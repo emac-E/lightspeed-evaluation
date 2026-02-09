@@ -2,6 +2,8 @@
 
 """Unit tests for pipeline evaluation evaluator module."""
 
+from typing import Optional
+
 import pytest
 from pytest_mock import MockerFixture
 
@@ -10,9 +12,11 @@ from lightspeed_evaluation.core.models import (
     EvaluationData,
     EvaluationRequest,
     EvaluationScope,
+    MetricResult,
     TurnData,
 )
 from lightspeed_evaluation.core.system.loader import ConfigLoader
+from lightspeed_evaluation.core.system.exceptions import EvaluationError
 from lightspeed_evaluation.core.metrics.manager import MetricManager
 from lightspeed_evaluation.core.script import ScriptExecutionManager
 from lightspeed_evaluation.pipeline.evaluation.evaluator import MetricsEvaluator
@@ -315,14 +319,18 @@ class TestMetricsEvaluator:
         mock_script_manager: ScriptExecutionManager,
         mocker: MockerFixture,
     ) -> None:
-        """Test exception handling during metric evaluation."""
+        """Test exception handling during metric evaluation.
+
+        Note: Even on error, turn data fields (query, response, contexts) should be
+        preserved in the result for debugging and analysis purposes.
+        """
         mocker.patch("lightspeed_evaluation.pipeline.evaluation.evaluator.LLMManager")
         mocker.patch(
             "lightspeed_evaluation.pipeline.evaluation.evaluator.EmbeddingManager"
         )
 
         mock_ragas = mocker.Mock()
-        mock_ragas.evaluate.side_effect = Exception("Unexpected error")
+        mock_ragas.evaluate.side_effect = EvaluationError("Unexpected error")
         mocker.patch(
             "lightspeed_evaluation.pipeline.evaluation.evaluator.RagasMetrics",
             return_value=mock_ragas,
@@ -355,10 +363,11 @@ class TestMetricsEvaluator:
         assert "Evaluation error" in result.reason
         assert "Unexpected error" in result.reason
 
+        # Turn data should be preserved even on error for debugging
         assert result.query == "Q"
         assert result.response == "R"
-        assert result.contexts is None
-        assert result.expected_response is None
+        assert result.contexts == '["C"]'  # JSON-serialized contexts preserved on error
+        assert result.expected_response is None  # Was not set in turn_data
 
     def test_evaluate_metric_skip_script_when_api_disabled(
         self,
@@ -701,6 +710,147 @@ class TestMetricsEvaluator:
         # Check the appropriate handler was called based on metric
         framework = metric_identifier.split(":")[0]
         assert mock_handlers[framework].evaluate.call_count == 1
+
+    def test_evaluate_multiple_expected_responses_error_preserves_tokens(
+        self,
+        config_loader: ConfigLoader,
+        mock_metric_manager: MetricManager,
+        mock_script_manager: ScriptExecutionManager,
+        mocker: MockerFixture,
+    ) -> None:
+        """Test token preservation when error occurs during multiple expected responses evaluation.
+
+        Scenario: First iteration succeeds with tokens, second iteration fails.
+        Expected: Error result should preserve tokens from first iteration.
+        """
+        mocker.patch("lightspeed_evaluation.pipeline.evaluation.evaluator.LLMManager")
+        mocker.patch(
+            "lightspeed_evaluation.pipeline.evaluation.evaluator.EmbeddingManager"
+        )
+
+        # First call returns valid result with tokens, second call raises exception
+        mock_ragas = mocker.Mock()
+        mock_ragas.evaluate.side_effect = [
+            (0.3, "First iteration failed threshold"),
+            EvaluationError("LLM error in second iteration"),
+        ]
+        mocker.patch(
+            "lightspeed_evaluation.pipeline.evaluation.evaluator.RagasMetrics",
+            return_value=mock_ragas,
+        )
+        mocker.patch(
+            "lightspeed_evaluation.pipeline.evaluation.evaluator.DeepEvalMetrics"
+        )
+        mocker.patch(
+            "lightspeed_evaluation.pipeline.evaluation.evaluator.CustomMetrics"
+        )
+        mocker.patch(
+            "lightspeed_evaluation.pipeline.evaluation.evaluator.ScriptEvalMetrics"
+        )
+        mocker.patch("lightspeed_evaluation.pipeline.evaluation.evaluator.NLPMetrics")
+
+        evaluator = MetricsEvaluator(
+            config_loader, mock_metric_manager, mock_script_manager
+        )
+
+        # Mock token tracker to simulate tokens from first iteration
+        original_evaluate = evaluator._evaluate
+
+        def mock_evaluate_with_tokens(
+            request: EvaluationRequest,
+            scope: EvaluationScope,
+            token_tracker: TokenTracker,
+            threshold: Optional[float],
+        ) -> MetricResult:
+            result = original_evaluate(request, scope, token_tracker, threshold)
+            # Simulate tokens were added after each successful call
+            result.judge_llm_input_tokens = 150
+            result.judge_llm_output_tokens = 50
+            return result
+
+        mocker.patch.object(
+            evaluator, "_evaluate", side_effect=mock_evaluate_with_tokens
+        )
+
+        turn_data = TurnData(
+            turn_id="1",
+            query="Q",
+            response="R",
+            expected_response=["A", "B"],
+            contexts=["C"],
+        )
+        conv_data = EvaluationData(conversation_group_id="test_conv", turns=[turn_data])
+        request = EvaluationRequest.for_turn(
+            conv_data, "ragas:context_recall", 0, turn_data
+        )
+
+        result = evaluator.evaluate_metric(request)
+
+        assert result is not None
+        assert result.result == "ERROR"
+        # Tokens from first successful iteration should be preserved
+        assert result.judge_llm_input_tokens == 150
+        assert result.judge_llm_output_tokens == 50
+        assert "iteration 2" in result.reason.lower()
+
+    def test_evaluate_single_path_error_preserves_tokens(
+        self,
+        config_loader: ConfigLoader,
+        mock_metric_manager: MetricManager,
+        mock_script_manager: ScriptExecutionManager,
+        mocker: MockerFixture,
+    ) -> None:
+        """Test token preservation when error occurs in single evaluation path.
+
+        Scenario: Single evaluation call fails but tokens were tracked.
+        Expected: Error result should preserve any tokens captured.
+        """
+        mocker.patch("lightspeed_evaluation.pipeline.evaluation.evaluator.LLMManager")
+        mocker.patch(
+            "lightspeed_evaluation.pipeline.evaluation.evaluator.EmbeddingManager"
+        )
+
+        mock_ragas = mocker.Mock()
+        mock_ragas.evaluate.side_effect = EvaluationError("LLM connection failed")
+        mocker.patch(
+            "lightspeed_evaluation.pipeline.evaluation.evaluator.RagasMetrics",
+            return_value=mock_ragas,
+        )
+        mocker.patch(
+            "lightspeed_evaluation.pipeline.evaluation.evaluator.DeepEvalMetrics"
+        )
+        mocker.patch(
+            "lightspeed_evaluation.pipeline.evaluation.evaluator.CustomMetrics"
+        )
+        mocker.patch(
+            "lightspeed_evaluation.pipeline.evaluation.evaluator.ScriptEvalMetrics"
+        )
+        mocker.patch("lightspeed_evaluation.pipeline.evaluation.evaluator.NLPMetrics")
+
+        evaluator = MetricsEvaluator(
+            config_loader, mock_metric_manager, mock_script_manager
+        )
+
+        turn_data = TurnData(
+            turn_id="1",
+            query="Q",
+            response="R",
+            expected_response="A",  # Single expected response
+            contexts=["C"],
+        )
+        conv_data = EvaluationData(conversation_group_id="test_conv", turns=[turn_data])
+        request = EvaluationRequest.for_turn(
+            conv_data, "ragas:faithfulness", 0, turn_data
+        )
+
+        result = evaluator.evaluate_metric(request)
+
+        assert result is not None
+        assert result.result == "ERROR"
+        assert "LLM connection failed" in result.reason
+        # Token counts should be present (even if 0)
+        assert result.judge_llm_input_tokens >= 0
+        assert result.judge_llm_output_tokens >= 0
 
 
 class TestTokenTracker:
