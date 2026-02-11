@@ -172,7 +172,7 @@ class MetricsEvaluator:
                 metrics_metadata=self._extract_metadata_for_csv(request),
             )
 
-        except Exception as e:  # pylint: disable=broad-exception-caught
+        except EvaluationError as e:
             # Any evaluation error should result in ERROR status
             execution_time = time.time() - start_time
             return self._create_error_result(
@@ -233,11 +233,25 @@ class MetricsEvaluator:
 
             ## Single expected_response handling or not supported
             else:
-                metric_result = self._evaluate(
-                    request, evaluation_scope, token_tracker, threshold
-                )
-        except Exception as e:  # pylint: disable=broad-exception-caught
-            raise EvaluationError(e) from e
+                try:
+                    metric_result = self._evaluate(
+                        request, evaluation_scope, token_tracker, threshold
+                    )
+                except EvaluationError as e:
+                    logger.error(
+                        "Conv %s: Error during evaluation: %s",
+                        request.conv_data.conversation_group_id,
+                        str(e),
+                    )
+                    input_tokens, output_tokens = token_tracker.get_counts()
+                    metric_result = MetricResult(
+                        result="ERROR",
+                        score=None,
+                        threshold=threshold,
+                        reason=f"Evaluation error: {e}",
+                        judge_llm_input_tokens=input_tokens,
+                        judge_llm_output_tokens=output_tokens,
+                    )
         finally:
             # Ensure callback is unregistered even on error
             token_tracker.stop()
@@ -299,8 +313,30 @@ class MetricsEvaluator:
                 is_conversation=evaluation_scope.is_conversation,
             )
 
-            # Evaluate metric
-            metric_result = self._evaluate(request, alt_scope, token_tracker, threshold)
+            # Evaluate metric - catch exceptions to preserve accumulated tokens
+            try:
+                metric_result = self._evaluate(
+                    request, alt_scope, token_tracker, threshold
+                )
+            except EvaluationError as e:
+                # Include tokens from failing call (LLM may have used tokens before error)
+                # Add current iteration's tokens to accumulated total
+                judge_llm_input_tokens += token_tracker.get_counts()[0]
+                judge_llm_output_tokens += token_tracker.get_counts()[1]
+                logger.error(
+                    "Conv %s: Error during evaluation iteration %d: %s",
+                    request.conv_data.conversation_group_id,
+                    idx + 1,
+                    str(e),
+                )
+                return MetricResult(
+                    result="ERROR",
+                    score=None,
+                    threshold=threshold,
+                    reason=f"Evaluation error at iteration {idx + 1}: {e}",
+                    judge_llm_input_tokens=judge_llm_input_tokens,
+                    judge_llm_output_tokens=judge_llm_output_tokens,
+                )
 
             # Accumulate token counts
             judge_llm_input_tokens += metric_result.judge_llm_input_tokens
@@ -384,8 +420,24 @@ class MetricsEvaluator:
             is_conversation=evaluation_scope.is_conversation,
         )
 
-        # Evaluate metric
-        metric_result = self._evaluate(request, alt_scope, token_tracker, threshold)
+        # Evaluate metric - catch exceptions to return error with captured tokens
+        try:
+            metric_result = self._evaluate(request, alt_scope, token_tracker, threshold)
+        except EvaluationError as e:
+            logger.error(
+                "Conv %s: Error during evaluation: %s",
+                request.conv_data.conversation_group_id,
+                str(e),
+            )
+            input_tokens, output_tokens = token_tracker.get_counts()
+            return MetricResult(
+                result="ERROR",
+                score=None,
+                threshold=threshold,
+                reason=f"Evaluation error: {e}",
+                judge_llm_input_tokens=input_tokens,
+                judge_llm_output_tokens=output_tokens,
+            )
 
         return metric_result
 
