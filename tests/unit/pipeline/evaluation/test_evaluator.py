@@ -882,16 +882,16 @@ class TestTokenTracker:
         """Test start and stop methods."""
         tracker = TokenTracker()
         tracker.start()
-        assert tracker._callback_registered is True
+        assert TokenTracker.get_active() is tracker
         tracker.stop()
-        assert tracker._callback_registered is False
+        assert TokenTracker.get_active() is None
 
     def test_token_tracker_double_start(self) -> None:
-        """Test calling start twice doesn't register callback twice."""
+        """Test calling start twice doesn't fail."""
         tracker = TokenTracker()
         tracker.start()
         tracker.start()  # Should not fail
-        assert tracker._callback_registered is True
+        assert TokenTracker.get_active() is tracker
         tracker.stop()
 
     def test_token_tracker_double_stop(self) -> None:
@@ -900,7 +900,7 @@ class TestTokenTracker:
         tracker.start()
         tracker.stop()
         tracker.stop()  # Should not fail
-        assert tracker._callback_registered is False
+        assert TokenTracker.get_active() is None
 
     def test_token_tracker_independent_instances(self) -> None:
         """Test multiple TokenTracker instances are independent."""

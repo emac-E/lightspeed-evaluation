@@ -2,6 +2,7 @@
 
 import os
 import logging
+import threading
 from typing import Any, Optional, Union
 
 import litellm
@@ -11,15 +12,22 @@ from lightspeed_evaluation.core.system.exceptions import LLMError
 
 logger = logging.getLogger(__name__)
 
+# Thread-local storage for active TokenTracker
+_active_tracker: threading.local = threading.local()
+
 
 class TokenTracker:
-    """Tracks token usage from LiteLLM calls via callbacks.
+    """Tracks token usage from LLM calls using direct response extraction.
+
+    Uses thread-local storage to track the active tracker. Tokens are captured
+    directly from litellm response in BaseCustomLLM.call() - no callbacks,
+    no timeouts, no race conditions.
 
     Usage:
         tracker = TokenTracker()
-        tracker.start()  # Register callback
-        # ... make LLM calls ...
-        tracker.stop()   # Unregister callback
+        tracker.start()  # Set as active tracker for this thread
+        # ... make LLM calls (tokens captured automatically) ...
+        tracker.stop()   # Unset as active tracker
         input_tokens, output_tokens = tracker.get_counts()
     """
 
@@ -27,46 +35,53 @@ class TokenTracker:
         """Initialize token tracker."""
         self.input_tokens = 0
         self.output_tokens = 0
-        self._callback_registered = False
+        self._lock = threading.Lock()  # Instance lock for token counter updates
 
-    def _token_callback(
-        self,
-        _kwargs: dict[str, Any],
-        completion_response: Any,
-        _start_time: float,
-        _end_time: float,
-    ) -> None:
-        """Capture token usage from LiteLLM completion response."""
-        if hasattr(completion_response, "usage") and completion_response.usage:
-            usage = completion_response.usage
-            self.input_tokens += getattr(usage, "prompt_tokens", 0)
-            self.output_tokens += getattr(usage, "completion_tokens", 0)
+    def add_tokens(self, prompt_tokens: int, completion_tokens: int) -> None:
+        """Add token counts (thread-safe).
+
+        Called by BaseCustomLLM.call() to record tokens from LLM response.
+
+        Args:
+            prompt_tokens: Number of input/prompt tokens.
+            completion_tokens: Number of output/completion tokens.
+        """
+        with self._lock:
+            self.input_tokens += prompt_tokens
+            self.output_tokens += completion_tokens
 
     def start(self) -> None:
-        """Register the token tracking callback."""
-        if self._callback_registered:
-            return
-        if not hasattr(litellm, "success_callback") or litellm.success_callback is None:
-            litellm.success_callback = []
-        litellm.success_callback.append(self._token_callback)
-        self._callback_registered = True
+        """Set this tracker as active for the current thread."""
+        _active_tracker.tracker = self
 
     def stop(self) -> None:
-        """Unregister the token tracking callback."""
-        if not self._callback_registered:
-            return
-        if self._token_callback in litellm.success_callback:
-            litellm.success_callback.remove(self._token_callback)
-        self._callback_registered = False
+        """Unset this tracker as active for the current thread."""
+        if getattr(_active_tracker, "tracker", None) is self:
+            _active_tracker.tracker = None
 
     def get_counts(self) -> tuple[int, int]:
-        """Get accumulated token counts."""
-        return self.input_tokens, self.output_tokens
+        """Get accumulated token counts.
+
+        Returns:
+            Tuple of (input_tokens, output_tokens)
+        """
+        with self._lock:
+            return self.input_tokens, self.output_tokens
 
     def reset(self) -> None:
         """Reset token counts to zero."""
-        self.input_tokens = 0
-        self.output_tokens = 0
+        with self._lock:
+            self.input_tokens = 0
+            self.output_tokens = 0
+
+    @staticmethod
+    def get_active() -> Optional["TokenTracker"]:
+        """Get the active tracker for the current thread.
+
+        Returns:
+            The active TokenTracker, or None if no tracker is active.
+        """
+        return getattr(_active_tracker, "tracker", None)
 
 
 class BaseCustomLLM:  # pylint: disable=too-few-public-methods
@@ -132,6 +147,14 @@ class BaseCustomLLM:  # pylint: disable=too-few-public-methods
 
         try:
             response = litellm.completion(**call_params)
+
+            # Direct token extraction - capture tokens synchronously from response
+            tracker = TokenTracker.get_active()
+            if tracker and hasattr(response, "usage") and response.usage:
+                tracker.add_tokens(
+                    getattr(response.usage, "prompt_tokens", 0),
+                    getattr(response.usage, "completion_tokens", 0),
+                )
 
             # Extract content from all choices
             results = []
