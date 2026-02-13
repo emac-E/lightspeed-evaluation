@@ -79,7 +79,7 @@ pyright:
 	uv run pyright src lsc_agent_eval/src tests
 
 docstyle:
-	uv run pydocstyle -v .
+	uv run pydocstyle -v src tests script lsc_agent_eval
 
 ruff:
 	uv run ruff check .
