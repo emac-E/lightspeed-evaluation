@@ -1,9 +1,11 @@
 """Unit tests for core.llm.manager module."""
 
+import logging
 import os
-from pytest_mock import MockerFixture
 
 import pytest
+from pytest_mock import MockerFixture
+
 from lightspeed_evaluation.core.llm import LLMError
 from lightspeed_evaluation.core.llm.manager import LLMManager
 from lightspeed_evaluation.core.models import LLMConfig, SystemConfig
@@ -26,29 +28,36 @@ class TestLLMError:
 class TestLLMManager:
     """Unit tests for LLMManager class."""
 
-    def test_llm_manager_initialization_openai(self, mocker: MockerFixture) -> None:
+    def test_llm_manager_initialization_openai(
+        self, mocker: MockerFixture, caplog: pytest.LogCaptureFixture
+    ) -> None:
         """Test LLMManager initialization with OpenAI provider."""
         config = LLMConfig(provider="openai", model="gpt-4")
 
         mocker.patch.dict(os.environ, {"OPENAI_API_KEY": "test-key"})
-        mock_print = mocker.patch("builtins.print")
-        manager = LLMManager(config)
+        with caplog.at_level(logging.INFO):
+            manager = LLMManager(config)
 
         assert manager.config == config
         assert manager.model_name == "gpt-4"
-        mock_print.assert_called_with("✅ LLM Manager: openai/gpt-4 -> gpt-4")
+        assert any(
+            "LLM Manager" in r.message
+            and "openai" in r.message
+            and "gpt-4" in r.message
+            for r in caplog.records
+        )
 
     def test_llm_manager_initialization_generic_provider(
-        self, mocker: MockerFixture
+        self, caplog: pytest.LogCaptureFixture
     ) -> None:
         """Test LLMManager initialization with unknown/generic provider."""
         config = LLMConfig(provider="custom", model="custom-model")
 
-        mock_print = mocker.patch("builtins.print")
-        manager = LLMManager(config)
+        with caplog.at_level(logging.WARNING):
+            manager = LLMManager(config)
 
         assert manager.model_name == "custom/custom-model"
-        mock_print.assert_any_call("⚠️ Using generic provider format for custom")
+        assert any("generic" in r.message.lower() for r in caplog.records)
 
     def test_llm_manager_openai_missing_api_key(self, mocker: MockerFixture) -> None:
         """Test LLMManager with OpenAI provider but missing API key."""
@@ -177,8 +186,8 @@ class TestLLMManager:
         for provider, model, env_vars, expected_model_name in providers_data:
             config = LLMConfig(provider=provider, model=model)
 
-            mocker.patch.dict(os.environ, env_vars)
-            mocker.patch("builtins.print")
+            # clear=True ensures each iteration has isolated env vars
+            mocker.patch.dict(os.environ, env_vars, clear=True)
             manager = LLMManager(config)
             assert manager.model_name == expected_model_name
             assert manager.config.provider == provider

@@ -1,9 +1,21 @@
 """Unit tests for LLM Manager."""
 
+import logging
+
 import pytest
 from pytest_mock import MockerFixture
 
-from lightspeed_evaluation.core.models import LLMConfig, SystemConfig
+from lightspeed_evaluation.core.models import (
+    LLMConfig,
+    SystemConfig,
+    LLMPoolConfig,
+    JudgePanelConfig,
+)
+from lightspeed_evaluation.core.models.system import (
+    LLMDefaultsConfig,
+    LLMParametersConfig,
+    LLMProviderConfig,
+)
 from lightspeed_evaluation.core.llm.manager import LLMManager
 
 
@@ -128,7 +140,7 @@ class TestLLMManager:
         assert manager.model_name == "hosted_vllm/mistral-7b"
 
     def test_initialization_generic_provider(
-        self, mocker: MockerFixture, capsys: pytest.CaptureFixture
+        self, mocker: MockerFixture, caplog: pytest.LogCaptureFixture
     ) -> None:
         """Test initialization with unknown/generic provider."""
         config = LLMConfig(
@@ -138,14 +150,14 @@ class TestLLMManager:
         )
         mocker.patch("lightspeed_evaluation.core.llm.manager.validate_provider_env")
 
-        manager = LLMManager(config)
+        with caplog.at_level(logging.WARNING):
+            manager = LLMManager(config)
 
         # Should construct generic model name
         assert manager.model_name == "custom_provider/custom-model"
 
-        # Should print warning
-        captured = capsys.readouterr()
-        assert "generic" in captured.out.lower() or "warning" in captured.out.lower()
+        # Should log warning about generic provider
+        assert any("generic" in record.message.lower() for record in caplog.records)
 
     def test_get_model_name(
         self, basic_llm_config: LLMConfig, mocker: MockerFixture
@@ -231,18 +243,147 @@ class TestLLMManager:
         assert params["timeout"] == 120
         assert params["num_retries"] == 5
 
-    def test_initialization_prints_message(
+    def test_initialization_logs_message(
         self,
         basic_llm_config: LLMConfig,
         mocker: MockerFixture,
-        capsys: pytest.CaptureFixture,
+        caplog: pytest.LogCaptureFixture,
     ) -> None:
-        """Test that initialization prints configuration message."""
+        """Test that initialization logs configuration message."""
         mocker.patch("lightspeed_evaluation.core.llm.manager.validate_provider_env")
 
-        LLMManager(basic_llm_config)
+        with caplog.at_level(logging.INFO):
+            LLMManager(basic_llm_config)
 
-        captured = capsys.readouterr()
-        assert "LLM Manager" in captured.out
-        assert "openai" in captured.out
-        assert "gpt-4" in captured.out
+        # Should log LLM manager info
+        assert any("LLM Manager" in record.message for record in caplog.records)
+        assert any("openai" in record.message for record in caplog.records)
+        assert any("gpt-4" in record.message for record in caplog.records)
+
+
+def _create_llm_pool_with_judges(
+    judges: list[tuple[str, str]],
+    enabled_metrics: list[str] | None = None,
+) -> tuple[LLMPoolConfig, JudgePanelConfig]:
+    """Helper to create LLMPoolConfig and JudgePanelConfig from judge list.
+
+    Args:
+        judges: List of (provider, model) tuples.
+        enabled_metrics: Optional list of metrics to enable for panel.
+    """
+    models: dict[str, LLMProviderConfig] = {}
+    for provider, model in judges:
+        models[model] = LLMProviderConfig(provider=provider)
+
+    pool = LLMPoolConfig(
+        defaults=LLMDefaultsConfig(
+            parameters=LLMParametersConfig(temperature=0.0, max_completion_tokens=512)
+        ),
+        models=models,
+    )
+    judge_ids = [model for _, model in judges]
+    panel = JudgePanelConfig(judges=judge_ids, enabled_metrics=enabled_metrics)
+    return pool, panel
+
+
+class TestLLMManagerJudgePanel:
+    """Tests for LLMManager judge panel functionality."""
+
+    def test_without_judge_panel(self, mocker: MockerFixture) -> None:
+        """Test LLMManager without judge panel configured."""
+        mocker.patch("lightspeed_evaluation.core.llm.manager.validate_provider_env")
+        manager = LLMManager(LLMConfig(provider="openai", model="gpt-4o-mini"))
+
+        assert not manager.has_judge_panel()
+        assert len(manager.judge_managers) == 0
+        assert len(manager.get_judge_managers()) == 1
+        assert manager.get_primary_judge() is manager
+        assert not manager.should_use_panel_for_metric("ragas:faithfulness")
+
+    def test_with_judge_panel(self, mocker: MockerFixture) -> None:
+        """Test LLMManager with judge panel configured."""
+        mocker.patch("lightspeed_evaluation.core.llm.manager.validate_provider_env")
+
+        pool, panel = _create_llm_pool_with_judges(
+            [
+                ("openai", "gpt-4o-mini"),
+                ("openai", "gpt-4o"),
+                ("gemini", "gemini-2.0-flash-exp"),
+            ]
+        )
+        system_config = SystemConfig(llm_pool=pool, judge_panel=panel)
+        manager = LLMManager.from_system_config(system_config)
+
+        # Panel detected
+        assert manager.has_judge_panel()
+        assert len(manager.judge_managers) == 3
+
+        # Judge managers
+        judges = manager.get_judge_managers()
+        assert len(judges) == 3
+        assert judges[0].config.model == "gpt-4o-mini"
+        assert judges[1].config.model == "gpt-4o"
+        assert judges[2].config.model == "gemini-2.0-flash-exp"
+
+        # Primary judge is first
+        assert manager.get_primary_judge().config.model == "gpt-4o-mini"
+
+    def test_should_use_panel_with_enabled_metrics(self, mocker: MockerFixture) -> None:
+        """Test should_use_panel with enabled_metrics."""
+        mocker.patch("lightspeed_evaluation.core.llm.manager.validate_provider_env")
+
+        pool, panel = _create_llm_pool_with_judges(
+            [("openai", "gpt-4o-mini")],
+            enabled_metrics=["ragas:faithfulness", "custom:answer_correctness"],
+        )
+        system_config = SystemConfig(llm_pool=pool, judge_panel=panel)
+        manager = LLMManager.from_system_config(system_config)
+
+        # Metric in list - use panel
+        assert manager.should_use_panel_for_metric("ragas:faithfulness")
+        assert manager.should_use_panel_for_metric("custom:answer_correctness")
+
+        # Metric not in list - don't use panel
+        assert not manager.should_use_panel_for_metric("ragas:response_relevancy")
+
+    def test_should_use_panel_with_enabled_metrics_none(
+        self, mocker: MockerFixture
+    ) -> None:
+        """Test should_use_panel when enabled_metrics is None (all metrics)."""
+        mocker.patch("lightspeed_evaluation.core.llm.manager.validate_provider_env")
+
+        # enabled_metrics=None is the default, meaning all metrics use panel
+        pool, panel = _create_llm_pool_with_judges(
+            [("openai", "gpt-4o-mini")],
+            enabled_metrics=None,
+        )
+        system_config = SystemConfig(llm_pool=pool, judge_panel=panel)
+        manager = LLMManager.from_system_config(system_config)
+
+        # All metrics use panel
+        assert manager.should_use_panel_for_metric("ragas:faithfulness")
+        assert manager.should_use_panel_for_metric("custom:answer_correctness")
+        assert manager.should_use_panel_for_metric("deepeval:conversation_completeness")
+
+    def test_judge_panel_logs_message(
+        self, mocker: MockerFixture, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        """Test judge panel initialization logs messages."""
+        mocker.patch("lightspeed_evaluation.core.llm.manager.validate_provider_env")
+
+        pool, panel = _create_llm_pool_with_judges(
+            [
+                ("openai", "gpt-4o-mini"),
+                ("openai", "gpt-4o"),
+            ]
+        )
+        system_config = SystemConfig(llm_pool=pool, judge_panel=panel)
+
+        with caplog.at_level(logging.INFO):
+            LLMManager.from_system_config(system_config)
+
+        # Should log judge panel info
+        assert any(
+            "Judge panel" in record.message and "2 judges" in record.message
+            for record in caplog.records
+        )
