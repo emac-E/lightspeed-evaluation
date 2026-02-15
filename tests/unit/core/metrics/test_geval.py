@@ -5,6 +5,7 @@ from typing import Any
 
 import pytest
 from pytest_mock import MockerFixture
+from deepeval.metrics.g_eval import Rubric
 from deepeval.test_case import LLMTestCaseParams
 
 from lightspeed_evaluation.core.metrics.geval import GEvalHandler
@@ -667,3 +668,262 @@ class TestGEvalHandler:
         assert score is None
         assert "evaluation error" in reason.lower()
         assert "API error" in reason
+
+    def test_parse_rubrics_returns_none_when_empty_or_missing(
+        self, handler: GEvalHandler
+    ) -> None:
+        """Test that _parse_rubrics returns None when rubrics not configured."""
+        assert handler._parse_rubrics(None) is None
+        assert handler._parse_rubrics([]) is None
+        assert handler._parse_rubrics("not a list") is None
+
+    def test_parse_rubrics_valid_list_returns_rubric_objects(
+        self, handler: GEvalHandler
+    ) -> None:
+        """Test that valid rubrics config is converted to Rubric instances."""
+        raw = [
+            {"score_range": [0, 2], "expected_outcome": "Incorrect."},
+            {"score_range": [3, 6], "expected_outcome": "Mostly correct."},
+            {"score_range": [7, 10], "expected_outcome": "Fully correct."},
+        ]
+        result = handler._parse_rubrics(raw)
+        assert result is not None
+        assert not isinstance(result, tuple)
+        assert isinstance(result, list)
+        assert len(result) == 3
+        for r in result:
+            assert isinstance(r, Rubric)
+        assert result[0].score_range == (0, 2)
+        assert result[0].expected_outcome == "Incorrect."
+        assert result[1].score_range == (3, 6)
+        assert result[2].score_range == (7, 10)
+
+    def test_parse_rubrics_accepts_category_alias(self, handler: GEvalHandler) -> None:
+        """Test that 'category' is accepted as alias for expected_outcome."""
+        raw = [{"score_range": [0, 5], "category": "Partial."}]
+        result = handler._parse_rubrics(raw)
+        assert result is not None
+        assert not isinstance(result, tuple)
+        assert len(result) == 1
+        assert result[0].expected_outcome == "Partial."
+
+    def test_parse_rubrics_invalid_structure_returns_error(
+        self, handler: GEvalHandler
+    ) -> None:
+        """Test that invalid rubric structure yields validation error."""
+        # missing expected_outcome/category
+        result = handler._parse_rubrics([{"score_range": [0, 2]}])
+        assert isinstance(result, tuple)
+        assert "expected_outcome" in result[1] or "category" in result[1]
+        # missing score_range
+        result = handler._parse_rubrics([{"expected_outcome": "X"}])
+        assert isinstance(result, tuple)
+        assert "score_range" in result[1]
+        # score_range must be list or tuple of 2
+        result = handler._parse_rubrics(
+            [{"score_range": [1, 2, 3], "expected_outcome": "X"}]
+        )
+        assert isinstance(result, tuple)
+        assert "score_range" in result[1]
+
+    def test_evaluate_turn_with_rubrics_passes_rubric_to_geval(
+        self,
+        handler: GEvalHandler,
+        mock_metric_manager: Any,
+        mocker: MockerFixture,
+    ) -> None:
+        """Test that turn-level evaluation passes rubrics to GEval."""
+        mock_geval_class = mocker.patch(
+            "lightspeed_evaluation.core.metrics.geval.GEval"
+        )
+        mock_metric = mocker.MagicMock()
+        mock_metric.score = 0.8
+        mock_metric.reason = "Good"
+        mock_geval_class.return_value = mock_metric
+
+        mock_metric_manager.get_metric_metadata.return_value = {
+            "criteria": "Test criteria",
+            "evaluation_params": ["query", "response"],
+            "threshold": 0.5,
+            "rubrics": [
+                {"score_range": [0, 3], "expected_outcome": "Poor"},
+                {"score_range": [4, 7], "expected_outcome": "Good"},
+                {"score_range": [8, 10], "expected_outcome": "Excellent"},
+            ],
+        }
+
+        turn_data = mocker.MagicMock()
+        turn_data.query = "Q"
+        turn_data.response = "R"
+        turn_data.expected_response = None
+        turn_data.contexts = None
+        conv_data = mocker.MagicMock()
+
+        handler.evaluate(
+            metric_name="test_metric",
+            conv_data=conv_data,
+            _turn_idx=0,
+            turn_data=turn_data,
+            is_conversation=False,
+        )
+
+        call_kwargs = mock_geval_class.call_args[1]
+        assert "rubric" in call_kwargs
+        rubric_list = call_kwargs["rubric"]
+        assert len(rubric_list) == 3
+        assert all(isinstance(r, Rubric) for r in rubric_list)
+        assert rubric_list[0].score_range == (0, 3)
+        assert rubric_list[1].expected_outcome == "Good"
+
+    def test_evaluate_conversation_with_rubrics_passes_rubric_to_geval(
+        self,
+        handler: GEvalHandler,
+        mock_metric_manager: Any,
+        mocker: MockerFixture,
+    ) -> None:
+        """Test that conversation-level evaluation passes rubrics to GEval."""
+        mock_geval_class = mocker.patch(
+            "lightspeed_evaluation.core.metrics.geval.GEval"
+        )
+        mock_metric = mocker.MagicMock()
+        mock_metric.score = 0.75
+        mock_metric.reason = "Coherent"
+        mock_geval_class.return_value = mock_metric
+
+        mock_metric_manager.get_metric_metadata.return_value = {
+            "criteria": "Coherence",
+            "threshold": 0.6,
+            "rubrics": [
+                {"score_range": [0, 4], "expected_outcome": "Weak"},
+                {"score_range": [5, 10], "expected_outcome": "Strong"},
+            ],
+        }
+
+        turn1 = mocker.MagicMock()
+        turn1.query = "Q1"
+        turn1.response = "R1"
+        conv_data = mocker.MagicMock()
+        conv_data.turns = [turn1]
+
+        handler.evaluate(
+            metric_name="test_metric",
+            conv_data=conv_data,
+            _turn_idx=None,
+            turn_data=None,
+            is_conversation=True,
+        )
+
+        call_kwargs = mock_geval_class.call_args[1]
+        assert "rubric" in call_kwargs
+        assert len(call_kwargs["rubric"]) == 2
+
+    def test_evaluate_with_both_criteria_and_rubrics_passes_both(
+        self,
+        handler: GEvalHandler,
+        mock_metric_manager: Any,
+        mocker: MockerFixture,
+    ) -> None:
+        """Test that when both criteria and rubrics are present, both are passed to GEval."""
+        mock_geval_class = mocker.patch(
+            "lightspeed_evaluation.core.metrics.geval.GEval"
+        )
+        mock_metric = mocker.MagicMock()
+        mock_metric.score = 0.9
+        mock_metric.reason = "OK"
+        mock_geval_class.return_value = mock_metric
+
+        mock_metric_manager.get_metric_metadata.return_value = {
+            "criteria": "Correctness criteria",
+            "evaluation_steps": ["Step one", "Step two"],
+            "threshold": 0.7,
+            "rubrics": [
+                {"score_range": [0, 5], "expected_outcome": "Low"},
+                {"score_range": [6, 10], "expected_outcome": "High"},
+            ],
+        }
+
+        turn_data = mocker.MagicMock()
+        turn_data.query = "Q"
+        turn_data.response = "R"
+        turn_data.expected_response = None
+        turn_data.contexts = None
+        conv_data = mocker.MagicMock()
+
+        handler.evaluate(
+            metric_name="test_metric",
+            conv_data=conv_data,
+            _turn_idx=0,
+            turn_data=turn_data,
+            is_conversation=False,
+        )
+
+        call_kwargs = mock_geval_class.call_args[1]
+        assert call_kwargs["criteria"] == "Correctness criteria"
+        assert call_kwargs["evaluation_steps"] == ["Step one", "Step two"]
+        assert "rubric" in call_kwargs
+        assert len(call_kwargs["rubric"]) == 2
+
+    def test_evaluate_with_invalid_rubrics_structure_returns_error(
+        self,
+        handler: GEvalHandler,
+        mock_metric_manager: Any,
+        mocker: MockerFixture,
+    ) -> None:
+        """Test that invalid rubric structure (e.g. missing expected_outcome) returns error."""
+        mock_metric_manager.get_metric_metadata.return_value = {
+            "criteria": "Some criteria",
+            "threshold": 0.5,
+            "rubrics": [{"score_range": [0, 5]}],  # missing expected_outcome
+        }
+        turn_data = mocker.MagicMock()
+        turn_data.query = "Q"
+        turn_data.response = "R"
+        turn_data.expected_response = None
+        turn_data.contexts = None
+        conv_data = mocker.MagicMock()
+
+        score, reason = handler.evaluate(
+            metric_name="test_metric",
+            conv_data=conv_data,
+            _turn_idx=0,
+            turn_data=turn_data,
+            is_conversation=False,
+        )
+
+        assert score is None
+        assert "expected_outcome" in reason or "category" in reason
+
+    def test_evaluate_turn_score_passed_through(
+        self,
+        handler: GEvalHandler,
+        mock_metric_manager: Any,
+        mocker: MockerFixture,
+    ) -> None:
+        """Test that GEval score is passed through as-is (DeepEval normalizes to 0-1)."""
+        mock_geval_class = mocker.patch(
+            "lightspeed_evaluation.core.metrics.geval.GEval"
+        )
+        mock_metric = mocker.MagicMock()
+        mock_metric.score = 0.85
+        mock_metric.reason = "OK"
+        mock_geval_class.return_value = mock_metric
+
+        mock_metric_manager.get_metric_metadata.return_value = {
+            "criteria": "Test",
+            "threshold": 0.5,
+        }
+        turn_data = mocker.MagicMock()
+        turn_data.query = "Q"
+        turn_data.response = "R"
+        turn_data.expected_response = None
+        turn_data.contexts = None
+        conv_data = mocker.MagicMock()
+
+        score, _ = handler.evaluate(
+            metric_name="test_metric",
+            conv_data=conv_data,
+            _turn_idx=0,
+            turn_data=turn_data,
+            is_conversation=False,
+        )
+        assert score == 0.85

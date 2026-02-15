@@ -120,9 +120,9 @@ metrics_metadata:
       distance_measure: "levenshtein"  # Options: levenshtein, hamming, jaro, jaro_winkler
       default: false  # Use custom:answer_correctness for semantic comparison instead
 
-    # GEval turn-level metrics 
+    # GEval turn-level metrics (criteria = required; evaluation_steps, rubrics = optional)
     "geval:technical_accuracy":
-      criteria: |
+      criteria: |  # required
         Assess whether the response provides technically accurate information,
         commands, code, syntax, and follows relevant industry or
         domain-specific best practices. The response should
@@ -131,12 +131,19 @@ metrics_metadata:
         - query
         - response
         - expected_response
-      evaluation_steps:
+      evaluation_steps:  # optional: how to evaluate; if omitted, GEval generates from criteria
         - "Verify that the provided syntax (e.g., code, commands, configuration) is valid and follows the language/tool's formatting rules."
         - "Check if the response uses appropriate modules, functions, libraries, or parameters for the given task."
         - "Assess whether the solution aligns with relevant official documentation or established best practices for the specific domain."
         - "Verify the response directly and accurately addresses the user's specific query or task."
         - "Check for potential security issues, significant inefficiencies, or anti-patterns."
+      # rubrics:  # optional: score ranges 0-10, non-overlapping, but final score is 0-1; same style as evaluation_steps
+      #   - score_range: [0, 3]
+      #     expected_outcome: "Incorrect or invalid."
+      #   - score_range: [4, 7]
+      #     expected_outcome: "Partially correct or has issues."
+      #   - score_range: [8, 10]
+      #     expected_outcome: "Technically correct and follows best practices."
       threshold: 0.7
       description: "General technical accuracy of provided commands, code, or technical information"
 
@@ -156,16 +163,16 @@ metrics_metadata:
       threshold: 0.7
       description: "How well the model retains information from previous turns"
 
-    # GEval conversation-level metrics
+    # GEval conversation-level metrics (criteria = required; evaluation_steps, rubrics = optional)
     "geval:conversation_coherence":
-      criteria: |
+      criteria: |  # required
         Evaluate whether the conversation maintains context and provides coherent
         responses across multiple turns. The assistant should reference previous
         exchanges and build upon earlier context.
       evaluation_params:
         - query
         - response
-      evaluation_steps:
+      evaluation_steps:  # optional
         - "Check if the assistant remembers information from previous turns"
         - "Verify responses build logically on previous context"
         - "Assess whether the conversation flows naturally"
