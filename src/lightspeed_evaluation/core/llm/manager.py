@@ -1,10 +1,13 @@
 """LLM Manager - Generic LLM configuration, validation, and parameter provider."""
 
+import logging
 import os
-from typing import Any
+from typing import Any, Optional
 
 from lightspeed_evaluation.core.models import LLMConfig, SystemConfig
 from lightspeed_evaluation.core.system.env_validator import validate_provider_env
+
+logger = logging.getLogger(__name__)
 
 
 class LLMManager:
@@ -14,19 +17,58 @@ class LLMManager:
     - Environment validation for multiple providers
     - Model name construction
     - Provides LLM parameters for consumption by framework-specific managers
+    - Manages judge panel configurations when available
     """
 
-    def __init__(self, config: LLMConfig):
-        """Initialize with validated environment and constructed model name."""
-        self.config = config
-        self.model_name = self._construct_model_name_and_validate()
-        print(
-            f"✅ LLM Manager: {self.config.provider}/{self.config.model} -> {self.model_name}"
-        )
+    def __init__(
+        self,
+        config: LLMConfig,
+        system_config: Optional[SystemConfig] = None,
+    ):
+        """Initialize with validated environment and constructed model name.
 
-    def _construct_model_name_and_validate(self) -> str:
-        """Construct model name and validate required environment variables."""
-        provider = self.config.provider.lower()
+        Args:
+            config: Primary LLM configuration (also used as fallback)
+            system_config: Optional full system config for judge panel support
+        """
+        self.config = config
+        self.system_config = system_config
+        self.model_name = self._construct_model_name_and_validate(config)
+
+        # Initialize judge panel if available
+        self.judge_managers: list["LLMManager"] = []
+        if system_config and system_config.judge_panel and system_config.llm_pool:
+            panel = system_config.judge_panel
+            logger.info("Judge panel configured with %d judges", len(panel.judges))
+            # Create LLM managers for each judge using resolved configs from llms pool
+            try:
+                judge_configs = system_config.get_judge_configs()
+                for resolved_config in judge_configs:
+                    # Create child manager without system_config to avoid recursion
+                    judge_manager = LLMManager(resolved_config)
+                    self.judge_managers.append(judge_manager)
+            except ValueError as e:
+                logger.error("Failed to resolve judge panel: %s", e)
+                raise
+        else:
+            # No judge panel - log single LLM info
+            logger.info(
+                "LLM Manager: %s/%s -> %s",
+                self.config.provider,
+                self.config.model,
+                self.model_name,
+            )
+
+    def _construct_model_name_and_validate(self, config: LLMConfig) -> str:
+        """Construct model name and validate required environment variables.
+
+        Args:
+            config: LLM configuration to construct model name for
+
+        Returns:
+            Constructed model name string
+        """
+        provider = config.provider.lower()
 
         # Provider-specific validation and model name construction
         provider_handlers = {
@@ -44,8 +86,8 @@ class LLMManager:
             return provider_handlers[provider]()
 
         # Generic provider - try as-is with warning
-        print(f"⚠️ Using generic provider format for {provider}")
-        return f"{provider}/{self.config.model}"
+        logger.warning("Using generic provider format for %s", provider)
+        return f"{provider}/{config.model}"
 
     def _handle_hosted_vllm_provider(self) -> str:
         """Handle hosted vLLM provider setup."""
@@ -88,6 +130,59 @@ class LLMManager:
         validate_provider_env("ollama")
         return f"ollama/{self.config.model}"
 
+    def has_judge_panel(self) -> bool:
+        """Check if judge panel is configured.
+
+        Returns:
+            True if judge panel is configured (one or more judges)
+        """
+        return len(self.judge_managers) > 0
+
+    def get_judge_managers(self) -> list["LLMManager"]:
+        """Get list of judge LLM managers.
+
+        Returns:
+            List of LLMManager instances. If no panel configured, returns list
+            with single manager (self). Always returns at least one manager.
+        """
+        if self.judge_managers:
+            return self.judge_managers
+        # No panel - return self as single judge
+        return [self]
+
+    def get_primary_judge(self) -> "LLMManager":
+        """Get primary judge LLM manager (first in panel or self).
+
+        This is used when panel is disabled for specific metrics or
+        as fallback when panel is not configured.
+
+        Returns:
+            Primary LLM manager (first judge if panel exists, otherwise self)
+        """
+        if self.judge_managers:
+            return self.judge_managers[0]
+        return self
+
+    def should_use_panel_for_metric(self, metric_identifier: str) -> bool:
+        """Determine if a metric should use judge panel based on enabled_metrics.
+
+        Args:
+            metric_identifier: Metric identifier (e.g., "ragas:faithfulness")
+
+        Returns:
+            True if metric should use judge panel, False otherwise
+        """
+        if self.system_config and self.system_config.judge_panel:
+            enabled_metrics = self.system_config.judge_panel.enabled_metrics
+            # If enabled_metrics is None, all metrics use panel
+            if enabled_metrics is None:
+                return True
+            # Check if this specific metric is in the list
+            return metric_identifier in enabled_metrics
+
+        # Default: Don't use panel (use primary judge only)
+        return False
+
     def get_model_name(self) -> str:
         """Get the constructed model name."""
         return self.model_name
@@ -110,10 +205,24 @@ class LLMManager:
 
     @classmethod
     def from_system_config(cls, system_config: SystemConfig) -> "LLMManager":
-        """Create LLM Manager from system configuration."""
-        return cls(system_config.llm)
+        """Create LLM Manager from system configuration.
+
+        Args:
+            system_config: System configuration with LLM and optional judge panel
+
+        Returns:
+            LLMManager with judge panel support if configured
+        """
+        return cls(system_config.llm, system_config=system_config)
 
     @classmethod
     def from_llm_config(cls, llm_config: LLMConfig) -> "LLMManager":
-        """Create LLM Manager from LLMConfig directly."""
+        """Create LLM Manager from LLMConfig directly (no judge panel support).
+
+        Args:
+            llm_config: LLM configuration
+
+        Returns:
+            LLMManager without judge panel support
+        """
         return cls(llm_config)
