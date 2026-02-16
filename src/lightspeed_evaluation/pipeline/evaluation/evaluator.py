@@ -142,6 +142,7 @@ class MetricsEvaluator:
                 tag=request.conv_data.tag,
                 turn_id=request.turn_id,
                 metric_identifier=request.metric_identifier,
+                metric_metadata=self._extract_metadata_for_csv(request),
                 query=turn_data.query if turn_data else "",
                 response=turn_data.response or "" if turn_data else "",
                 execution_time=execution_time,
@@ -169,7 +170,6 @@ class MetricsEvaluator:
                 expected_tool_calls=(
                     _to_json_str(turn_data.expected_tool_calls) if turn_data else None
                 ),
-                metrics_metadata=self._extract_metadata_for_csv(request),
             )
 
         except EvaluationError as e:
@@ -495,6 +495,7 @@ class MetricsEvaluator:
             tag=request.conv_data.tag,
             turn_id=request.turn_id,
             metric_identifier=request.metric_identifier,
+            metric_metadata=self._extract_metadata_for_csv(request),
             result="ERROR",
             score=None,
             threshold=None,
@@ -508,7 +509,6 @@ class MetricsEvaluator:
             time_to_first_token=turn_data.time_to_first_token if turn_data else None,
             streaming_duration=turn_data.streaming_duration if turn_data else None,
             tokens_per_second=turn_data.tokens_per_second if turn_data else None,
-            metrics_metadata=self._extract_metadata_for_csv(request),
         )
 
     def _determine_status(self, score: float, threshold: Optional[float]) -> str:

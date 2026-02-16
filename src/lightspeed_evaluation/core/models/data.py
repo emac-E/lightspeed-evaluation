@@ -470,6 +470,10 @@ class EvaluationResult(MetricResult, StreamingMetricsMixin):
         min_length=1,
         description="Metric identifier (e.g., 'ragas:response_relevancy')",
     )
+    metric_metadata: Optional[str] = Field(
+        default=None,
+        description="Metric metadata for evaluation (JSON, excludes identifier and threshold)",
+    )
     query: str = Field(default="", description="Query text")
     response: str = Field(default="", description="Response text")
     execution_time: float = Field(
@@ -498,10 +502,6 @@ class EvaluationResult(MetricResult, StreamingMetricsMixin):
     )
     expected_tool_calls: Optional[str] = Field(
         default=None, description="Expected tool calls formatted as string"
-    )
-    metrics_metadata: Optional[str] = Field(
-        default=None,
-        description="Additional metric metadata (JSON-encoded key-value pairs)",
     )
 
 

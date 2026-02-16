@@ -344,20 +344,20 @@ class TestOutputHandlerInitialization:
         self, tmp_path: Path, mocker: MockerFixture
     ) -> None:
         """Test CSV report generation with specific results."""
+        metric_metadata = '{"max_ngram": 4}'
         results = [
             EvaluationResult(
                 conversation_group_id="test_conv",
                 turn_id="turn1",
-                metric_identifier="test:metric",
+                metric_identifier="nlp:bleu",
+                metric_metadata=metric_metadata,
                 result="PASS",
                 score=0.8,
                 threshold=0.7,
-                reason="Good performance",
+                reason="Score is 0.8",
                 query="What is OpenShift?",
                 response="OpenShift is a container platform.",
                 execution_time=1.5,
-                contexts='["OpenShift context"]',
-                expected_keywords='[["OpenShift", "container"]]',
             ),
             EvaluationResult(
                 conversation_group_id="test_conv",
@@ -404,8 +404,7 @@ class TestOutputHandlerInitialization:
         assert rows[0]["result"] == "PASS"
         assert rows[0]["query"] == "What is OpenShift?"
         assert rows[0]["response"] == "OpenShift is a container platform."
-        assert rows[0]["contexts"] == '["OpenShift context"]'
-        assert rows[0]["expected_keywords"] == '[["OpenShift", "container"]]'
+        assert rows[0]["metric_metadata"] == metric_metadata
 
         assert rows[1]["result"] == "FAIL"
         assert rows[1]["expected_response"] == "Use oc apply -f deployment.yaml"
