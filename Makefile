@@ -42,10 +42,10 @@ check-types: ## Checks type hints in sources
 	uv run mypy --explicit-package-bases --disallow-untyped-calls --disallow-untyped-defs --disallow-incomplete-defs src/ lsc_agent_eval/src/ tests
 
 black-check:
-	uv run black . --check
+	uv run black src tests script lsc_agent_eval --check
 
 black-format:
-	uv run black .
+	uv run black src tests script lsc_agent_eval
 
 requirements.txt:	pyproject.toml uv.lock ## Generate requirements.txt file containing hashes for all non-devel packages
 	uv export --no-dev --format requirements-txt --output-file requirements.txt
@@ -82,7 +82,7 @@ docstyle:
 	uv run pydocstyle -v src tests script lsc_agent_eval
 
 ruff:
-	uv run ruff check .
+	uv run ruff check src tests script lsc_agent_eval
 
 bandit: ## Security scanning with Bandit
 	uv run bandit -r src/lightspeed_evaluation -ll
