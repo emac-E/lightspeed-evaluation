@@ -1,13 +1,24 @@
 """GEval metrics handler using LLM Manager.
 
-This module provides integration with DeepEval's GEval for configurable custom evaluation criteria.
-GEval allows runtime-defined evaluation metrics through YAML configuration.
+This module provides integration with DeepEval's GEval for configurable custom
+evaluation criteria. This allows runtime-defined evaluation metrics through
+YAML configuration.
+
+- **criteria** / **evaluation_steps**: Define what and how to evaluate.
+  criteria is always required in the config.
+  evaluation_steps (if provided) are used as the steps the LLM follows; otherwise
+  GEval generates steps from criteria.
+- **rubrics**: Optional list of score ranges (0-10) with expected_outcome text.
+  Confines the judge's score output to those ranges. Works alongside
+  evaluation_steps: steps define how to evaluate, rubrics define score boundaries.
+- **Final score**: DeepEval normalizes GEval output to [0, 1].
 """
 
 import logging
 from typing import Any
 
 from deepeval.metrics import GEval
+from deepeval.metrics.g_eval import Rubric
 from deepeval.test_case import LLMTestCase, LLMTestCaseParams
 
 from lightspeed_evaluation.core.llm.deepeval import DeepEvalLLMManager
@@ -100,6 +111,11 @@ class GEvalHandler:  # pylint: disable=R0903
         evaluation_params = geval_config.get("evaluation_params", [])
         evaluation_steps = geval_config.get("evaluation_steps")
         threshold = geval_config.get("threshold", 0.5)
+        rubrics = self._parse_rubrics(geval_config.get("rubrics"))
+
+        # rubrics is (None, error_message) on validation failure
+        if isinstance(rubrics, tuple):
+            return None, rubrics[1]
 
         # The criteria field defines what the model is being judged on.
         # Without it, we cannot perform evaluation. Evaluation steps can be generated
@@ -109,10 +125,20 @@ class GEvalHandler:  # pylint: disable=R0903
         # Perform evaluation based on level (turn or conversation)
         if is_conversation:
             return self._evaluate_conversation(
-                conv_data, criteria, evaluation_params, evaluation_steps, threshold
+                conv_data,
+                criteria,
+                evaluation_params,
+                evaluation_steps,
+                threshold,
+                rubrics,
             )
         return self._evaluate_turn(
-            turn_data, criteria, evaluation_params, evaluation_steps, threshold
+            turn_data,
+            criteria,
+            evaluation_params,
+            evaluation_steps,
+            threshold,
+            rubrics,
         )
 
     def _convert_evaluation_params(
@@ -175,6 +201,53 @@ class GEvalHandler:  # pylint: disable=R0903
         # Return the successfully converted list, or None if it ended up empty
         return converted if converted else None
 
+    def _parse_one_rubric(self, item: Any, index: int) -> tuple[int, int, str] | str:
+        """Parse a single rubric dict. Returns (low, high, outcome) or error string."""
+        if not isinstance(item, dict):
+            return (
+                f"geval rubrics[{index}]: expected dict with score_range and "
+                "expected_outcome (or category)"
+            )
+        score_range = item.get("score_range")
+        outcome = item.get("expected_outcome") or item.get("category")
+        if outcome is None or not isinstance(outcome, str):
+            return (
+                f"geval rubrics[{index}]: missing or invalid expected_outcome/category"
+            )
+        if score_range is None:
+            return f"geval rubrics[{index}]: missing score_range"
+        if isinstance(score_range, (list, tuple)) and len(score_range) == 2:
+            low, high = int(score_range[0]), int(score_range[1])
+        else:
+            return (
+                f"geval rubrics[{index}]: score_range must be list or tuple [min, max]"
+            )
+        return (low, high, outcome)
+
+    def _parse_rubrics(
+        self, raw_rubrics: Any
+    ) -> list[Rubric] | None | tuple[None, str]:
+        """Convert config rubrics to DeepEval Rubric objects.
+
+        Config format: list of dicts with score_range [min, max] and
+        expected_outcome or category (category is an alias for expected_outcome).
+        DeepEval expects rubric score_range 0-10 and non-overlapping ranges;
+        validation is handled by GEval/DeepEval.
+        """
+        if not raw_rubrics or not isinstance(raw_rubrics, list):
+            return None
+
+        rubric_objects: list[Rubric] = []
+        for i, item in enumerate(raw_rubrics):
+            parsed = self._parse_one_rubric(item, i)
+            if isinstance(parsed, str):
+                return (None, parsed)
+            low, high, outcome = parsed
+            rubric_objects.append(
+                Rubric(score_range=(low, high), expected_outcome=outcome)
+            )
+        return rubric_objects if rubric_objects else None
+
     def _evaluate_turn(  # pylint: disable=R0913,R0917
         self,
         turn_data: Any,
@@ -182,6 +255,7 @@ class GEvalHandler:  # pylint: disable=R0903
         evaluation_params: list[str],
         evaluation_steps: list[str] | None,
         threshold: float,
+        rubrics: list[Rubric] | None = None,
     ) -> tuple[float | None, str]:
         """Evaluate a single turn using GEval.
 
@@ -200,11 +274,14 @@ class GEvalHandler:  # pylint: disable=R0903
                 Optional step-by-step evaluation guidance for the model.
             threshold (float):
                 Minimum score threshold that determines pass/fail behavior.
+            rubrics (list[Rubric] | None):
+                Optional list of Rubric objects to confine score ranges (0-10).
+                Works alongside evaluation_steps; neither takes priority.
 
         Returns:
             tuple[float | None, str]:
-                A tuple of (score, reason). If evaluation fails, score will be None
-                and the reason will contain an error message.
+                A tuple of (score, reason). Score is in [0, 1] (per DeepEval).
+                If evaluation fails, score will be None and reason will hold an error.
         """
         # Validate that we actually have turn data
         if not turn_data:
@@ -239,6 +316,10 @@ class GEvalHandler:  # pylint: disable=R0903
         if evaluation_steps:
             metric_kwargs["evaluation_steps"] = evaluation_steps
 
+        # Add rubrics if provided (confine score ranges; works alongside criteria)
+        if rubrics:
+            metric_kwargs["rubric"] = rubrics
+
         # Instantiate the GEval metric object
         metric = GEval(**metric_kwargs)
 
@@ -258,7 +339,7 @@ class GEvalHandler:  # pylint: disable=R0903
         # Create test case for a single turn
         test_case = LLMTestCase(**test_case_kwargs)
 
-        # Evaluate
+        # Evaluate (DeepEval normalizes score to [0, 1]; pass through as-is)
         try:
             metric.measure(test_case)
             score = metric.score if metric.score is not None else 0.0
@@ -289,6 +370,7 @@ class GEvalHandler:  # pylint: disable=R0903
         evaluation_params: list[str],
         evaluation_steps: list[str] | None,
         threshold: float,
+        rubrics: list[Rubric] | None = None,
     ) -> tuple[float | None, str]:
         """Evaluate a conversation using GEval.
 
@@ -308,10 +390,13 @@ class GEvalHandler:  # pylint: disable=R0903
                 Optional instructions guiding how the evaluation should proceed.
             threshold (float):
                 Minimum acceptable score before the metric is considered failed.
+            rubrics (list[Rubric] | None):
+                Optional list of Rubric objects to confine score ranges (0-10).
+                Works alongside evaluation_steps.
 
         Returns:
             tuple[float | None, str]:
-                Tuple containing (score, reason). Returns None on error.
+                Tuple of (score, reason). Score is in [0, 1] (per DeepEval). None on error.
         """
         # Convert evaluation_params to enum values if valid, otherwise use defaults
         converted_params = self._convert_evaluation_params(evaluation_params)
@@ -339,6 +424,10 @@ class GEvalHandler:  # pylint: disable=R0903
         if evaluation_steps:
             metric_kwargs["evaluation_steps"] = evaluation_steps
 
+        # Add rubrics if provided (confine score ranges; works alongside criteria)
+        if rubrics:
+            metric_kwargs["rubric"] = rubrics
+
         # Instantiate the GEval metric object
         metric = GEval(**metric_kwargs)
 
@@ -357,7 +446,7 @@ class GEvalHandler:  # pylint: disable=R0903
             actual_output="\n".join(conversation_output),
         )
 
-        # Evaluate
+        # Evaluate (DeepEval normalizes score to [0, 1]; pass through as-is)
         try:
             metric.measure(test_case)
             score = metric.score if metric.score is not None else 0.0

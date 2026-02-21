@@ -142,26 +142,20 @@ lightspeed-eval --system-config config/system_api_disabled.yaml --eval-data conf
 
 ### Custom Metrics with GEval (from DeepEval)
 
-GEval allows us to define custom evaluation metrics using natural language criteria. Define metrics in `system.yaml` under `metrics_metadata`:
+Define custom evaluation metrics in `system.yaml` under `metrics_metadata`. **Criteria** is required; **evaluation_steps** and **rubrics** are optional. Score is 0–1.
 
 ```yaml
 metrics_metadata:
   turn_level:
     "geval:custom_metric_name":
       criteria: |
-        Specific criteria for the evaluation.
-      evaluation_params:
-        - query
-        - response
-        - expected_response  # optional
-      evaluation_steps:
-        - "Step 1: Check if..."
-        - "Step 2: Verify that..."
+        What to evaluate (required).
+      evaluation_params: [query, response, expected_response]
       threshold: 0.7
       description: "Metric description"
 ```
 
-See sample [`system config`](config/system.yaml) for complete examples of `geval:technical_accuracy` and `geval:conversation_coherence`.
+See [Configuration → Metrics](docs/configuration.md#metrics) for GEval options (evaluation_steps, rubrics) and [config/system.yaml](config/system.yaml) for full examples.
 
 ## ⚙️ Configuration
 

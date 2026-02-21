@@ -162,6 +162,15 @@ is marked a `PASS` in the results. If the returned metric value is lower it is m
 In case of error it is marked `ERROR`.
 - `description` -- Description of the metric.
 
+For **GEval** metrics (`geval:...`), you can also set:
+
+- **`criteria`** (required): Natural-language description of what to evaluate. GEval uses this to generate evaluation steps when `evaluation_steps` is not provided.
+- **`evaluation_params`**: List of field names to include (e.g. `query`, `response`, `expected_response`). GEval auto-detect is not supported.
+- **`evaluation_steps`** (optional): List of step-by-step instructions the LLM judge follows. If omitted, GEval generates steps from `criteria`. When provided together with `rubrics`, both are used: steps define how to evaluate, rubrics define score-range boundaries; neither overrides the other.
+- **`rubrics`** (optional): List of `{ score_range: [min, max], expected_outcome: "..." }` (or use `category` instead of `expected_outcome`). Score range is 0–10 inclusive; DeepEval expects non-overlapping ranges and validates. Confines the judge’s output to these ranges. When provided with `evaluation_steps`, both are passed to GEval.
+
+GEval returns a score in **[0, 1]**.
+
 By default no metrics are computed (`default` is set to `false`).
 
 | Setting (metrics_metadata.) | Description |
