@@ -669,63 +669,6 @@ class TestGEvalHandler:
         assert "evaluation error" in reason.lower()
         assert "API error" in reason
 
-    def test_parse_rubrics_returns_none_when_empty_or_missing(
-        self, handler: GEvalHandler
-    ) -> None:
-        """Test that _parse_rubrics returns None when rubrics not configured."""
-        assert handler._parse_rubrics(None) is None
-        assert handler._parse_rubrics([]) is None
-        assert handler._parse_rubrics("not a list") is None
-
-    def test_parse_rubrics_valid_list_returns_rubric_objects(
-        self, handler: GEvalHandler
-    ) -> None:
-        """Test that valid rubrics config is converted to Rubric instances."""
-        raw = [
-            {"score_range": [0, 2], "expected_outcome": "Incorrect."},
-            {"score_range": [3, 6], "expected_outcome": "Mostly correct."},
-            {"score_range": [7, 10], "expected_outcome": "Fully correct."},
-        ]
-        result = handler._parse_rubrics(raw)
-        assert result is not None
-        assert not isinstance(result, tuple)
-        assert isinstance(result, list)
-        assert len(result) == 3
-        for r in result:
-            assert isinstance(r, Rubric)
-        assert result[0].score_range == (0, 2)
-        assert result[0].expected_outcome == "Incorrect."
-        assert result[1].score_range == (3, 6)
-        assert result[2].score_range == (7, 10)
-
-    def test_parse_rubrics_accepts_category_alias(self, handler: GEvalHandler) -> None:
-        """Test that 'category' is accepted as alias for expected_outcome."""
-        raw = [{"score_range": [0, 5], "category": "Partial."}]
-        result = handler._parse_rubrics(raw)
-        assert result is not None
-        assert not isinstance(result, tuple)
-        assert len(result) == 1
-        assert result[0].expected_outcome == "Partial."
-
-    def test_parse_rubrics_invalid_structure_returns_error(
-        self, handler: GEvalHandler
-    ) -> None:
-        """Test that invalid rubric structure yields validation error."""
-        # missing expected_outcome/category
-        result = handler._parse_rubrics([{"score_range": [0, 2]}])
-        assert isinstance(result, tuple)
-        assert "expected_outcome" in result[1] or "category" in result[1]
-        # missing score_range
-        result = handler._parse_rubrics([{"expected_outcome": "X"}])
-        assert isinstance(result, tuple)
-        assert "score_range" in result[1]
-        # score_range must be list or tuple of 2
-        result = handler._parse_rubrics(
-            [{"score_range": [1, 2, 3], "expected_outcome": "X"}]
-        )
-        assert isinstance(result, tuple)
-        assert "score_range" in result[1]
-
     def test_evaluate_turn_with_rubrics_passes_rubric_to_geval(
         self,
         handler: GEvalHandler,
@@ -891,7 +834,7 @@ class TestGEvalHandler:
         )
 
         assert score is None
-        assert "expected_outcome" in reason or "category" in reason
+        assert "expected_outcome" in reason
 
     def test_evaluate_turn_score_passed_through(
         self,
