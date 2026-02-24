@@ -3,7 +3,14 @@
 import os
 from typing import Any, Optional
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    ValidationError,
+    field_validator,
+    model_validator,
+)
 
 from lightspeed_evaluation.core.system.exceptions import ConfigurationError
 from lightspeed_evaluation.core.constants import (
@@ -602,6 +609,121 @@ class JudgePanelConfig(BaseModel):
         return v
 
 
+class GEvalRubricConfig(BaseModel):
+    """Single rubric entry: score range 0-10 and expected outcome text."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    score_range: tuple[int, int] = Field(
+        ...,
+        description="[min, max] score range (0-10); non-overlapping",
+    )
+    expected_outcome: str = Field(
+        ...,
+        min_length=1,
+        description="Expected outcome for this score range",
+    )
+
+    @field_validator("score_range")
+    @classmethod
+    def validate_score_range(cls, v: tuple[int, int]) -> tuple[int, int]:
+        """Ensure score_range is [min, max] with 0 <= min <= max <= 10."""
+        if not isinstance(v, (list, tuple)) or len(v) != 2:
+            raise ValueError("score_range must be [min, max] with two integers")
+        low, high = int(v[0]), int(v[1])
+        if low > high:
+            raise ValueError(f"score_range min must be <= max, got [{low}, {high}]")
+        if not (0 <= low <= 10 and 0 <= high <= 10):
+            raise ValueError(
+                f"score_range values must be between 0 and 10, got [{low}, {high}]"
+            )
+        return (low, high)
+
+
+class GEvalConfig(BaseModel):
+    """Validated GEval metric configuration (criteria required; rest optional)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    criteria: str = Field(..., min_length=1, description="Required evaluation criteria")
+    evaluation_params: list[str] = Field(
+        default_factory=list,
+        description="Field names to include (e.g. query, response, expected_response)",
+    )
+    evaluation_steps: list[str] | None = Field(
+        default=None,
+        description="Optional step-by-step evaluation instructions",
+    )
+    rubrics: list[GEvalRubricConfig] | None = Field(
+        default=None,
+        description="Optional score ranges (0-10) with expected_outcome",
+    )
+    threshold: float = Field(
+        default=0.5,
+        ge=0.0,
+        le=1.0,
+        description="Minimum score threshold for pass/fail",
+    )
+
+    @model_validator(mode="after")
+    def validate_rubrics_non_overlapping(self) -> "GEvalConfig":
+        """Ensure rubric score ranges do not overlap."""
+        rubs: list[GEvalRubricConfig] = self.rubrics if self.rubrics else []
+        if len(rubs) <= 1:
+            return self
+        ranges = [r.score_range for r in rubs]
+        for i, (a, b) in enumerate(ranges):
+            for j, (c, d) in enumerate(ranges):
+                if i >= j:
+                    continue
+                # Overlap if not (b < c or d < a)
+                if not (b < c or d < a):
+                    raise ValueError(
+                        f"Rubric score ranges must not overlap: "
+                        f"[{a}, {b}] and [{c}, {d}] overlap"
+                    )
+        return self
+
+    @classmethod
+    def from_metadata(cls, raw: dict[str, Any]) -> "GEvalConfig":
+        """Build GEvalConfig from raw metadata dict.
+
+        Args:
+            raw: Metadata dict with at least "criteria" (required). May include
+                evaluation_params, evaluation_steps, rubrics, threshold.
+
+        Returns:
+            Validated GEvalConfig instance.
+
+        Raises:
+            ValueError: If raw is not a dict or criteria is missing/empty
+                (only these pre-model_validate checks raise bare ValueError).
+            ValidationError: If rubric or config fields fail Pydantic validation:
+                wrong types (e.g. score_range, expected_outcome), invalid structure,
+                or overlapping score ranges (model validator raises ValueError
+                and Pydantic v2 wraps it as ValidationError).
+        """
+        if not isinstance(raw, dict):
+            raise ValueError("GEval config must be a dict")
+        criteria = raw.get("criteria")
+        if not criteria or not isinstance(criteria, str) or not criteria.strip():
+            raise ValueError("GEval requires non-empty 'criteria' in configuration")
+        data: dict[str, Any] = {
+            "criteria": criteria.strip(),
+            "evaluation_params": raw.get("evaluation_params") or [],
+            "evaluation_steps": raw.get("evaluation_steps"),
+            "threshold": raw.get("threshold", 0.5),
+        }
+        raw_rubrics = raw.get("rubrics")
+        if raw_rubrics and isinstance(raw_rubrics, list):
+            data["rubrics"] = [
+                GEvalRubricConfig.model_validate(item) for item in raw_rubrics
+            ]
+        else:
+            data["rubrics"] = None
+        return cls.model_validate(data)
+
+
 class SystemConfig(BaseModel):
     """System configuration using individual config models."""
 
@@ -652,6 +774,39 @@ class SystemConfig(BaseModel):
     default_conversation_metrics_metadata: dict[str, dict[str, Any]] = Field(
         default_factory=dict, description="Default conversation metrics metadata"
     )
+
+    @field_validator(
+        "default_turn_metrics_metadata", "default_conversation_metrics_metadata"
+    )
+    @classmethod
+    def validate_default_metrics_metadata_geval(
+        cls, v: dict[str, dict[str, Any]]
+    ) -> dict[str, dict[str, Any]]:
+        """Validate GEval entries at load; keep storing as dict (result discarded).
+
+        We call GEvalConfig.from_metadata(meta) only for its validation side
+        effect (fail fast on invalid system config). The returned config is
+        discarded; the raw dict is stored. At evaluation time the manager
+        may merge overrides with this dict, and the handler re-validates
+        via from_metadata on the merged result.
+
+        Raises:
+            ConfigurationError: When a geval:* entry has invalid config (e.g.
+                missing criteria, invalid rubric structure).
+                Re-raised from ValueError or Pydantic ValidationError for a consistent
+                config-failure exception type.
+        """
+        if not v:
+            return v
+        for metric_id, meta in v.items():
+            if metric_id.startswith("geval:") and isinstance(meta, dict):
+                try:
+                    GEvalConfig.from_metadata(meta)
+                except (ValueError, ValidationError) as e:
+                    raise ConfigurationError(
+                        f"Invalid GEval config for '{metric_id}': {e!s}"
+                    ) from e
+        return v
 
     def get_judge_configs(self) -> list[LLMConfig]:
         """Get resolved LLMConfig for all judges.

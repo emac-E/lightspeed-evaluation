@@ -21,8 +21,11 @@ from deepeval.metrics import GEval
 from deepeval.metrics.g_eval import Rubric
 from deepeval.test_case import LLMTestCase, LLMTestCaseParams
 
+from pydantic import ValidationError
+
 from lightspeed_evaluation.core.llm.deepeval import DeepEvalLLMManager
 from lightspeed_evaluation.core.metrics.manager import MetricLevel, MetricManager
+from lightspeed_evaluation.core.models import GEvalConfig
 
 logger = logging.getLogger(__name__)
 
@@ -96,48 +99,45 @@ class GEvalHandler:  # pylint: disable=R0903
         4. Delegate to `_evaluate_conversation()` or `_evaluate_turn()` depending
            on the `is_conversation` flag.
         """
-        # Extract GEval configuration from metadata
-        # May come from runtime metadata or a preloaded registry
-        geval_config = self._get_geval_config(
+        # Extract GEval configuration from metadata (runtime or system registry)
+        raw_config = self._get_geval_config(
             metric_name, conv_data, turn_data, is_conversation
         )
-
-        # If no configuration is available, return early with an informative message.
-        if not geval_config:
+        if not raw_config:
             return None, f"GEval configuration not found for metric '{metric_name}'"
 
-        # Extract configuration parameters
-        criteria = geval_config.get("criteria")
-        evaluation_params = geval_config.get("evaluation_params", [])
-        evaluation_steps = geval_config.get("evaluation_steps")
-        threshold = geval_config.get("threshold", 0.5)
-        rubrics = self._parse_rubrics(geval_config.get("rubrics"))
+        # Load/validate GEval config from raw metadata: after override the dict may be
+        # system-only, level-only, or combined. We need a single validated
+        # GEvalConfig (criteria, rubrics, threshold, etc.) for evaluation.
+        try:
+            config = GEvalConfig.from_metadata(raw_config)
+        except (ValueError, ValidationError) as e:
+            return None, f"Invalid GEval configuration: {e!s}"
 
-        # rubrics is (None, error_message) on validation failure
-        if isinstance(rubrics, tuple):
-            return None, rubrics[1]
-
-        # The criteria field defines what the model is being judged on.
-        # Without it, we cannot perform evaluation. Evaluation steps can be generated
-        if not criteria:
-            return None, "GEval requires 'criteria' in configuration"
+        # Convert validated rubrics to DeepEval Rubric objects
+        rubrics: list[Rubric] | None = None
+        if config.rubrics:
+            rubrics = [
+                Rubric(score_range=r.score_range, expected_outcome=r.expected_outcome)
+                for r in config.rubrics
+            ]
 
         # Perform evaluation based on level (turn or conversation)
         if is_conversation:
             return self._evaluate_conversation(
                 conv_data,
-                criteria,
-                evaluation_params,
-                evaluation_steps,
-                threshold,
+                config.criteria,
+                config.evaluation_params,
+                config.evaluation_steps,
+                config.threshold,
                 rubrics,
             )
         return self._evaluate_turn(
             turn_data,
-            criteria,
-            evaluation_params,
-            evaluation_steps,
-            threshold,
+            config.criteria,
+            config.evaluation_params,
+            config.evaluation_steps,
+            config.threshold,
             rubrics,
         )
 
@@ -200,53 +200,6 @@ class GEvalHandler:  # pylint: disable=R0903
 
         # Return the successfully converted list, or None if it ended up empty
         return converted if converted else None
-
-    def _parse_one_rubric(self, item: Any, index: int) -> tuple[int, int, str] | str:
-        """Parse a single rubric dict. Returns (low, high, outcome) or error string."""
-        if not isinstance(item, dict):
-            return (
-                f"geval rubrics[{index}]: expected dict with score_range and "
-                "expected_outcome (or category)"
-            )
-        score_range = item.get("score_range")
-        outcome = item.get("expected_outcome") or item.get("category")
-        if outcome is None or not isinstance(outcome, str):
-            return (
-                f"geval rubrics[{index}]: missing or invalid expected_outcome/category"
-            )
-        if score_range is None:
-            return f"geval rubrics[{index}]: missing score_range"
-        if isinstance(score_range, (list, tuple)) and len(score_range) == 2:
-            low, high = int(score_range[0]), int(score_range[1])
-        else:
-            return (
-                f"geval rubrics[{index}]: score_range must be list or tuple [min, max]"
-            )
-        return (low, high, outcome)
-
-    def _parse_rubrics(
-        self, raw_rubrics: Any
-    ) -> list[Rubric] | None | tuple[None, str]:
-        """Convert config rubrics to DeepEval Rubric objects.
-
-        Config format: list of dicts with score_range [min, max] and
-        expected_outcome or category (category is an alias for expected_outcome).
-        DeepEval expects rubric score_range 0-10 and non-overlapping ranges;
-        validation is handled by GEval/DeepEval.
-        """
-        if not raw_rubrics or not isinstance(raw_rubrics, list):
-            return None
-
-        rubric_objects: list[Rubric] = []
-        for i, item in enumerate(raw_rubrics):
-            parsed = self._parse_one_rubric(item, i)
-            if isinstance(parsed, str):
-                return (None, parsed)
-            low, high, outcome = parsed
-            rubric_objects.append(
-                Rubric(score_range=(low, high), expected_outcome=outcome)
-            )
-        return rubric_objects if rubric_objects else None
 
     def _evaluate_turn(  # pylint: disable=R0913,R0917
         self,

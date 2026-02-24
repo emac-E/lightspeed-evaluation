@@ -18,6 +18,8 @@ from lightspeed_evaluation.core.models.system import (
     APIConfig,
     CoreConfig,
     EmbeddingConfig,
+    GEvalConfig,
+    GEvalRubricConfig,
     JudgePanelConfig,
     LLMConfig,
     LLMPoolConfig,
@@ -35,6 +37,9 @@ __all__ = [
     "MetricResult",
     "EvaluationResult",
     "EvaluationScope",
+    # Metric metadata models (GEval config, etc.)
+    "GEvalConfig",
+    "GEvalRubricConfig",
     # System config models
     "CoreConfig",
     "JudgePanelConfig",

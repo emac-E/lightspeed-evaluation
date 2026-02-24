@@ -32,6 +32,15 @@ class TestTurnData:
         with pytest.raises(ValidationError):
             TurnData(turn_id="turn1", query="")
 
+    def test_turn_metrics_metadata_accepted_at_load(self) -> None:
+        """Override dict is accepted at load; GEval is validated at eval time when resolved."""
+        turn = TurnData(
+            turn_id="turn1",
+            query="Q",
+            turn_metrics_metadata={"geval:custom": {"threshold": 0.8}},
+        )
+        assert turn.turn_metrics_metadata == {"geval:custom": {"threshold": 0.8}}
+
 
 class TestTurnDataToolCallsValidation:
     """Test cases for TurnData expected_tool_calls field validation and conversion."""
@@ -400,6 +409,18 @@ class TestEvaluationData:
         """Test that empty turns list is rejected."""
         with pytest.raises(ValidationError):
             EvaluationData(conversation_group_id="conv1", turns=[])
+
+    def test_conversation_metrics_metadata_accepted_at_load(self) -> None:
+        """Override dict is accepted at load; GEval is validated at eval time when resolved."""
+        turn = TurnData(turn_id="turn1", query="Q")
+        eval_data = EvaluationData(
+            conversation_group_id="conv1",
+            turns=[turn],
+            conversation_metrics_metadata={"geval:custom": {"threshold": 0.7}},
+        )
+        assert eval_data.conversation_metrics_metadata == {
+            "geval:custom": {"threshold": 0.7}
+        }
 
 
 class TestEvaluationResult:

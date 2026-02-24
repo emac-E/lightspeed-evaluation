@@ -17,6 +17,8 @@ from lightspeed_evaluation.core.models import (
     VisualizationConfig,
 )
 from lightspeed_evaluation.core.models.system import (
+    GEvalConfig,
+    GEvalRubricConfig,
     LLMDefaultsConfig,
     LLMParametersConfig,
     LLMProviderConfig,
@@ -417,3 +419,98 @@ class TestSystemConfigWithLLMPoolAndJudgePanel:
         config = SystemConfig(llm_pool=pool, judge_panel=panel)
         with pytest.raises(ValueError, match="Model 'nonexistent' not found"):
             config.get_judge_configs()
+
+
+class TestGEvalRubricValidation:
+    """Tests for GEval rubric and config validation."""
+
+    def test_rubric_score_range_valid(self) -> None:
+        """Valid score_range [0, 10] and min <= max accepted."""
+        r = GEvalRubricConfig(score_range=(0, 10), expected_outcome="Full marks.")
+        assert r.score_range == (0, 10)
+        r2 = GEvalRubricConfig(score_range=(3, 7), expected_outcome="Partial.")
+        assert r2.score_range == (3, 7)
+
+    def test_rubric_score_range_min_max_swapped_fails(self) -> None:
+        """score_range with min > max fails."""
+        with pytest.raises(ValueError, match="min must be <= max"):
+            GEvalRubricConfig(score_range=(5, 3), expected_outcome="X")
+
+    def test_rubric_score_range_out_of_bounds_fails(self) -> None:
+        """score_range outside 0-10 fails."""
+        with pytest.raises(ValueError, match="between 0 and 10"):
+            GEvalRubricConfig(score_range=(-1, 5), expected_outcome="X")
+        with pytest.raises(ValueError, match="between 0 and 10"):
+            GEvalRubricConfig(score_range=(0, 11), expected_outcome="X")
+
+    def test_geval_config_rubrics_non_overlapping(self) -> None:
+        """Non-overlapping rubric ranges accepted."""
+        config = GEvalConfig.from_metadata(
+            {
+                "criteria": "Check correctness.",
+                "rubrics": [
+                    {"score_range": [0, 3], "expected_outcome": "Low"},
+                    {"score_range": [4, 7], "expected_outcome": "Mid"},
+                    {"score_range": [8, 10], "expected_outcome": "High"},
+                ],
+            }
+        )
+        assert config.rubrics is not None
+        assert len(config.rubrics) == 3
+
+    def test_geval_config_rubrics_adjacent_non_overlapping_accepted(self) -> None:
+        """Adjacent but non-overlapping ranges [0,3] and [4,7] are accepted."""
+        config = GEvalConfig.from_metadata(
+            {
+                "criteria": "Check.",
+                "rubrics": [
+                    {"score_range": [0, 3], "expected_outcome": "Low"},
+                    {"score_range": [4, 7], "expected_outcome": "High"},
+                ],
+            }
+        )
+        assert config.rubrics is not None
+        assert len(config.rubrics) == 2
+        assert config.rubrics[0].score_range == (0, 3)
+        assert config.rubrics[1].score_range == (4, 7)
+
+    def test_geval_config_rubrics_overlapping_fails(self) -> None:
+        """Overlapping rubric ranges fail validation.
+
+        validate_rubrics_non_overlapping raises ValueError, but Pydantic v2
+        wraps it in ValidationError before from_metadata returns, so callers
+        get ValidationError.
+        """
+        with pytest.raises(ValidationError, match="overlap"):
+            GEvalConfig.from_metadata(
+                {
+                    "criteria": "Check.",
+                    "rubrics": [
+                        {"score_range": [0, 5], "expected_outcome": "A"},
+                        {"score_range": [4, 10], "expected_outcome": "B"},
+                    ],
+                }
+            )
+
+    def test_system_config_geval_validation_error_wrapped_as_configuration_error(
+        self,
+    ) -> None:
+        """ValidationError from GEval/rubric validation is wrapped as ConfigurationError.
+
+        GEvalConfig.from_metadata can raise pydantic.ValidationError (e.g. from
+        invalid rubric structure). The field validator catches it and re-raises
+        ConfigurationError so callers get a consistent config-failure exception type.
+        """
+        with pytest.raises(
+            ConfigurationError, match="Invalid GEval config for 'geval:bad'"
+        ):
+            SystemConfig(
+                default_turn_metrics_metadata={
+                    "geval:bad": {
+                        "criteria": "Some criteria",
+                        "rubrics": [
+                            {"score_range": "not-a-list", "expected_outcome": "X"},
+                        ],
+                    },
+                }
+            )

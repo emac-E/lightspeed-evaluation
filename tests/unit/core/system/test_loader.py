@@ -5,6 +5,7 @@ from pathlib import Path
 
 import pytest
 
+from lightspeed_evaluation.core.system.exceptions import ConfigurationError
 from lightspeed_evaluation.core.system.loader import (
     ConfigLoader,
     populate_metric_mappings,
@@ -368,5 +369,34 @@ metrics_metadata:
             assert config.core.max_threads is None
             assert config.api.enabled is True  # Default is True
             assert config.output.output_dir == "./eval_output"
+        finally:
+            Path(temp_path).unlink()
+
+    def test_load_system_config_invalid_geval_metadata_fails(self) -> None:
+        """Test that invalid GEval metadata in system config causes load to fail."""
+        yaml_content = """
+llm:
+  provider: openai
+  model: gpt-4o-mini
+
+metrics_metadata:
+  turn_level:
+    geval:bad_metric: {}
+  conversation_level: {}
+"""
+
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
+            f.write(yaml_content)
+            temp_path = f.name
+
+        try:
+            loader = ConfigLoader()
+            with pytest.raises(ConfigurationError) as exc_info:
+                loader.load_system_config(temp_path)
+            # GEval requires non-empty criteria; validator wraps as ConfigurationError
+            assert (
+                "criteria" in str(exc_info.value).lower()
+                or "geval" in str(exc_info.value).lower()
+            )
         finally:
             Path(temp_path).unlink()
