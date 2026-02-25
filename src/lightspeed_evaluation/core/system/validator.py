@@ -7,7 +7,7 @@ from typing import Optional, Union
 import yaml
 from pydantic import ValidationError
 
-from lightspeed_evaluation.core.models import EvaluationData
+from lightspeed_evaluation.core.models import EvaluationData, TurnData
 from lightspeed_evaluation.core.system.exceptions import DataValidationError
 from lightspeed_evaluation.core.system.loader import (
     CONVERSATION_LEVEL_METRICS,
@@ -73,6 +73,9 @@ _NLP_METRIC_REQUIREMENTS = {
 for _nlp_metric in ["nlp:bleu", "nlp:rouge", "nlp:semantic_similarity_distance"]:
     METRIC_REQUIREMENTS[_nlp_metric] = _NLP_METRIC_REQUIREMENTS
 
+# Fields that may be populated by the API when API is enabled
+API_POPULATED_FIELDS = ("response", "contexts", "tool_calls")
+
 
 def format_pydantic_error(error: ValidationError) -> str:
     """Format Pydantic validation error for better readability."""
@@ -82,6 +85,52 @@ def format_pydantic_error(error: ValidationError) -> str:
         message = err["msg"]
         errors.append(f"{field}: {message}")
     return "; ".join(errors)
+
+
+def _is_field_empty(value: Optional[Union[str, list, dict]]) -> bool:
+    """Return True if value is considered empty for required-field validation."""
+    if value is None:
+        return True
+    if isinstance(value, str):
+        return not value.strip()
+    if isinstance(value, (list, dict)):
+        return len(value) == 0
+    return False
+
+
+def check_metric_required_data(
+    turn_data: TurnData, metric_identifier: str
+) -> tuple[bool, str]:
+    """Check that all required data for a metric is present and non-empty.
+
+    Used at evaluation time (after API amendment) to ensure actual data is
+    available. When a required field is missing or empty, the metric should
+    be skipped and an ERROR result returned instead of running the metric.
+
+    Args:
+        turn_data: Turn data (with actual values after API if enabled).
+        metric_identifier: Metric id (e.g. 'ragas:faithfulness').
+
+    Returns:
+        (True, "") if all required fields are present and non-empty.
+        (False, error_message) if any required field is missing or empty.
+    """
+    if metric_identifier not in METRIC_REQUIREMENTS:
+        return True, ""
+
+    requirements = METRIC_REQUIREMENTS[metric_identifier]
+    required_fields = requirements["required_fields"]
+    description = requirements["description"]
+
+    for field_name in required_fields:
+        field_value = getattr(turn_data, field_name, None)
+        if _is_field_empty(field_value):
+            return (
+                False,
+                f"Metric '{metric_identifier}' {description}: "
+                f"required field '{field_name}' is missing or empty",
+            )
+    return True, ""
 
 
 class DataValidator:  # pylint: disable=too-few-public-methods
@@ -308,25 +357,20 @@ class DataValidator:  # pylint: disable=too-few-public-methods
                     field_value = getattr(turn_data, field_name, None)
 
                     # For API-populated fields, allow None if API is enabled
-                    api_populated_fields = ["response", "contexts", "tool_calls"]
                     if (
-                        field_name in api_populated_fields
+                        field_name in API_POPULATED_FIELDS
                         and api_enabled
                         and field_value is None
                     ):
                         continue  # will be populated by API
 
                     # Check if field is missing or empty
-                    if (
-                        field_value is None
-                        or (isinstance(field_value, str) and not field_value.strip())
-                        or (isinstance(field_value, list) and not field_value)
-                    ):
+                    if _is_field_empty(field_value):
                         turn_data.add_invalid_metric(metric)
 
                         api_context = (
                             " when API is disabled"
-                            if field_name in api_populated_fields and not api_enabled
+                            if field_name in API_POPULATED_FIELDS and not api_enabled
                             else ""
                         )
                         errors.append(

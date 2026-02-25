@@ -14,6 +14,7 @@ from lightspeed_evaluation.core.models import EvaluationData, TurnData
 from lightspeed_evaluation.core.system.exceptions import DataValidationError
 from lightspeed_evaluation.core.system.validator import (
     DataValidator,
+    check_metric_required_data,
     format_pydantic_error,
 )
 
@@ -39,6 +40,79 @@ class TestFormatPydanticError:
             # Should contain errors separated by semicolons
             assert ";" in formatted
             assert "turn_id" in formatted or "query" in formatted
+
+
+class TestCheckMetricRequiredData:
+    """Unit tests for check_metric_required_data (runtime required-data check)."""
+
+    def test_all_required_fields_present_returns_ok(self) -> None:
+        """When all required fields are present and non-empty, returns (True, "")."""
+        turn = TurnData(
+            turn_id="1",
+            query="Q",
+            response="R",
+            contexts=["C"],
+        )
+        ok, msg = check_metric_required_data(turn, "ragas:faithfulness")
+        assert ok is True
+        assert msg == ""
+
+    def test_missing_contexts_returns_error(self) -> None:
+        """When required field contexts is None, returns (False, message)."""
+        turn = TurnData(
+            turn_id="1",
+            query="Q",
+            response="R",
+            contexts=None,
+        )
+        ok, msg = check_metric_required_data(turn, "ragas:faithfulness")
+        assert ok is False
+        assert msg is not None
+        assert "contexts" in msg
+        assert "missing or empty" in msg
+
+    def test_empty_list_required_field_returns_error(self) -> None:
+        """When required field expected_keywords is [], returns (False, message)."""
+        turn = TurnData(
+            turn_id="1",
+            query="Q",
+            response="R",
+            expected_keywords=[],  # Empty list for keywords_eval
+        )
+        ok, msg = check_metric_required_data(turn, "custom:keywords_eval")
+        assert ok is False
+        assert msg is not None
+        assert "expected_keywords" in msg
+
+    def test_missing_response_returns_error(self) -> None:
+        """When required field response is None, returns (False, message)."""
+        turn = TurnData(
+            turn_id="1",
+            query="Q",
+            response=None,
+        )
+        ok, msg = check_metric_required_data(turn, "ragas:response_relevancy")
+        assert ok is False
+        assert msg is not None
+        assert "response" in msg
+
+    def test_whitespace_only_response_returns_error(self) -> None:
+        """When required field response is whitespace-only, returns (False, message)."""
+        turn = TurnData(
+            turn_id="1",
+            query="Q",
+            response="   ",
+        )
+        ok, msg = check_metric_required_data(turn, "ragas:response_relevancy")
+        assert ok is False
+        assert msg is not None
+
+    def test_unknown_metric_returns_ok(self) -> None:
+        """When metric is not in METRIC_REQUIREMENTS, returns (True, None)."""
+        turn = TurnData(turn_id="1", query="Q", response="R")
+        ok, msg = check_metric_required_data(turn, "geval:some_criteria")
+        assert ok is True
+        assert msg == ""
 
 
 class TestDataValidator:
