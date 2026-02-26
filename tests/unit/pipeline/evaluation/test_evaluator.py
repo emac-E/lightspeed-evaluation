@@ -182,6 +182,57 @@ class TestMetricsEvaluator:
         assert result.score == 0.3
         assert result.threshold == 0.7
 
+    def test_evaluate_metric_missing_required_data_returns_error(
+        self,
+        config_loader: ConfigLoader,
+        mock_metric_manager: MetricManager,
+        mock_script_manager: ScriptExecutionManager,
+        mocker: MockerFixture,
+    ) -> None:
+        """When required data is missing or empty, return ERROR and skip metric processing."""
+        mocker.patch("lightspeed_evaluation.pipeline.evaluation.evaluator.LLMManager")
+        mocker.patch(
+            "lightspeed_evaluation.pipeline.evaluation.evaluator.EmbeddingManager"
+        )
+        mock_ragas = mocker.Mock()
+        mocker.patch(
+            "lightspeed_evaluation.pipeline.evaluation.evaluator.RagasMetrics",
+            return_value=mock_ragas,
+        )
+        mocker.patch(
+            "lightspeed_evaluation.pipeline.evaluation.evaluator.DeepEvalMetrics"
+        )
+        mocker.patch(
+            "lightspeed_evaluation.pipeline.evaluation.evaluator.CustomMetrics"
+        )
+        mocker.patch(
+            "lightspeed_evaluation.pipeline.evaluation.evaluator.ScriptEvalMetrics"
+        )
+
+        evaluator = MetricsEvaluator(
+            config_loader, mock_metric_manager, mock_script_manager
+        )
+
+        turn_data = TurnData(
+            turn_id="1",
+            query="Query",
+            response="Response",
+            contexts=None,  # Required for faithfulness but missing
+        )
+        conv_data = EvaluationData(conversation_group_id="test_conv", turns=[turn_data])
+        request = EvaluationRequest.for_turn(
+            conv_data, "ragas:faithfulness", 0, turn_data
+        )
+
+        result = evaluator.evaluate_metric(request)
+
+        assert result is not None
+        assert result.result == "ERROR"
+        assert result.score is None
+        assert "contexts" in result.reason
+        assert "missing or empty" in result.reason
+        mock_ragas.evaluate.assert_not_called()
+
     def test_evaluate_metric_conversation_level(
         self,
         config_loader: ConfigLoader,

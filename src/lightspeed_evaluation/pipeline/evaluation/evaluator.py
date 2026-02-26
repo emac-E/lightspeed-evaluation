@@ -23,7 +23,10 @@ from lightspeed_evaluation.core.models import (
 from lightspeed_evaluation.core.script import ScriptExecutionManager
 from lightspeed_evaluation.core.system import ConfigLoader
 from lightspeed_evaluation.core.system.exceptions import EvaluationError
-from lightspeed_evaluation.core.system.validator import METRIC_REQUIREMENTS
+from lightspeed_evaluation.core.system.validator import (
+    METRIC_REQUIREMENTS,
+    check_metric_required_data,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -112,6 +115,21 @@ class MetricsEvaluator:
                 return self._create_error_result(
                     request, f"Unsupported framework: {framework}", execution_time
                 )
+
+            # Check required data for metric (after API call); skip with ERROR if missing
+            if (
+                request.turn_data is not None
+                and request.metric_identifier in METRIC_REQUIREMENTS
+            ):
+                ok, msg = check_metric_required_data(
+                    request.turn_data, request.metric_identifier
+                )
+                if not ok:
+                    execution_time = time.time() - start_time
+                    logger.warning(
+                        "Skipping metric due to missing required data: %s", msg
+                    )
+                    return self._create_error_result(request, msg, execution_time)
 
             # Create evaluation scope
             evaluation_scope = EvaluationScope(
