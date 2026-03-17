@@ -1,0 +1,63 @@
+# RHEL 10 Documentation Retrieval Tests
+# Migrated from lscore-poc-docs2db test scripts
+# These questions test MCP tool usage since RHEL 10 is past the LLM's training cutoff.
+# Accurate answers prove the RAG pipeline is working.
+
+- conversation_group_id: rhel10_operations
+  description: RHEL 10 common operations and service configuration
+  tag: rhel10_operations
+
+  turns:
+    - turn_id: systemd_service
+      query: How do I create a custom systemd service unit file in RHEL 10?
+      expected_response: Should include systemd unit file structure, [Unit], [Service], [Install] sections, and systemctl enable/start commands
+      turn_metrics:
+        - ragas:faithfulness
+        - ragas:response_relevancy
+
+    - turn_id: apache_deployment
+      query: How do I deploy a web server with Apache in RHEL 10?
+      expected_response: Should cover httpd installation, configuration, firewall rules, and service management
+      turn_metrics:
+        - ragas:faithfulness
+        - ragas:response_relevancy
+
+    - turn_id: gnome_configuration
+      query: How do I configure the GNOME desktop environment in RHEL 10?
+      expected_response: Should include GNOME installation, display manager setup, and configuration options
+      turn_metrics:
+        - ragas:faithfulness
+        - ragas:response_relevancy
+
+- conversation_group_id: rhel10_new_features
+  description: RHEL 10 specific new features and changes
+  tag: rhel10_features
+
+  turns:
+    - turn_id: sequoia_openpgp
+      query: What is the new Sequoia OpenPGP backend in RPM 4.19 for RHEL 10 and how does it improve security?
+      expected_response: Should explain Sequoia as the new OpenPGP implementation, replacing legacy crypto, and security benefits
+      turn_metrics:
+        - ragas:faithfulness
+        - ragas:response_relevancy
+        - ragas:context_precision_without_reference
+
+    - turn_id: dnf_modularity_deprecation
+      query: Explain the DNF modularity deprecation in RHEL 10 and what replaces it
+      expected_response: Should clarify that modularity is deprecated, explain alternatives (AppStream versioning, containers), and migration path
+      turn_metrics:
+        - ragas:faithfulness
+        - ragas:response_relevancy
+        - ragas:context_recall
+
+- conversation_group_id: rhel_general_security
+  description: General RHEL security configuration (not version-specific)
+  tag: security
+
+  turns:
+    - turn_id: selinux_configuration
+      query: How do I configure SELinux in RHEL?
+      expected_response: Should cover SELinux modes (enforcing, permissive, disabled), setenforce command, configuration file, and policy management
+      turn_metrics:
+        - ragas:faithfulness
+        - ragas:response_relevancy

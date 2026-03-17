@@ -1,0 +1,60 @@
+# Brian's Tests - Red Hat Specific Accuracy
+# Source: Brian Smith via Slack (2025-03-10)
+# These test cases demonstrate where the LLM gets Red Hat-specific facts wrong
+# without RAG, even though it's good at generic Linux questions.
+#
+# Vulnerability being tested: LLM has generic knowledge but lacks/has outdated
+# Red Hat-specific policies, compatibility matrices, and deprecation timelines.
+# RAG must override the LLM's prior knowledge with authoritative Red Hat docs.
+
+- conversation_group_id: container_compatibility
+  description: RHEL 6 containers are NOT supported on RHEL 9 host
+  tag: brian_tests
+
+  turns:
+    - turn_id: rhel6_on_rhel9
+      query: Can I run RHEL 6 containers on a RHEL 9 host?
+      expected_response: No, RHEL 6 containers are not supported on RHEL 9. Must state "Unsupported" clearly per Container Compatibility Matrix.
+      turn_metrics:
+        - ragas:faithfulness
+        - ragas:response_relevancy
+      contexts:
+        - "https://access.redhat.com/support/policy/rhel-container-compatibility"
+
+- conversation_group_id: virtualization_deprecation
+  description: SPICE and virt-manager deprecation/removal status
+  tag: brian_tests
+
+  turns:
+    - turn_id: spice_status
+      query: Is SPICE still available in RHEL 9?
+      expected_response: No, SPICE was deprecated in RHEL 8 and removed in RHEL 9. Should not recommend it.
+      turn_metrics:
+        - ragas:faithfulness
+        - ragas:response_relevancy
+
+    - turn_id: virt_manager_status
+      query: Can I use virt-manager to manage virtual machines in RHEL 9?
+      expected_response: virt-manager was deprecated in RHEL 8. Should mention deprecation status and recommend current alternatives (Cockpit web console, virsh).
+      turn_metrics:
+        - ragas:faithfulness
+        - ragas:response_relevancy
+
+- conversation_group_id: eus_support_timeline
+  description: EUS support duration and availability
+  tag: brian_tests
+
+  turns:
+    - turn_id: eus_duration
+      query: How long is EUS support for RHEL minor releases?
+      expected_response: EUS provides 24 months from the GA date of the minor release. NOT 30 months, NOT additive to standard support.
+      turn_metrics:
+        - ragas:faithfulness
+        - ragas:response_relevancy
+
+    - turn_id: rhel9_eus_availability
+      query: Which RHEL 9 minor releases have EUS support?
+      expected_response: Only even-numbered minor releases have EUS (9.0, 9.2, 9.4, 9.6, 9.8). RHEL 9.1 and 9.3 do NOT have EUS. Note that 9.0 did have EUS.
+      turn_metrics:
+        - ragas:faithfulness
+        - ragas:response_relevancy
