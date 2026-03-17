@@ -128,9 +128,9 @@ class APIClient:
 
             if self.config.endpoint_type == "streaming":
                 response = self._streaming_query_with_retry(api_request)
-            elif self.endpoint_type == "query":
+            elif self.config.endpoint_type == "query":
                 response = self._standard_query_with_retry(api_request)
-            elif self.endpoint_type == "infer":
+            elif self.config.endpoint_type == "infer":
                 response = self._rlsapi_infer_query(api_request)
 
 
@@ -252,17 +252,27 @@ class APIClient:
         if not self.client:
             raise APIError("HTTP client not initialized")
         try:
-            # convert form from "query" to "question" as expected by rlsapi 
+            # convert form from "query" to "question" as expected by rlsapi
             request_data = api_request.model_dump(exclude_none=True)
             infer_request = {"question": request_data.pop("query"), "include_metadata":True}
-            
+
+            logger.debug(f"RLS API infer request URL: /{self.config.version}/infer")
+            logger.debug(f"RLS API infer request body: {json.dumps(infer_request, indent=2)}")
+            logger.debug(f"Original request_data (remaining): {json.dumps(request_data, indent=2)}")
+
             response = self.client.post(
-                f"/{self.version}/infer",
+                f"/api/lightspeed/{self.config.version}/infer",
                 json=infer_request,
             )
+
+            logger.debug(f"RLS API response status: {response.status_code}")
+            if response.status_code != 200:
+                logger.error(f"RLS API error response body: {response.text}")
+
             response.raise_for_status()
 
             response_data = response.json()
+            logger.debug(f"RLS API response data keys: {response_data.keys() if isinstance(response_data, dict) else type(response_data)}")
 
             # parse out data needed for tests
             if "data" in response_data:         # the outer key
@@ -282,8 +292,8 @@ class APIClient:
                     for result in tool_results:
                         if (result["type"]) == "mcp_call":      # mcp rag call was made
                             # break into individual dict entries - this might be weak but draft
-                            content = {"content": result["content"].split("---")}
-                            response_data["rag_chunks"] = ({"content": x} for x in content)   # delimiter is --- between references pulled
+                            content = result["content"].split("---")
+                            response_data["rag_chunks"] = [{"content": x} for x in content]   # delimiter is --- between references pulled
 
             # empty text check
             if "response" not in response_data:
@@ -322,8 +332,9 @@ class APIClient:
             return APIResponse.from_raw_response(response_data)
 
         except httpx.TimeoutException as e:
-            raise self._handle_timeout_error("infer", self.timeout) from e
+            raise self._handle_timeout_error("infer", self.config.timeout) from e
         except httpx.HTTPStatusError as e:
+            logger.error(f"RLS API HTTP error - Status: {e.response.status_code}, Body: {e.response.text}")
             raise self._handle_http_error(e) from e
         except ValueError as e:
             raise self._handle_validation_error(e) from e
