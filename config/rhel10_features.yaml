@@ -1,0 +1,68 @@
+# RHEL 10 Feature Questions - Answer Quality Tests
+# These test the LLM's ability to answer questions about RHEL 10 features correctly
+# using documentation search and proper source attribution.
+
+- conversation_group_id: rhel10_basic_features
+  description: Basic RHEL 10 feature questions
+  tag: rhel10
+
+  turns:
+    - turn_id: rhel10_overview
+      query: What are the key new features in RHEL 10?
+      expected_response: Should mention major RHEL 10 features and improvements
+      turn_metrics:
+        - ragas:faithfulness
+        - ragas:response_relevancy
+
+    - turn_id: rhel10_kernel_version
+      query: What kernel version does RHEL 10 use?
+      expected_response: Should provide the specific kernel version for RHEL 10
+      turn_metrics:
+        - ragas:faithfulness
+        - ragas:response_relevancy
+
+- conversation_group_id: rhel10_hugepages
+  description: RHEL 10 hugepages configuration - testing the specific instruction about kernel boot parameters
+  tag: rhel10_kernel
+
+  turns:
+    - turn_id: hugepages_1gb_config
+      query: How do I configure 1GB hugepages in RHEL 10?
+      expected_response: Must include ALL three required parameters - default_hugepagesz=1G hugepagesz=1G hugepages=<count>
+      turn_metrics:
+        - ragas:faithfulness
+        - ragas:response_relevancy
+        - nlp:bleu
+      turn_metrics_metadata:
+        nlp:bleu:
+          threshold: 0.3
+
+    - turn_id: hugepages_grubby_command
+      query: What grubby command do I use to set 1GB hugepages?
+      expected_response: Complete grubby command with all three parameters (default_hugepagesz, hugepagesz, hugepages)
+      turn_metrics:
+        - ragas:faithfulness
+
+- conversation_group_id: rhel10_deprecated_features
+  description: Testing awareness of deprecated/removed features in RHEL 10
+  tag: rhel10_deprecation
+
+  turns:
+    - turn_id: check_feature_removal
+      query: Is network-scripts still available in RHEL 10?
+      expected_response: Should check deprecation status and provide the supported replacement if removed
+      turn_metrics:
+        - ragas:faithfulness
+        - ragas:response_relevancy
+
+- conversation_group_id: source_attribution
+  description: Verify all responses include proper source attribution
+  tag: sources
+
+  turns:
+    - turn_id: sources_included
+      query: How do I enable SELinux in RHEL 10?
+      expected_response: Must end with a Sources section listing URLs from search results
+      turn_metrics:
+        - ragas:faithfulness
+        - ragas:response_relevancy

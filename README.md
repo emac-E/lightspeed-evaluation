@@ -4,6 +4,8 @@ A comprehensive framework for evaluating GenAI applications.
 
 **This is a WIP. We’re actively adding features, fixing issues, and expanding examples. Please give it a try, share feedback, and report bugs.**
 
+**ALSO - this is a fork by EM for rlsapi RAG validation work! As lscore-deploy and okp-mcp projects change, we may experience some issues so please report asap to author**
+
 ## 🎯 Key Features
 
 - **Multi-Framework Support**: Seamlessly use metrics from Ragas, DeepEval, and custom implementations
