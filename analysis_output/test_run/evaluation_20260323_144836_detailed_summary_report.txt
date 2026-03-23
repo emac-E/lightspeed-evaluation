@@ -1,0 +1,85 @@
+================================================================================
+CROSS-METRIC CORRELATION ANALYSIS REPORT
+Evaluation Run: evaluation_20260323_144836_detailed
+================================================================================
+
+DATASET OVERVIEW
+--------------------------------------------------------------------------------
+Total score entries: 32
+Unique conversations: 14
+Unique turns evaluated: 14
+Metrics analyzed: 4
+
+Metrics:
+  - custom:answer_correctness
+  - ragas:context_precision_without_reference
+  - ragas:context_relevance
+  - ragas:faithfulness
+
+METRIC STATISTICS
+--------------------------------------------------------------------------------
+Total data points: 14
+
+
+custom:answer_correctness:
+  Count:  14
+  Mean:   0.796
+  Median: 0.950
+  Std:    0.371
+  Range:  [0.000, 1.000]
+
+ragas:context_precision_without_reference:
+  Count:  1
+  Mean:   0.056
+  Median: 0.056
+  Std:    nan
+  Range:  [0.056, 0.056]
+
+ragas:context_relevance:
+  Count:  13
+  Mean:   0.231
+  Median: 0.000
+  Std:    0.439
+  Range:  [0.000, 1.000]
+
+ragas:faithfulness:
+  Count:  4
+  Mean:   0.667
+  Median: 0.708
+  Std:    0.312
+  Range:  [0.250, 1.000]
+
+CORRELATION SUMMARY (Pearson)
+--------------------------------------------------------------------------------
+
+Strongest Correlations:
+  -0.772  custom:answer_correctness ↔ ragas:faithfulness  ⚠️ Suspicious (negative)
+  +0.756  ragas:context_relevance ↔ ragas:faithfulness  ✅ Expected
+  +0.303  custom:answer_correctness ↔ ragas:context_relevance  
+
+Weakest Correlations:
+  -0.772  custom:answer_correctness ↔ ragas:faithfulness
+  +0.756  ragas:context_relevance ↔ ragas:faithfulness
+  +0.303  custom:answer_correctness ↔ ragas:context_relevance
+
+ANOMALY SUMMARY
+--------------------------------------------------------------------------------
+  RAG_BYPASS: 1 cases
+  PARAMETRIC_KNOWLEDGE: 1 cases
+
+Anomalous Conversations (sample):
+  - TEMPORAL-REMOVED-001/turn1: RAG_BYPASS
+  - TEMPORAL-REMOVED-001/turn1: PARAMETRIC_KNOWLEDGE
+
+RECOMMENDATIONS
+--------------------------------------------------------------------------------
+⚠️ Faithfulness mean (0.667) is below threshold (0.8)
+   Consider lowering threshold to 0.7 or investigating why scores are consistently low
+
+⚠️ Found 1 cases where LLM bypassed RAG retrieval
+   This suggests either:
+   - okp-mcp retrieval is failing for certain queries
+   - LLM has strong parametric knowledge for these topics
+   - Test data expected_response doesn't match retrieved contexts
+
+================================================================================

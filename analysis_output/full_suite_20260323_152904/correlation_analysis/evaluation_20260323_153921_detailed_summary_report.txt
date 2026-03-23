@@ -1,0 +1,53 @@
+================================================================================
+CROSS-METRIC CORRELATION ANALYSIS REPORT
+Evaluation Run: evaluation_20260323_153921_detailed
+================================================================================
+
+DATASET OVERVIEW
+--------------------------------------------------------------------------------
+Total score entries: 8
+Unique conversations: 4
+Unique turns evaluated: 5
+Metrics analyzed: 2
+
+Metrics:
+  - ragas:faithfulness
+  - ragas:response_relevancy
+
+METRIC STATISTICS
+--------------------------------------------------------------------------------
+Total data points: 5
+
+
+ragas:faithfulness:
+  Count:  3
+  Mean:   0.889
+  Median: 1.000
+  Std:    0.192
+  Range:  [0.667, 1.000]
+
+ragas:response_relevancy:
+  Count:  5
+  Mean:   0.708
+  Median: 0.885
+  Std:    0.396
+  Range:  [0.000, 0.885]
+
+CORRELATION SUMMARY (Pearson)
+--------------------------------------------------------------------------------
+
+Strongest Correlations:
+  +1.000  ragas:faithfulness ↔ ragas:response_relevancy  ✅ Expected
+
+Weakest Correlations:
+  +1.000  ragas:faithfulness ↔ ragas:response_relevancy
+
+
+RECOMMENDATIONS
+--------------------------------------------------------------------------------
+
+ℹ️ High correlation between metrics:
+   ragas:faithfulness ↔ ragas:response_relevancy (1.000)
+   Consider if both metrics are needed
+
+================================================================================

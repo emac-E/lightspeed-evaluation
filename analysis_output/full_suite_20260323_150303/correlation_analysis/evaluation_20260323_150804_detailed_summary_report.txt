@@ -1,0 +1,63 @@
+================================================================================
+CROSS-METRIC CORRELATION ANALYSIS REPORT
+Evaluation Run: evaluation_20260323_150804_detailed
+================================================================================
+
+DATASET OVERVIEW
+--------------------------------------------------------------------------------
+Total score entries: 12
+Unique conversations: 3
+Unique turns evaluated: 6
+Metrics analyzed: 4
+
+Metrics:
+  - ragas:context_precision_without_reference
+  - ragas:context_recall
+  - ragas:faithfulness
+  - ragas:response_relevancy
+
+METRIC STATISTICS
+--------------------------------------------------------------------------------
+Total data points: 6
+
+
+ragas:context_precision_without_reference:
+  Count:  1
+  Mean:   0.267
+  Median: 0.267
+  Std:    nan
+  Range:  [0.267, 0.267]
+
+ragas:context_recall:
+  Count:  1
+  Mean:   0.000
+  Median: 0.000
+  Std:    nan
+  Range:  [0.000, 0.000]
+
+ragas:faithfulness:
+  Count:  4
+  Mean:   0.823
+  Median: 0.812
+  Std:    0.146
+  Range:  [0.667, 1.000]
+
+ragas:response_relevancy:
+  Count:  6
+  Mean:   0.738
+  Median: 0.885
+  Std:    0.361
+  Range:  [0.000, 0.885]
+
+CORRELATION SUMMARY (Pearson)
+--------------------------------------------------------------------------------
+
+Strongest Correlations:
+
+Weakest Correlations:
+
+
+RECOMMENDATIONS
+--------------------------------------------------------------------------------
+
+================================================================================

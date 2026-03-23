@@ -1,0 +1,5 @@
+metric_identifier,ragas:context_precision_without_reference,ragas:context_recall,ragas:faithfulness,ragas:response_relevancy
+ragas:context_precision_without_reference,1.0,,,
+ragas:context_recall,,1.0,,
+ragas:faithfulness,,,1.0,0.816496580927726
+ragas:response_relevancy,,,0.816496580927726,1.0

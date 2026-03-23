@@ -1,0 +1,665 @@
+# Temporal Validity Test Suite
+# Tests version-specific documentation accuracy and temporal context handling
+#
+# Purpose: Verify that okp-mcp retrieves correct version docs and that
+#          ragas metrics can detect when outdated/wrong-version contexts are used
+#
+# Categories:
+#   - REMOVED: Features available in older RHEL but removed in newer
+#   - ADDED: Features not in older RHEL but added in newer
+#   - CHANGED: Syntax or defaults that changed between versions
+#   - MIGRATION: Cross-version migration scenarios
+
+# ==============================================================================
+# SECTION 1: REMOVED FEATURES (Critical - Wrong version causes failures)
+# ==============================================================================
+
+- conversation_group_id: TEMPORAL-REMOVED-001
+  description: "ISC DHCP removed in RHEL 10, replaced with Kea"
+  tag: temporal_validity
+  temporal_test: true
+  target_version: "RHEL 10"
+  wrong_versions: ["RHEL 9", "RHEL 8"]
+
+  turns:
+    - turn_id: turn1
+      query: "How to install and configure a DHCP server in RHEL 10?"
+      response: null
+      contexts: null
+
+      expected_response: |
+        Kea is the DHCP server in RHEL 10. ISC DHCP was removed.
+        Installation:
+        - dnf install kea
+        Configuration: /etc/kea/kea-dhcp4.conf or kea-dhcp6.conf
+        Start service: systemctl enable --now kea-dhcp4
+
+      forbidden_terms:
+        - "dhcp-server"       # RHEL 9 package name
+        - "dhcpd.conf"        # ISC DHCP config file
+        - "systemctl start dhcpd"  # Old service name
+
+      required_terms:
+        - "Kea"
+        - "RHEL 10"
+
+      turn_metrics:
+        - ragas:context_relevance
+        - ragas:context_precision_without_reference
+        - ragas:faithfulness
+        - custom:answer_correctness
+
+- conversation_group_id: TEMPORAL-REMOVED-002
+  description: "network-scripts deprecated in RHEL 9, removed in RHEL 10"
+  tag: temporal_validity
+  temporal_test: true
+  target_version: "RHEL 10"
+
+  turns:
+    - turn_id: turn1
+      query: "How to configure static IP address in RHEL 10?"
+      response: null
+      contexts: null
+
+      expected_response: |
+        Use NetworkManager in RHEL 10:
+        - nmcli con add type ethernet con-name eth0 ifname eth0
+        - nmcli con mod eth0 ipv4.addresses 192.168.1.100/24
+        - nmcli con mod eth0 ipv4.method manual
+        - nmcli con up eth0
+
+        Alternative: NetworkManager keyfiles in /etc/NetworkManager/system-connections/
+
+      forbidden_terms:
+        - "/etc/sysconfig/network-scripts"
+        - "ifcfg-eth0"
+        - "BOOTPROTO=static"
+
+      required_terms:
+        - "NetworkManager"
+        - "nmcli"
+
+      turn_metrics:
+        - ragas:context_relevance
+        - ragas:faithfulness
+        - custom:answer_correctness
+
+- conversation_group_id: TEMPORAL-REMOVED-003
+  description: "Python 2 removed in RHEL 8"
+  tag: temporal_validity
+  temporal_test: true
+  target_version: "RHEL 10"
+
+  turns:
+    - turn_id: turn1
+      query: "How to install Python 2 in RHEL 10?"
+      response: null
+      contexts: null
+
+      expected_response: |
+        Python 2 is not available in RHEL 10 (removed since RHEL 8).
+        Use Python 3 instead:
+        - Default: python3 (Python 3.12)
+        - Alternative versions in AppStream
+        - Migration guide: python2-to-python3 package for assistance
+
+      forbidden_terms:
+        - "yum install python2"
+        - "python27"
+        - "/usr/bin/python2"
+
+      required_terms:
+        - "not available"
+        - "Python 3"
+        - "removed"
+
+      turn_metrics:
+        - ragas:context_relevance
+        - custom:answer_correctness
+
+# ==============================================================================
+# SECTION 2: ADDED FEATURES (New in recent versions)
+# ==============================================================================
+
+- conversation_group_id: TEMPORAL-ADDED-001
+  description: "Python 3.12 is default in RHEL 10"
+  tag: temporal_validity
+  temporal_test: true
+  target_version: "RHEL 10"
+  wrong_versions: ["RHEL 9", "RHEL 8"]
+
+  turns:
+    - turn_id: turn1
+      query: "What is the default Python version in RHEL 10?"
+      response: null
+      contexts: null
+
+      expected_response: |
+        Python 3.12 is the default system Python in RHEL 10.
+        - Invoked as: python3 or python3.12
+        - Available in base system, no AppStream module needed
+        - Also available: Python 3.13 in AppStream
+
+      forbidden_terms:
+        - "Python 3.9"   # RHEL 9 default
+        - "Python 3.11"  # RHEL 9 alternative
+        - "Python 3.6"   # RHEL 8 default
+
+      required_terms:
+        - "Python 3.12"
+        - "RHEL 10"
+        - "default"
+
+      turn_metrics:
+        - ragas:context_relevance
+        - ragas:faithfulness
+        - custom:answer_correctness
+
+- conversation_group_id: TEMPORAL-ADDED-002
+  description: "Kea DHCP new in RHEL 10"
+  tag: temporal_validity
+  temporal_test: true
+  target_version: "RHEL 10"
+
+  turns:
+    - turn_id: turn1
+      query: "What DHCP server options are available in RHEL 10?"
+      response: null
+      contexts: null
+
+      expected_response: |
+        Kea is the ONLY DHCP server option in RHEL 10.
+        - ISC DHCP was removed
+        - Kea supports DHCPv4 and DHCPv6
+        - Package: kea
+        - Modern, actively maintained
+
+      forbidden_terms:
+        - "ISC DHCP available"
+        - "dhcp-server package"
+        - "dhcpd"
+
+      required_terms:
+        - "Kea"
+        - "only"
+        - "RHEL 10"
+
+      turn_metrics:
+        - ragas:context_relevance
+        - custom:answer_correctness
+
+- conversation_group_id: TEMPORAL-ADDED-003
+  description: "Kernel 6.x in RHEL 10"
+  tag: temporal_validity
+  temporal_test: true
+  target_version: "RHEL 10"
+
+  turns:
+    - turn_id: turn1
+      query: "What kernel version does RHEL 10 use?"
+      response: null
+      contexts: null
+
+      expected_response: |
+        RHEL 10 uses kernel 6.x (major upgrade from RHEL 9's kernel 5.14).
+        - Initial release: kernel 6.x
+        - Check version: uname -r
+        - Major features: improved performance, new hardware support
+
+      forbidden_terms:
+        - "kernel 5"
+        - "kernel 4"
+        - "kernel 3"
+
+      required_terms:
+        - "kernel 6"
+        - "RHEL 10"
+
+      turn_metrics:
+        - ragas:context_relevance
+        - custom:answer_correctness
+
+# ==============================================================================
+# SECTION 3: CHANGED SYNTAX/DEFAULTS
+# ==============================================================================
+
+- conversation_group_id: TEMPORAL-CHANGED-001
+  description: "Firewall default changed from iptables to nftables in RHEL 9"
+  tag: temporal_validity
+  temporal_test: true
+  target_version: "RHEL 10"
+
+  turns:
+    - turn_id: turn1
+      query: "What is the default firewall backend in RHEL 10?"
+      response: null
+      contexts: null
+
+      expected_response: |
+        nftables is the default firewall backend in RHEL 10 (and RHEL 9).
+        - firewalld uses nftables by default
+        - iptables still available for compatibility
+        - View rules: nft list ruleset
+
+      forbidden_terms:
+        - "iptables is default"
+        - "iptables-based firewalld"
+
+      required_terms:
+        - "nftables"
+        - "default"
+
+      turn_metrics:
+        - ragas:context_relevance
+        - custom:answer_correctness
+
+- conversation_group_id: TEMPORAL-CHANGED-002
+  description: "Grubby args syntax for hugepages"
+  tag: temporal_validity
+  temporal_test: true
+  target_version: "RHEL 10"
+
+  turns:
+    - turn_id: turn1
+      query: "How to configure 1GB hugepages in RHEL 10?"
+      response: null
+      contexts: null
+
+      expected_response: |
+        Use grubby with ALL THREE parameters:
+        grubby --update-kernel=ALL --args="default_hugepagesz=1G hugepagesz=1G hugepages=64"
+
+        Required parameters:
+        - default_hugepagesz=1G (sets default size)
+        - hugepagesz=1G (specifies size)
+        - hugepages=64 (number of pages)
+
+      required_terms:
+        - "default_hugepagesz=1G"
+        - "hugepagesz=1G"
+        - "hugepages="
+
+      turn_metrics:
+        - ragas:faithfulness
+        - custom:answer_correctness
+
+# ==============================================================================
+# SECTION 4: MIGRATION SCENARIOS (Cross-version understanding)
+# ==============================================================================
+
+- conversation_group_id: TEMPORAL-MIGRATION-001
+  description: "Migrating DHCP server from RHEL 9 to RHEL 10"
+  tag: temporal_validity
+  temporal_test: true
+  target_version: "RHEL 10"
+  requires_versions: ["RHEL 9", "RHEL 10"]
+
+  turns:
+    - turn_id: turn1
+      query: "How do I migrate my DHCP server from RHEL 9 to RHEL 10?"
+      response: null
+      contexts: null
+
+      expected_response: |
+        ISC DHCP (RHEL 9) to Kea (RHEL 10) migration steps:
+
+        1. Backup RHEL 9 config:
+           - /etc/dhcp/dhcpd.conf
+
+        2. Convert configuration:
+           - Kea uses JSON format, not ISC DHCP syntax
+           - Subnet declarations become subnet4/subnet6 objects
+           - Different option names and structure
+
+        3. Install Kea on RHEL 10:
+           - dnf install kea
+
+        4. Configure /etc/kea/kea-dhcp4.conf
+
+        5. Test before production migration
+
+      required_terms:
+        - "ISC DHCP"
+        - "Kea"
+        - "migration"
+        - "configuration"
+        - "RHEL 9"
+        - "RHEL 10"
+
+      turn_metrics:
+        - ragas:context_relevance
+        - ragas:faithfulness
+        - custom:answer_correctness
+
+- conversation_group_id: TEMPORAL-MIGRATION-002
+  description: "Understanding Python changes from RHEL 9 to RHEL 10"
+  tag: temporal_validity
+  temporal_test: true
+  requires_versions: ["RHEL 9", "RHEL 10"]
+
+  turns:
+    - turn_id: turn1
+      query: "What changed in Python between RHEL 9 and RHEL 10?"
+      response: null
+      contexts: null
+
+      expected_response: |
+        Python changes from RHEL 9 to RHEL 10:
+
+        RHEL 9:
+        - Default: Python 3.9
+        - Alternative: Python 3.11 in AppStream
+
+        RHEL 10:
+        - Default: Python 3.12
+        - Alternative: Python 3.13 in AppStream
+
+        Key changes:
+        - Performance improvements in 3.12
+        - New syntax features
+        - Some deprecated modules removed
+        - Migration guide available
+
+      required_terms:
+        - "RHEL 9"
+        - "RHEL 10"
+        - "Python 3.9"
+        - "Python 3.12"
+
+      turn_metrics:
+        - ragas:context_relevance
+        - custom:answer_correctness
+
+# ==============================================================================
+# SECTION 5: POISONED CONTEXT TESTS (Controlled wrong versions)
+# ==============================================================================
+
+- conversation_group_id: TEMPORAL-POISON-001
+  description: "Deliberately inject RHEL 9 docs for RHEL 10 DHCP query"
+  tag: temporal_validity_poisoned
+  temporal_test: true
+  api:
+    enabled: false  # Manual context provision
+
+  turns:
+    - turn_id: turn1
+      query: "How to install DHCP server in RHEL 10?"
+
+      # Manually provide WRONG version contexts (RHEL 9)
+      contexts:
+        - |
+          Red Hat Enterprise Linux 9 Documentation
+          Installing and Configuring DHCP Server
+
+          To install DHCP server on RHEL 9:
+
+          1. Install the dhcp-server package:
+             # dnf install dhcp-server
+
+          2. Configure /etc/dhcp/dhcpd.conf with your network settings
+
+          3. Start and enable the DHCP service:
+             # systemctl enable --now dhcpd
+
+          4. Configure firewall:
+             # firewall-cmd --add-service=dhcp --permanent
+
+        - |
+          RHEL 9 System Administration Guide
+          Chapter: Network Services
+          Section: DHCP Server
+
+          The dhcp-server package provides the ISC DHCP server daemon.
+          This is a widely-used DHCP implementation suitable for most
+          enterprise environments.
+
+      response: null  # Will be populated by LLM using wrong contexts
+
+      expected_response: |
+        Kea is the DHCP server in RHEL 10. ISC DHCP was removed.
+        Install: dnf install kea
+
+      turn_metrics:
+        - ragas:context_relevance      # Should detect wrong version
+        - ragas:faithfulness           # May be HIGH if LLM uses wrong contexts
+        - custom:answer_correctness    # Should FAIL
+
+      turn_metrics_metadata:
+        "ragas:context_relevance":
+          threshold: 0.3  # Lower because we EXPECT low relevance
+
+        "custom:answer_correctness":
+          threshold: 0.8  # Should fail
+
+- conversation_group_id: TEMPORAL-POISON-002
+  description: "RHEL 8 network-scripts docs for RHEL 10 network config query"
+  tag: temporal_validity_poisoned
+  temporal_test: true
+  api:
+    enabled: false
+
+  turns:
+    - turn_id: turn1
+      query: "How to configure static IP in RHEL 10?"
+
+      contexts:
+        - |
+          RHEL 8 Networking Guide
+          Configuring Static IP with network-scripts
+
+          1. Create /etc/sysconfig/network-scripts/ifcfg-eth0:
+
+          DEVICE=eth0
+          BOOTPROTO=static
+          IPADDR=192.168.1.100
+          NETMASK=255.255.255.0
+          GATEWAY=192.168.1.1
+          ONBOOT=yes
+
+          2. Restart network:
+          # systemctl restart network
+
+      response: null
+
+      expected_response: |
+        Use NetworkManager in RHEL 10:
+        nmcli con add type ethernet con-name eth0 ifname eth0
+        nmcli con mod eth0 ipv4.addresses 192.168.1.100/24
+
+      turn_metrics:
+        - ragas:context_relevance
+        - ragas:faithfulness
+        - custom:answer_correctness
+
+      turn_metrics_metadata:
+        "ragas:context_relevance":
+          threshold: 0.3
+
+- conversation_group_id: TEMPORAL-POISON-003
+  description: "Mixed RHEL 9 and RHEL 10 contexts for Python query"
+  tag: temporal_validity_poisoned
+  temporal_test: true
+  api:
+    enabled: false
+
+  turns:
+    - turn_id: turn1
+      query: "What is the default Python version in RHEL 10?"
+
+      contexts:
+        - |
+          RHEL 9 Release Notes
+          Default Python: Python 3.9
+          Alternative: Python 3.11 available in AppStream
+
+        - |
+          RHEL 10 Release Notes
+          Default Python: Python 3.12
+          Alternative: Python 3.13 available in AppStream
+
+      response: null
+
+      expected_response: "Python 3.12"
+
+      turn_metrics:
+        - ragas:context_relevance      # Mixed quality
+        - ragas:context_precision_without_reference
+        - custom:answer_correctness
+
+# ==============================================================================
+# SECTION 6: VERSION COMPARISON TESTS
+# ==============================================================================
+
+- conversation_group_id: TEMPORAL-COMPARE-001
+  description: "Compare feature across RHEL 9 and RHEL 10"
+  tag: temporal_validity
+  temporal_test: true
+  requires_versions: ["RHEL 9", "RHEL 10"]
+
+  turns:
+    - turn_id: turn1
+      query: "What are the differences in DHCP server between RHEL 9 and RHEL 10?"
+      response: null
+      contexts: null
+
+      expected_response: |
+        DHCP Server differences:
+
+        RHEL 9:
+        - ISC DHCP (dhcp-server package)
+        - Traditional /etc/dhcp/dhcpd.conf configuration
+        - systemctl dhcpd service
+
+        RHEL 10:
+        - Kea DHCP (kea package)
+        - JSON-based configuration (/etc/kea/kea-dhcp4.conf)
+        - systemctl kea-dhcp4 service
+        - ISC DHCP removed, migration required
+
+      required_terms:
+        - "RHEL 9"
+        - "RHEL 10"
+        - "ISC DHCP"
+        - "Kea"
+        - "removed"
+
+      turn_metrics:
+        - ragas:context_relevance
+        - custom:answer_correctness
+
+- conversation_group_id: TEMPORAL-COMPARE-002
+  description: "Network configuration evolution RHEL 8→9→10"
+  tag: temporal_validity
+  temporal_test: true
+  requires_versions: ["RHEL 8", "RHEL 9", "RHEL 10"]
+
+  turns:
+    - turn_id: turn1
+      query: "How has network configuration changed from RHEL 8 to RHEL 10?"
+      response: null
+      contexts: null
+
+      expected_response: |
+        Network configuration evolution:
+
+        RHEL 8:
+        - network-scripts (/etc/sysconfig/network-scripts/)
+        - NetworkManager available but not default
+
+        RHEL 9:
+        - network-scripts deprecated
+        - NetworkManager default
+        - Migration path provided
+
+        RHEL 10:
+        - network-scripts removed
+        - NetworkManager only option
+        - keyfiles format recommended
+
+      required_terms:
+        - "RHEL 8"
+        - "RHEL 9"
+        - "RHEL 10"
+        - "network-scripts"
+        - "NetworkManager"
+
+      turn_metrics:
+        - ragas:context_relevance
+        - custom:answer_correctness
+
+# ==============================================================================
+# SECTION 7: IMPLICIT VERSION TESTS (User doesn't specify version)
+# ==============================================================================
+
+- conversation_group_id: TEMPORAL-IMPLICIT-001
+  description: "DHCP query without version (should assume latest RHEL)"
+  tag: temporal_validity
+  temporal_test: true
+  target_version: "RHEL 10"  # Should be inferred
+
+  turns:
+    - turn_id: turn1
+      query: "How do I set up a DHCP server?"
+      response: null
+      contexts: null
+
+      expected_response: |
+        For current RHEL (RHEL 10):
+        Install Kea: dnf install kea
+        Configure: /etc/kea/kea-dhcp4.conf
+
+        Note: ISC DHCP was removed in RHEL 10. For older RHEL versions,
+        see version-specific documentation.
+
+      required_terms:
+        - "Kea"
+
+      # Should NOT recommend RHEL 9 approach without disclaimer
+      forbidden_terms:
+        - "dhcp-server"
+        - "dhcpd.conf"
+
+      turn_metrics:
+        - ragas:context_relevance
+        - custom:answer_correctness
+
+- conversation_group_id: TEMPORAL-IMPLICIT-002
+  description: "Python version query without specifying RHEL version"
+  tag: temporal_validity
+  temporal_test: true
+  target_version: "RHEL 10"
+
+  turns:
+    - turn_id: turn1
+      query: "What is the default Python version?"
+      response: null
+      contexts: null
+
+      expected_response: |
+        For current RHEL (RHEL 10): Python 3.12
+        For RHEL 9: Python 3.9
+        For RHEL 8: Python 3.6
+
+        Please specify your RHEL version for version-specific information.
+
+      # Should mention latest version
+      required_terms:
+        - "Python 3.12"
+
+      turn_metrics:
+        - ragas:context_relevance
+        - custom:answer_correctness
+
+# ==============================================================================
+# METADATA FOR ANALYSIS
+# ==============================================================================
+
+# Total test cases: 20
+# Removed features: 3
+# Added features: 3
+# Changed syntax: 2
+# Migration scenarios: 2
+# Poisoned contexts: 3
+# Version comparison: 2
+# Implicit version: 2
+# Direct version: 3 (within other categories)
