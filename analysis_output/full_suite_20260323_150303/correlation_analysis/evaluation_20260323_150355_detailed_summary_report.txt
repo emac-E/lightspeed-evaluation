@@ -1,0 +1,106 @@
+================================================================================
+CROSS-METRIC CORRELATION ANALYSIS REPORT
+Evaluation Run: evaluation_20260323_150355_detailed
+================================================================================
+
+DATASET OVERVIEW
+--------------------------------------------------------------------------------
+Total score entries: 92
+Unique conversations: 20
+Unique turns evaluated: 20
+Metrics analyzed: 5
+
+Metrics:
+  - custom:answer_correctness
+  - ragas:context_precision_without_reference
+  - ragas:context_relevance
+  - ragas:faithfulness
+  - ragas:response_relevancy
+
+METRIC STATISTICS
+--------------------------------------------------------------------------------
+Total data points: 20
+
+
+custom:answer_correctness:
+  Count:  20
+  Mean:   0.910
+  Median: 0.975
+  Std:    0.164
+  Range:  [0.300, 1.000]
+
+ragas:context_precision_without_reference:
+  Count:  15
+  Mean:   0.373
+  Median: 0.269
+  Std:    0.378
+  Range:  [0.000, 1.000]
+
+ragas:context_relevance:
+  Count:  19
+  Mean:   0.500
+  Median: 0.500
+  Std:    0.471
+  Range:  [0.000, 1.000]
+
+ragas:faithfulness:
+  Count:  18
+  Mean:   0.736
+  Median: 0.750
+  Std:    0.229
+  Range:  [0.250, 1.000]
+
+ragas:response_relevancy:
+  Count:  20
+  Mean:   0.841
+  Median: 0.885
+  Std:    0.198
+  Range:  [0.000, 0.885]
+
+CORRELATION SUMMARY (Pearson)
+--------------------------------------------------------------------------------
+
+Strongest Correlations:
+  +0.797  ragas:context_precision_without_reference ↔ ragas:context_relevance  ✅ Expected
+  +0.273  ragas:context_precision_without_reference ↔ ragas:response_relevancy  
+  +0.267  ragas:context_precision_without_reference ↔ ragas:faithfulness  
+  +0.257  ragas:faithfulness ↔ ragas:response_relevancy  
+  +0.257  ragas:context_relevance ↔ ragas:response_relevancy  
+
+Weakest Correlations:
+  -0.114  custom:answer_correctness ↔ ragas:context_precision_without_reference
+  -0.065  ragas:context_relevance ↔ ragas:faithfulness
+  +0.046  custom:answer_correctness ↔ ragas:faithfulness
+  +0.014  custom:answer_correctness ↔ ragas:response_relevancy
+  +0.000  custom:answer_correctness ↔ ragas:context_relevance
+
+ANOMALY SUMMARY
+--------------------------------------------------------------------------------
+  RAG_BYPASS: 5 cases
+  PARAMETRIC_KNOWLEDGE: 5 cases
+  UNFAITHFUL_RESPONSE: 3 cases
+
+Anomalous Conversations (sample):
+  - RSPEED-1813/turn1: RAG_BYPASS
+  - RSPEED-1902/turn1: RAG_BYPASS
+  - RSPEED-1929/turn1: RAG_BYPASS
+  - RSPEED-1931/turn1: RAG_BYPASS
+  - RSPEED-2200/turn1: RAG_BYPASS
+  - RSPEED-1998/turn1: UNFAITHFUL_RESPONSE
+  - RSPEED-2136/turn1: UNFAITHFUL_RESPONSE
+  - RSPEED-2294/turn1: UNFAITHFUL_RESPONSE
+  - RSPEED-1859/turn1: PARAMETRIC_KNOWLEDGE
+  - RSPEED-1929/turn1: PARAMETRIC_KNOWLEDGE
+
+RECOMMENDATIONS
+--------------------------------------------------------------------------------
+⚠️ Faithfulness mean (0.736) is below threshold (0.8)
+   Consider lowering threshold to 0.7 or investigating why scores are consistently low
+
+⚠️ Found 5 cases where LLM bypassed RAG retrieval
+   This suggests either:
+   - okp-mcp retrieval is failing for certain queries
+   - LLM has strong parametric knowledge for these topics
+   - Test data expected_response doesn't match retrieved contexts
+
+================================================================================

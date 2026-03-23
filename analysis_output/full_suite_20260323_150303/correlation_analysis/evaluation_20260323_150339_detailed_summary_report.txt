@@ -1,0 +1,89 @@
+================================================================================
+CROSS-METRIC CORRELATION ANALYSIS REPORT
+Evaluation Run: evaluation_20260323_150339_detailed
+================================================================================
+
+DATASET OVERVIEW
+--------------------------------------------------------------------------------
+Total score entries: 13
+Unique conversations: 5
+Unique turns evaluated: 7
+Metrics analyzed: 7
+
+Metrics:
+  - custom:tool_eval
+  - ragas:context_precision_with_reference
+  - ragas:context_precision_without_reference
+  - ragas:context_recall
+  - ragas:context_relevance
+  - ragas:faithfulness
+  - ragas:response_relevancy
+
+METRIC STATISTICS
+--------------------------------------------------------------------------------
+Total data points: 7
+
+
+custom:tool_eval:
+  Count:  4
+  Mean:   0.000
+  Median: 0.000
+  Std:    0.000
+  Range:  [0.000, 0.000]
+
+ragas:context_precision_with_reference:
+  Count:  1
+  Mean:   0.000
+  Median: 0.000
+  Std:    nan
+  Range:  [0.000, 0.000]
+
+ragas:context_precision_without_reference:
+  Count:  1
+  Mean:   0.000
+  Median: 0.000
+  Std:    nan
+  Range:  [0.000, 0.000]
+
+ragas:context_recall:
+  Count:  1
+  Mean:   0.000
+  Median: 0.000
+  Std:    nan
+  Range:  [0.000, 0.000]
+
+ragas:context_relevance:
+  Count:  1
+  Mean:   0.000
+  Median: 0.000
+  Std:    nan
+  Range:  [0.000, 0.000]
+
+ragas:faithfulness:
+  Count:  1
+  Mean:   0.000
+  Median: 0.000
+  Std:    nan
+  Range:  [0.000, 0.000]
+
+ragas:response_relevancy:
+  Count:  2
+  Mean:   0.885
+  Median: 0.885
+  Std:    0.000
+  Range:  [0.885, 0.885]
+
+CORRELATION SUMMARY (Pearson)
+--------------------------------------------------------------------------------
+
+Strongest Correlations:
+
+Weakest Correlations:
+
+
+RECOMMENDATIONS
+--------------------------------------------------------------------------------
+⚠️ Faithfulness mean (0.000) is below threshold (0.8)
+   Consider lowering threshold to 0.7 or investigating why scores are consistently low
+
+================================================================================

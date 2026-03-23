@@ -1,0 +1,12 @@
+conversation_group_id,turn_id,custom:answer_correctness,ragas:context_precision_without_reference,ragas:context_relevance,ragas:faithfulness,ragas:response_relevancy,anomaly_type,description
+RSPEED-1813,turn1,1.0,0.2685185185095679,0.0,0.6666666666666666,0.885407750250424,RAG_BYPASS,LLM answered correctly despite poor context retrieval
+RSPEED-1902,turn1,1.0,0.010989010987912,0.5,0.5,0.885407750250424,RAG_BYPASS,LLM answered correctly despite poor context retrieval
+RSPEED-1931,turn1,0.95,0.0714285714214285,0.0,1.0,0.885407750250424,RAG_BYPASS,LLM answered correctly despite poor context retrieval
+RSPEED-2200,turn1,1.0,0.032265322104884,0.0,1.0,0.885407750250424,RAG_BYPASS,LLM answered correctly despite poor context retrieval
+RSPEED-1998,turn1,0.9,0.8333333332916666,1.0,0.6666666666666666,0.885407750250424,UNFAITHFUL_RESPONSE,Relevant contexts but response not faithful to them
+RSPEED-2136,turn1,1.0,,1.0,0.5,0.885407750250424,UNFAITHFUL_RESPONSE,Relevant contexts but response not faithful to them
+RSPEED-2294,turn1,0.7,0.5737373737182492,1.0,0.5,0.885407750250424,UNFAITHFUL_RESPONSE,Relevant contexts but response not faithful to them
+RSPEED-1859,turn1,0.9,0.0,0.0,,0.885407750250424,PARAMETRIC_KNOWLEDGE,Correct answer with zero context scores (parametric knowledge)
+RSPEED-1930,turn1,0.9,0.0,0.0,0.5,0.0,PARAMETRIC_KNOWLEDGE,Correct answer with zero context scores (parametric knowledge)
+RSPEED-1931,turn1,0.95,0.0714285714214285,0.0,1.0,0.885407750250424,PARAMETRIC_KNOWLEDGE,Correct answer with zero context scores (parametric knowledge)
+RSPEED-2200,turn1,1.0,0.032265322104884,0.0,1.0,0.885407750250424,PARAMETRIC_KNOWLEDGE,Correct answer with zero context scores (parametric knowledge)

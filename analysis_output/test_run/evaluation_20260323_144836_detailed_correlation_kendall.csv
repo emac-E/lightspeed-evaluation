@@ -1,0 +1,5 @@
+metric_identifier,custom:answer_correctness,ragas:context_precision_without_reference,ragas:context_relevance,ragas:faithfulness
+custom:answer_correctness,1.0,,0.33855558338467207,-0.8164965809277261
+ragas:context_precision_without_reference,,1.0,,
+ragas:context_relevance,0.33855558338467207,,1.0,0.816496580927726
+ragas:faithfulness,-0.8164965809277261,,0.816496580927726,1.0
