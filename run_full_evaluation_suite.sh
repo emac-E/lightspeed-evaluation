@@ -81,16 +81,21 @@ echo ""
 
 # Find all detailed CSV files from successful evals
 DETAILED_CSVS=$(find "${OUTPUT_BASE}" -name "evaluation_*_detailed.csv" 2>/dev/null | tr '\n' ' ')
+CORRELATION_ANALYSIS_RAN=false
 
 if [ -n "$DETAILED_CSVS" ]; then
     echo -e "${YELLOW}Analyzing metrics from all evaluation runs...${NC}"
 
-    python scripts/analyze_metric_correlations.py \
+    if python scripts/analyze_metric_correlations.py \
         --input ${DETAILED_CSVS} \
         --output "${ANALYSIS_OUTPUT}/correlation_analysis" \
-        --compare-runs
+        --compare-runs; then
 
-    echo -e "${GREEN}✓ Correlation analysis complete${NC}"
+        echo -e "${GREEN}✓ Correlation analysis complete${NC}"
+        CORRELATION_ANALYSIS_RAN=true
+    else
+        echo -e "${RED}✗ Correlation analysis failed${NC}"
+    fi
 else
     echo -e "${RED}✗ No evaluation outputs found for correlation analysis${NC}"
 fi
@@ -101,16 +106,21 @@ echo ""
 
 # Find temporal test output
 TEMPORAL_CSV=$(find "${OUTPUT_BASE}/temporal_validity_tests_runnable" -name "evaluation_*_detailed.csv" 2>/dev/null | head -1)
+VERSION_ANALYSIS_RAN=false
 
 if [ -n "$TEMPORAL_CSV" ]; then
     echo -e "${YELLOW}Analyzing RHEL version distribution...${NC}"
 
-    python scripts/analyze_version_distribution.py \
+    if python scripts/analyze_version_distribution.py \
         --input "${TEMPORAL_CSV}" \
         --test-config config/temporal_validity_tests_runnable.yaml \
-        --output "${ANALYSIS_OUTPUT}/version_analysis"
+        --output "${ANALYSIS_OUTPUT}/version_analysis"; then
 
-    echo -e "${GREEN}✓ Version distribution analysis complete${NC}"
+        echo -e "${GREEN}✓ Version distribution analysis complete${NC}"
+        VERSION_ANALYSIS_RAN=true
+    else
+        echo -e "${RED}✗ Version distribution analysis failed${NC}"
+    fi
 else
     echo -e "${YELLOW}⚠ Temporal test output not found, skipping version analysis${NC}"
 fi
@@ -119,11 +129,19 @@ echo ""
 echo -e "${GREEN}Step 4: Generating RAG Quality Report for okp-mcp developers...${NC}"
 echo ""
 
-# Use Python script to generate comprehensive report
-python scripts/generate_okp_mcp_report.py \
-    --output-base "${OUTPUT_BASE}" \
-    --correlation-analysis "${ANALYSIS_OUTPUT}/correlation_analysis" \
-    --version-analysis "${ANALYSIS_OUTPUT}/version_analysis"
+# Build command with optional analysis directories
+REPORT_CMD="python scripts/generate_okp_mcp_report.py --output-base \"${OUTPUT_BASE}\""
+
+if [ "$CORRELATION_ANALYSIS_RAN" = true ]; then
+    REPORT_CMD="$REPORT_CMD --correlation-analysis \"${ANALYSIS_OUTPUT}/correlation_analysis\""
+fi
+
+if [ "$VERSION_ANALYSIS_RAN" = true ]; then
+    REPORT_CMD="$REPORT_CMD --version-analysis \"${ANALYSIS_OUTPUT}/version_analysis\""
+fi
+
+# Generate report
+eval $REPORT_CMD
 
 echo ""
 
