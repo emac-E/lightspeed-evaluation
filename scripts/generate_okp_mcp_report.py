@@ -8,17 +8,323 @@ okp-mcp developers working on the Solr-based retrieval system.
 """
 
 import argparse
-import json
+import re
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 import pandas as pd
 
 
+# ============================================================================
+# ISSUE DETECTION PATTERNS
+# ============================================================================
+
+ISSUE_PATTERNS = {
+    "over_retrieval": {
+        "name": "Over-Retrieval",
+        "severity": "high",
+        "metric_check": lambda m: m.get("context_precision_mean", 1.0) < 0.5,
+        "threshold": 0.5,
+        "metric": "context_precision",
+        "symptom": "context_precision scores consistently below 0.5",
+        "root_cause": "okp-mcp returns too many contexts (often 100-250+ instead of 10-20)",
+        "why_matters": [
+            "LLM must wade through noise to find signal",
+            "Increases token costs",
+            "Slows response time",
+            "Buries relevant docs among irrelevant ones"
+        ],
+        "fix_title": "Limit Result Count",
+        "fix_code": """# In okp-mcp Solr query
+solr_params = {
+    'rows': 10,  # Limit to top 10 results (currently unlimited or very high)
+    'q': query,
+}""",
+        "expected_improvement": "context_precision +30-50%"
+    },
+
+    "poor_ranking": {
+        "name": "Poor Ranking",
+        "severity": "high",
+        "metric_check": lambda m: m.get("context_relevance_mean", 1.0) < 0.7,
+        "threshold": 0.7,
+        "metric": "context_relevance",
+        "symptom": "context_relevance below 0.7, relevant docs not in top positions",
+        "root_cause": "Boilerplate (legal notices, warnings) ranks higher than actual documentation",
+        "why_matters": [
+            "LLM sees boilerplate first",
+            "Wastes token budget on non-content",
+            "Reduces context window for actual docs"
+        ],
+        "fix_title": "Boost Content Over Metadata",
+        "fix_code": """# Boost content over metadata
+solr_params = {
+    'qf': 'content^5.0 title^2.0 metadata^1.0',  # Weight content 5x higher
+    'defType': 'edismax',
+}""",
+        "expected_improvement": "context_relevance +20-30%"
+    },
+
+    "low_faithfulness": {
+        "name": "Low Faithfulness",
+        "severity": "medium",
+        "metric_check": lambda m: m.get("faithfulness_mean", 1.0) < 0.7,
+        "threshold": 0.7,
+        "metric": "faithfulness",
+        "symptom": "faithfulness scores below 0.7",
+        "root_cause": "LLM cannot extract useful information from retrieved contexts, or contexts don't contain needed information",
+        "why_matters": [
+            "LLM forced to use parametric knowledge instead of RAG",
+            "Defeats purpose of retrieval system",
+            "May produce outdated or incorrect answers"
+        ],
+        "fix_title": "Improve Context Quality",
+        "fix_code": """# Filter out low-quality contexts
+def is_useful_context(doc):
+    # Minimum content length
+    if len(doc.get('content', '')) < 100:
+        return False
+
+    # Filter out boilerplate
+    if doc.get('type') in ['legal_notice', 'warning', 'metadata']:
+        return False
+
+    return True
+
+contexts = [doc for doc in solr_results if is_useful_context(doc)]""",
+        "expected_improvement": "faithfulness +15-25%"
+    },
+
+    "version_filtering": {
+        "name": "Missing Version Filtering",
+        "severity": "high",
+        "metric_check": lambda m: m.get("version_accuracy", 1.0) < 0.8,
+        "threshold": 0.8,
+        "metric": "version_accuracy",
+        "symptom": "RHEL 10 queries return RHEL 9 or RHEL 8 documentation",
+        "root_cause": "Version not boosted in retrieval query",
+        "why_matters": [
+            "Outdated commands (e.g., ISC DHCP for RHEL 10)",
+            "Wrong package names",
+            "Deprecated syntax",
+            "User gets incorrect instructions"
+        ],
+        "fix_title": "Add Version Boost",
+        "fix_code": """# Extract and boost target version
+import re
+
+def extract_rhel_version(query):
+    patterns = [r'RHEL\\s*(\\d+)', r'Red Hat Enterprise Linux\\s*(\\d+)']
+    for pattern in patterns:
+        match = re.search(pattern, query, re.IGNORECASE)
+        if match:
+            return match.group(1)
+    return None  # Default to latest if not specified
+
+target_version = extract_rhel_version(query)
+if target_version:
+    solr_params['bq'] = f'version:{target_version}^10.0'  # Boost 10x""",
+        "expected_improvement": "version_accuracy 50% → 80%+"
+    },
+
+    "boilerplate_pollution": {
+        "name": "Boilerplate Pollution",
+        "severity": "medium",
+        "metric_check": lambda m: (
+            m.get("context_precision_mean", 1.0) < 0.4 and
+            m.get("context_relevance_mean", 1.0) < 0.6
+        ),
+        "threshold": 0.4,
+        "metric": "context_precision + context_relevance",
+        "symptom": "High % of contexts are legal notices, deprecation warnings, title fragments",
+        "root_cause": "No content filtering before sending to LLM",
+        "why_matters": [
+            "Wastes 50-90% of context window",
+            "Dilutes signal-to-noise ratio",
+            "Increases context_precision penalty"
+        ],
+        "fix_title": "Filter Boilerplate",
+        "fix_code": """# Filter out boilerplate before returning contexts
+def is_useful_context(doc):
+    content = doc.get('content', '')
+    doc_type = doc.get('type', '')
+    title = doc.get('title', '')
+
+    # Too short - likely metadata fragment
+    if len(content) < 100:
+        return False
+
+    # Known boilerplate types
+    if doc_type in ['legal_notice', 'warning', 'metadata', 'copyright']:
+        return False
+
+    # Generic deprecation warnings (unless version-specific)
+    if 'deprecated' in title.lower():
+        if not any(f'RHEL {v}' in content for v in ['8', '9', '10']):
+            return False
+
+    return True
+
+filtered_contexts = [doc for doc in solr_results if is_useful_context(doc)]""",
+        "expected_improvement": "context_precision +25-40%"
+    },
+
+    "poor_answer_quality": {
+        "name": "Poor Answer Quality",
+        "severity": "critical",
+        "metric_check": lambda m: m.get("answer_correctness_mean", 1.0) < 0.75,
+        "threshold": 0.75,
+        "metric": "answer_correctness",
+        "symptom": "answer_correctness below 0.75, despite good retrieval metrics",
+        "root_cause": "Retrieved contexts contain correct information, but LLM produces incorrect answers",
+        "why_matters": [
+            "End users get wrong instructions",
+            "Defeats entire purpose of the system",
+            "May damage user trust and adoption"
+        ],
+        "fix_title": "Improve Context Presentation",
+        "fix_code": """# Improve context presentation to LLM
+def format_context_for_llm(contexts):
+    formatted = []
+    for i, ctx in enumerate(contexts, 1):
+        # Add metadata to help LLM understand context
+        context_block = f'''
+--- Context {i} ---
+Source: {ctx.get('source', 'Unknown')}
+Version: {ctx.get('version', 'Unknown')}
+Type: {ctx.get('doc_type', 'Documentation')}
+
+{ctx['content']}
+---
+'''
+        formatted.append(context_block)
+    return '\\n'.join(formatted)""",
+        "expected_improvement": "answer_correctness +10-20%"
+    }
+}
+
+
+# ============================================================================
+# METRIC EXTRACTION
+# ============================================================================
+
+def extract_metric_stats(summary_text: str) -> Dict[str, float]:
+    """Extract and aggregate metric statistics from correlation summary report(s).
+
+    Handles both single reports and combined reports from multiple test configs.
+    Computes overall averages across all configs.
+    """
+    stats = {}
+
+    if not summary_text:
+        return stats
+
+    # Track all values for each metric to compute averages
+    metric_values = {}
+
+    # Parse metric statistics section
+    lines = summary_text.split('\n')
+    current_metric = None
+
+    for line in lines:
+        # Detect metric name
+        if line.strip() and not line.startswith(' ') and ':' in line:
+            parts = line.split(':')
+            if len(parts) >= 2:
+                metric_name = parts[0].strip()
+                if any(m in metric_name for m in ['context_precision', 'context_relevance',
+                                                    'faithfulness', 'answer_correctness']):
+                    current_metric = metric_name
+
+        # Extract mean value
+        if current_metric and 'Mean:' in line:
+            match = re.search(r'Mean:\s*([\d.]+)', line)
+            if match:
+                mean_val = float(match.group(1))
+                metric_key = f"{current_metric}_mean"
+
+                # Collect all values
+                if metric_key not in metric_values:
+                    metric_values[metric_key] = []
+                metric_values[metric_key].append(mean_val)
+
+        # Extract pass rate
+        if current_metric and ('Pass Rate' in line or 'PASS' in line):
+            match = re.search(r'([\d.]+)%', line)
+            if match:
+                pass_rate = float(match.group(1)) / 100.0
+                metric_key = f"{current_metric}_pass_rate"
+
+                if metric_key not in metric_values:
+                    metric_values[metric_key] = []
+                metric_values[metric_key].append(pass_rate)
+
+    # Compute overall averages
+    for metric_key, values in metric_values.items():
+        if values:
+            stats[metric_key] = sum(values) / len(values)
+
+    return stats
+
+
+def extract_version_accuracy(version_text: str) -> Optional[float]:
+    """Extract version accuracy from version distribution report."""
+    if not version_text:
+        return None
+
+    # Look for average version accuracy
+    match = re.search(r'Average version accuracy:\s*([\d.]+)%', version_text)
+    if match:
+        return float(match.group(1)) / 100.0
+
+    return None
+
+
+# ============================================================================
+# ISSUE DETECTION
+# ============================================================================
+
+def detect_issues(
+    correlation_summary: Optional[str],
+    version_summary: Optional[str]
+) -> List[Tuple[str, Dict[str, Any]]]:
+    """Detect which issues apply based on metric values.
+
+    Returns:
+        List of (issue_key, issue_config) tuples, sorted by severity
+    """
+    # Extract metrics
+    metrics = extract_metric_stats(correlation_summary or "")
+
+    # Add version accuracy if available
+    version_acc = extract_version_accuracy(version_summary or "")
+    if version_acc is not None:
+        metrics["version_accuracy"] = version_acc
+
+    # Detect which issues apply
+    detected = []
+    for issue_key, issue_config in ISSUE_PATTERNS.items():
+        if issue_config["metric_check"](metrics):
+            detected.append((issue_key, issue_config))
+
+    # Sort by severity
+    severity_order = {"critical": 0, "high": 1, "medium": 2, "low": 3}
+    detected.sort(key=lambda x: severity_order.get(x[1]["severity"], 99))
+
+    return detected
+
+
+# ============================================================================
+# FILE LOADING
+# ============================================================================
+
 def load_correlation_summary(analysis_dir: Path) -> Optional[str]:
-    """Load correlation analysis summary report."""
+    """Load correlation analysis summary report(s).
+
+    Combines multiple summary reports if they exist (one per test config).
+    """
     # Try exact name first
     summary_file = analysis_dir / "summary_report.txt"
     if summary_file.exists():
@@ -27,9 +333,26 @@ def load_correlation_summary(analysis_dir: Path) -> Optional[str]:
     # Try pattern match for files like "evaluation_TIMESTAMP_detailed_summary_report.txt"
     summary_files = list(analysis_dir.glob("*_summary_report.txt"))
     if summary_files:
-        # Use the most recent one if multiple exist
-        summary_files.sort(key=lambda x: x.stat().st_mtime, reverse=True)
-        return summary_files[0].read_text()
+        # Sort by timestamp for consistent ordering
+        summary_files.sort(key=lambda x: x.name)
+
+        # Combine all summary reports
+        combined = []
+        combined.append("=" * 80)
+        combined.append("COMBINED CORRELATION ANALYSIS")
+        combined.append(f"Total test configs analyzed: {len(summary_files)}")
+        combined.append("=" * 80)
+        combined.append("")
+
+        for i, summary_file in enumerate(summary_files, 1):
+            combined.append(f"\n{'=' * 80}")
+            combined.append(f"TEST CONFIG {i}/{len(summary_files)}: {summary_file.stem}")
+            combined.append("=" * 80)
+            combined.append("")
+            combined.append(summary_file.read_text())
+            combined.append("")
+
+        return "\n".join(combined)
 
     return None
 
@@ -74,34 +397,9 @@ def load_anomalies(analysis_dir: Path) -> Optional[pd.DataFrame]:
     return None
 
 
-def extract_key_metrics(summary_text: Optional[str]) -> Dict[str, Any]:
-    """Extract key metric values from summary report."""
-    metrics = {
-        "context_precision_mean": "N/A",
-        "context_precision_pass_rate": "N/A",
-        "context_relevance_mean": "N/A",
-        "context_relevance_pass_rate": "N/A",
-        "faithfulness_mean": "N/A",
-        "faithfulness_pass_rate": "N/A",
-        "answer_correctness_mean": "N/A",
-        "answer_correctness_pass_rate": "N/A",
-        "overall_pass_rate": "N/A",
-    }
-
-    if not summary_text:
-        return metrics
-
-    # Parse summary text for key values (basic parsing)
-    lines = summary_text.split("\n")
-    for line in lines:
-        if "context_precision" in line.lower() and "mean:" in line.lower():
-            parts = line.split(":")
-            if len(parts) > 1:
-                metrics["context_precision_mean"] = parts[-1].strip()
-        # Add more parsing as needed
-
-    return metrics
-
+# ============================================================================
+# REPORT GENERATION
+# ============================================================================
 
 def generate_report(
     output_dir: Path,
@@ -142,8 +440,8 @@ def generate_report(
     else:
         version_dir_status = "No version analysis directory specified"
 
-    # Extract metrics
-    metrics = extract_key_metrics(correlation_summary)
+    # Detect issues
+    detected_issues = detect_issues(correlation_summary, version_summary)
 
     # Build report
     report = f"""# RAG Retrieval Quality Report for okp-mcp Developers
@@ -202,109 +500,48 @@ This report analyzes the retrieval quality of the okp-mcp server from the perspe
         report += "1. Run temporal tests: `lightspeed-eval --eval-data config/temporal_validity_tests_runnable.yaml`\n"
         report += "2. Run version analysis: `python scripts/analyze_version_distribution.py --input <csv> --test-config config/temporal_validity_tests_runnable.yaml`\n\n"
 
-    # Add root cause analysis
-    report += """---
+    # Add root cause analysis - DYNAMIC based on detected issues
+    report += "---\n\n"
+    report += "## Root Cause Analysis\n\n"
 
-## Root Cause Analysis
+    if detected_issues:
+        report += f"**{len(detected_issues)} issue(s) detected** based on metric analysis:\n\n"
 
-Based on the metrics, the primary issues are:
+        for i, (issue_key, issue) in enumerate(detected_issues, 1):
+            severity_emoji = {
+                "critical": "🔴",
+                "high": "🟠",
+                "medium": "🟡",
+                "low": "🟢"
+            }
 
-### 1. Over-Retrieval (Low context_precision)
+            report += f"### {i}. {issue['name']} {severity_emoji.get(issue['severity'], '')}\n\n"
+            report += f"**Severity:** {issue['severity'].upper()}\n\n"
+            report += f"**Symptom:** {issue['symptom']}\n\n"
+            report += f"**Root Cause:** {issue['root_cause']}\n\n"
+            report += "**Why This Matters:**\n"
+            for matter in issue['why_matters']:
+                report += f"- {matter}\n"
+            report += "\n"
 
-**Symptom:** context_precision scores consistently below 0.5
+            report += f"**Fix - {issue['fix_title']}:**\n"
+            report += "```python\n"
+            report += issue['fix_code']
+            report += "\n```\n\n"
 
-**Root Cause:** okp-mcp returns too many contexts (often 100-250+ instead of 10-20)
+            report += f"**Expected Improvement:** {issue['expected_improvement']}\n\n"
+            report += "---\n\n"
+    else:
+        report += "✅ **No major issues detected!**\n\n"
+        report += "Metrics are within acceptable ranges. Continue monitoring for any degradation.\n\n"
+        report += "**Recommendations:**\n"
+        report += "- Maintain current retrieval configuration\n"
+        report += "- Monitor metrics over time for any regression\n"
+        report += "- Consider A/B testing optimizations for marginal improvements\n\n"
 
-**Why This Matters:**
-- LLM must wade through noise to find signal
-- Increases token costs
-- Slows response time
-- Buries relevant docs among irrelevant ones
-
-**Fix:**
-```python
-# In okp-mcp Solr query
-solr_params = {
-    'rows': 10,  # Limit to top 10 results (currently unlimited or very high)
-    'q': query,
-}
-```
-
-### 2. Poor Ranking (Low context_relevance)
-
-**Symptom:** context_relevance below 0.7, relevant docs not in top positions
-
-**Root Cause:** Boilerplate (legal notices, warnings) ranks higher than actual documentation
-
-**Why This Matters:**
-- LLM sees boilerplate first
-- Wastes token budget on non-content
-- Reduces context window for actual docs
-
-**Fix:**
-```python
-# Boost content over metadata
-solr_params = {
-    'qf': 'content^5.0 title^2.0 metadata^1.0',  # Weight content 5x higher
-    'defType': 'edismax',
-}
-```
-
-### 3. No Version Filtering (Wrong RHEL version docs)
-
-**Symptom:** RHEL 10 queries return RHEL 9 or RHEL 8 documentation
-
-**Root Cause:** Version not boosted in retrieval query
-
-**Why This Matters:**
-- Outdated commands (e.g., ISC DHCP for RHEL 10)
-- Wrong package names
-- Deprecated syntax
-- User gets incorrect instructions
-
-**Fix:**
-```python
-# Add version boost
-target_version = extract_rhel_version(query)  # "10"
-solr_params = {
-    'bq': f'version:{target_version}^10.0',  # Boost target version 10x
-}
-```
-
-### 4. Boilerplate Pollution
-
-**Symptom:** High % of contexts are legal notices, deprecation warnings, title fragments
-
-**Root Cause:** No content filtering before sending to LLM
-
-**Why This Matters:**
-- Wastes 50-90% of context window
-- Dilutes signal-to-noise ratio
-- Increases context_precision penalty
-
-**Fix:**
-```python
-# Filter out boilerplate before returning contexts
-def is_useful_context(doc):
-    if len(doc['content']) < 100:  # Too short
-        return False
-    if doc['type'] in ['legal_notice', 'warning', 'metadata']:
-        return False
-    if 'deprecated' in doc['title'].lower() and target_version not in doc:
-        return False
-    return True
-
-contexts = [doc for doc in solr_results if is_useful_context(doc)]
-```
-
----
-
-## Specific Examples
-
-"""
-
-    # Add anomaly examples
+    # Add anomaly examples if available
     if anomalies_df is not None and not anomalies_df.empty:
+        report += "## Specific Examples\n\n"
         report += "### Anomalous Cases Detected\n\n"
         report += "These cases show specific retrieval problems:\n\n"
 
@@ -323,74 +560,52 @@ contexts = [doc for doc in solr_results if is_useful_context(doc)]
         report += "\n"
         report += f"**Total anomalies detected:** {len(anomalies_df)}\n\n"
         report += "See full list in `anomalies.csv`\n\n"
+
+    # Add recommended action plan - DYNAMIC based on detected issues
+    report += "---\n\n"
+    report += "## Recommended Action Plan\n\n"
+
+    if detected_issues:
+        # Separate by severity
+        critical = [i for i in detected_issues if i[1]["severity"] == "critical"]
+        high = [i for i in detected_issues if i[1]["severity"] == "high"]
+        medium = [i for i in detected_issues if i[1]["severity"] == "medium"]
+
+        if critical:
+            report += "### 🔴 Critical (Fix Immediately)\n\n"
+            for issue_key, issue in critical:
+                report += f"1. **{issue['name']}**\n"
+                report += f"   - Implement: {issue['fix_title']}\n"
+                report += f"   - Expected: {issue['expected_improvement']}\n\n"
+
+        if high:
+            report += "### 🟠 High Priority (This Week)\n\n"
+            for issue_key, issue in high:
+                report += f"1. **{issue['name']}**\n"
+                report += f"   - Implement: {issue['fix_title']}\n"
+                report += f"   - Expected: {issue['expected_improvement']}\n\n"
+
+        if medium:
+            report += "### 🟡 Medium Priority (Next 2-4 Weeks)\n\n"
+            for issue_key, issue in medium:
+                report += f"1. **{issue['name']}**\n"
+                report += f"   - Implement: {issue['fix_title']}\n"
+                report += f"   - Expected: {issue['expected_improvement']}\n\n"
     else:
-        report += "No anomalies CSV found or no anomalies detected.\n\n"
+        report += "✅ **System is performing well**\n\n"
+        report += "Continue with normal operations and monitoring.\n\n"
 
-    # Add recommended action plan
+    # Add validation section
+    report += "---\n\n"
+    report += "## Validation\n\n"
+    report += "Run this evaluation suite again after fixes:\n\n"
+    report += "```bash\n"
+    report += "./run_full_evaluation_suite.sh\n"
+    report += "```\n\n"
+    report += "Compare reports to measure improvement.\n\n"
+
+    # Add appendix
     report += """---
-
-## Recommended Action Plan
-
-### Phase 1: Quick Wins (This Week)
-
-1. **Limit result count**
-   - Set Solr `rows` parameter to 10-20
-   - Immediate reduction in noise
-   - Expected improvement: context_precision +30%
-
-2. **Boost content over metadata**
-   - Add `qf` parameter with content weighting
-   - Expected improvement: context_relevance +20%
-
-### Phase 2: Version Filtering (Week 2)
-
-1. **Extract version from query**
-   - Regex: `RHEL\\s*(\\d+)` or `Red Hat Enterprise Linux (\\d+)`
-   - Default to latest version if not specified
-
-2. **Boost target version in Solr**
-   - Add `bq` parameter with version boost
-   - Expected improvement: temporal test accuracy 50% → 80%
-
-### Phase 3: Content Quality (Week 3-4)
-
-1. **Filter boilerplate**
-   - Remove legal notices
-   - Remove short metadata fragments
-   - Remove off-version deprecation warnings
-
-2. **Improve ranking**
-   - Boost recent docs over old ones
-   - Boost full documents over fragments
-   - Boost tutorials over API refs for how-to queries
-
----
-
-## Success Metrics
-
-After implementing fixes, re-run evaluations and look for:
-
-| Metric | Current | Target | Impact |
-|--------|---------|--------|--------|
-| context_precision | 0.2-0.4 | >0.6 | Fewer irrelevant docs |
-| context_relevance | 0.3-0.5 | >0.7 | Better ranking |
-| faithfulness | 0.6-0.8 | >0.8 | LLM trusts contexts more |
-| answer_correctness | 0.8-0.9 | >0.9 | More correct answers |
-| **Overall pass rate** | **50-60%** | **>75%** | System improvement |
-
----
-
-## Validation
-
-Run this evaluation suite again after fixes:
-
-```bash
-./run_full_evaluation_suite.sh
-```
-
-Compare reports to measure improvement.
-
----
 
 ## Appendix: Understanding the Metrics
 
@@ -451,29 +666,35 @@ But:
 
 ## Key Takeaways for okp-mcp Team
 
-1. **The evaluation framework is working correctly** - It's successfully detecting retrieval quality issues
-2. **Primary issue: Over-retrieval** - 100-250+ contexts when 10-20 would be optimal
-3. **Secondary issue: Poor ranking** - Boilerplate ranks higher than content
-4. **Tertiary issue: Version filtering** - Wrong RHEL version docs retrieved
-5. **Quick wins available** - Limiting results and boosting content can improve metrics 30-50%
-
-**These are NOT test framework bugs** - they are accurate measurements of current retrieval quality.
-
----
-
-**Questions?** Contact evaluation team or see full analysis in the output directory.
-
-**Analysis Location:**
-- Correlation analysis: `{correlation_analysis_dir.name if correlation_analysis_dir else 'N/A'}/`
-- Version analysis: `{version_analysis_dir.name if version_analysis_dir else 'N/A'}/`
-
----
-
-*Generated by LightSpeed Evaluation Framework*
 """
+
+    if detected_issues:
+        report += f"1. **{len(detected_issues)} issues detected** - See Root Cause Analysis section\n"
+        critical_high = [i for i in detected_issues if i[1]["severity"] in ["critical", "high"]]
+        if critical_high:
+            report += f"2. **{len(critical_high)} critical/high priority issues** - Immediate attention needed\n"
+        report += "3. **Fixes are straightforward** - Most are simple Solr parameter changes\n"
+        report += "4. **Quick wins available** - Some fixes can improve metrics 30-50%\n"
+    else:
+        report += "1. **System is healthy** - No major issues detected\n"
+        report += "2. **Continue monitoring** - Metrics are within acceptable ranges\n"
+        report += "3. **Consider optimizations** - Room for marginal improvements\n"
+
+    report += "\n**These are NOT test framework bugs** - they are accurate measurements of current retrieval quality.\n\n"
+    report += "---\n\n"
+    report += "**Questions?** Contact evaluation team or see full analysis in the output directory.\n\n"
+    report += "**Analysis Location:**\n"
+    report += f"- Correlation analysis: `{correlation_analysis_dir.name if correlation_analysis_dir else 'N/A'}/`\n"
+    report += f"- Version analysis: `{version_analysis_dir.name if version_analysis_dir else 'N/A'}/`\n\n"
+    report += "---\n\n"
+    report += "*Generated by LightSpeed Evaluation Framework*\n"
 
     return report
 
+
+# ============================================================================
+# MAIN
+# ============================================================================
 
 def main():
     """Main entry point."""
@@ -526,9 +747,9 @@ def main():
                 # Check for pattern match
                 summary_files = list(args.correlation_analysis.glob("*_summary_report.txt"))
                 if summary_files:
-                    print(f"    ✓ Found {len(summary_files)} summary report file(s): {summary_files[0].name}")
+                    print(f"    ✓ Found {len(summary_files)} summary report file(s)")
                     if len(summary_files) > 1:
-                        print(f"      (will use most recent)")
+                        print(f"      (will combine all {len(summary_files)} test configs)")
                 else:
                     print(f"    ⚠ No summary report files found - correlation data will be missing from report")
         else:
