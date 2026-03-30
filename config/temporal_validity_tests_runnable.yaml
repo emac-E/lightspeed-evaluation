@@ -29,9 +29,11 @@
         Start service: systemctl enable --now kea-dhcp4
 
       turn_metrics:
-        - ragas:context_relevance
-        - ragas:context_precision_without_reference
         - ragas:faithfulness
+        - ragas:response_relevancy
+        - ragas:context_precision_without_reference
+        - ragas:context_relevance
+        - ragas:context_recall
         - custom:answer_correctness
 
 - conversation_group_id: TEMPORAL-REMOVED-002
@@ -52,8 +54,11 @@
         nmcli con up eth0
 
       turn_metrics:
-        - ragas:context_relevance
         - ragas:faithfulness
+        - ragas:response_relevancy
+        - ragas:context_precision_without_reference
+        - ragas:context_relevance
+        - ragas:context_recall
         - custom:answer_correctness
 
 - conversation_group_id: TEMPORAL-REMOVED-003
@@ -73,7 +78,11 @@
         - Migration guide available
 
       turn_metrics:
+        - ragas:faithfulness
+        - ragas:response_relevancy
+        - ragas:context_precision_without_reference
         - ragas:context_relevance
+        - ragas:context_recall
         - custom:answer_correctness
 
 # ==============================================================================
@@ -96,8 +105,11 @@
         Also available: Python 3.13 in AppStream
 
       turn_metrics:
-        - ragas:context_relevance
         - ragas:faithfulness
+        - ragas:response_relevancy
+        - ragas:context_precision_without_reference
+        - ragas:context_relevance
+        - ragas:context_recall
         - custom:answer_correctness
 
 - conversation_group_id: TEMPORAL-ADDED-002
@@ -116,7 +128,11 @@
         Kea supports DHCPv4 and DHCPv6.
 
       turn_metrics:
+        - ragas:faithfulness
+        - ragas:response_relevancy
+        - ragas:context_precision_without_reference
         - ragas:context_relevance
+        - ragas:context_recall
         - custom:answer_correctness
 
 - conversation_group_id: TEMPORAL-ADDED-003
@@ -133,7 +149,11 @@
         RHEL 10 uses kernel 6.x (major upgrade from RHEL 9's kernel 5.14).
 
       turn_metrics:
+        - ragas:faithfulness
+        - ragas:response_relevancy
+        - ragas:context_precision_without_reference
         - ragas:context_relevance
+        - ragas:context_recall
         - custom:answer_correctness
 
 # ==============================================================================
@@ -155,7 +175,11 @@
         firewalld uses nftables by default.
 
       turn_metrics:
+        - ragas:faithfulness
+        - ragas:response_relevancy
+        - ragas:context_precision_without_reference
         - ragas:context_relevance
+        - ragas:context_recall
         - custom:answer_correctness
 
 - conversation_group_id: TEMPORAL-CHANGED-002
@@ -174,6 +198,10 @@
 
       turn_metrics:
         - ragas:faithfulness
+        - ragas:response_relevancy
+        - ragas:context_precision_without_reference
+        - ragas:context_relevance
+        - ragas:context_recall
         - custom:answer_correctness
 
 # ==============================================================================
@@ -199,8 +227,11 @@
         5. Test before production
 
       turn_metrics:
-        - ragas:context_relevance
         - ragas:faithfulness
+        - ragas:response_relevancy
+        - ragas:context_precision_without_reference
+        - ragas:context_relevance
+        - ragas:context_recall
         - custom:answer_correctness
 
 - conversation_group_id: TEMPORAL-MIGRATION-002
@@ -220,7 +251,11 @@
         Performance improvements and new syntax features in 3.12
 
       turn_metrics:
+        - ragas:faithfulness
+        - ragas:response_relevancy
+        - ragas:context_precision_without_reference
         - ragas:context_relevance
+        - ragas:context_recall
         - custom:answer_correctness
 
 # ==============================================================================
@@ -243,7 +278,11 @@
         RHEL 10: Kea DHCP (kea package), ISC DHCP removed
 
       turn_metrics:
+        - ragas:faithfulness
+        - ragas:response_relevancy
+        - ragas:context_precision_without_reference
         - ragas:context_relevance
+        - ragas:context_recall
         - custom:answer_correctness
 
 - conversation_group_id: TEMPORAL-COMPARE-002
@@ -263,7 +302,11 @@
         RHEL 10: network-scripts removed, NetworkManager only
 
       turn_metrics:
+        - ragas:faithfulness
+        - ragas:response_relevancy
+        - ragas:context_precision_without_reference
         - ragas:context_relevance
+        - ragas:context_recall
         - custom:answer_correctness
 
 # ==============================================================================
@@ -286,7 +329,11 @@
         Configure: /etc/kea/kea-dhcp4.conf
 
       turn_metrics:
+        - ragas:faithfulness
+        - ragas:response_relevancy
+        - ragas:context_precision_without_reference
         - ragas:context_relevance
+        - ragas:context_recall
         - custom:answer_correctness
 
 - conversation_group_id: TEMPORAL-IMPLICIT-002
@@ -304,7 +351,11 @@
         Please specify RHEL version for version-specific information.
 
       turn_metrics:
+        - ragas:faithfulness
+        - ragas:response_relevancy
+        - ragas:context_precision_without_reference
         - ragas:context_relevance
+        - ragas:context_recall
         - custom:answer_correctness
 
 # ==============================================================================

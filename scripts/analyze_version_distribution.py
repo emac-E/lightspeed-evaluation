@@ -40,10 +40,10 @@ class VersionDistributionAnalyzer:
     """Analyze RHEL version distribution in retrieved contexts."""
 
     VERSION_PATTERNS = [
-        r"RHEL\s*(\d+)(?:\.\d+)?",
-        r"Red\s+Hat\s+Enterprise\s+Linux\s+(\d+)(?:\.\d+)?",
-        r"rhel-(\d+)",
-        r"rhel(\d+)",
+        r"\bRHEL\s+(\d{1,2})(?:\.\d+)?\b",
+        r"\bRed\s+Hat\s+Enterprise\s+Linux\s+(\d{1,2})(?:\.\d+)?\b",
+        r"\brhel-(\d{1,2})(?:[-_.]|$)",
+        r"\brhel(\d{1,2})\b",
     ]
 
     def __init__(self, csv_file: str, test_config_file: str | None = None):
@@ -94,9 +94,12 @@ class VersionDistributionAnalyzer:
         if not text or pd.isna(text):
             return []
 
+        # Remove URLs to prevent matching KB article IDs (e.g., articles/58812)
+        text_cleaned = re.sub(r'https?://\S+', '', text)
+
         versions = []
         for pattern in self.VERSION_PATTERNS:
-            matches = re.finditer(pattern, text, re.IGNORECASE)
+            matches = re.finditer(pattern, text_cleaned, re.IGNORECASE)
             for match in matches:
                 version = match.group(1)
                 if version not in versions:
@@ -375,6 +378,44 @@ class VersionDistributionAnalyzer:
         print("=" * 80 + "\n")
 
 
+def find_latest_temporal_test() -> tuple[Path | None, Path | None]:
+    """Find the latest temporal test CSV and config from eval_output.
+
+    Returns:
+        Tuple of (csv_file, config_file) or (None, None) if not found
+    """
+    base_dir = Path("eval_output")
+
+    # Find all full_suite_* directories, sorted by name (newest first)
+    all_runs = sorted(
+        [d for d in base_dir.glob("full_suite_*") if d.is_dir()],
+        key=lambda p: p.name,
+        reverse=True,
+    )
+
+    for run_dir in all_runs:
+        # Look for temporal test CSV
+        temporal_csvs = list(run_dir.glob("temporal_validity_tests*/evaluation_*_detailed.csv"))
+        if temporal_csvs:
+            csv_file = temporal_csvs[0]
+
+            # Look for corresponding config file
+            config_file = Path("config/temporal_validity_tests_runnable.yaml")
+            if not config_file.exists():
+                config_file = Path("config/temporal_validity_tests.yaml")
+            if not config_file.exists():
+                config_file = None
+
+            logger.info(f"Auto-detected latest run: {run_dir.name}")
+            logger.info(f"  CSV: {csv_file}")
+            if config_file:
+                logger.info(f"  Config: {config_file}")
+
+            return csv_file, config_file
+
+    return None, None
+
+
 def main() -> int:
     """Main entry point."""
     parser = argparse.ArgumentParser(
@@ -383,31 +424,65 @@ def main() -> int:
     parser.add_argument(
         "--input",
         "-i",
-        required=True,
-        help="Input CSV file from evaluation results",
+        help="Input CSV file from evaluation results (auto-detects latest run if not specified)",
     )
     parser.add_argument(
         "--test-config",
         "-t",
-        help="Optional YAML config file with target versions",
+        help="Optional YAML config file with target versions (auto-detects if not specified)",
     )
     parser.add_argument(
         "--output",
         "-o",
-        default="analysis_output",
-        help="Output directory for reports (default: analysis_output)",
+        default=None,
+        help="Output directory for reports (default: auto-generated based on run)",
     )
 
     args = parser.parse_args()
 
     try:
-        analyzer = VersionDistributionAnalyzer(args.input, args.test_config)
+        # Auto-detect input and config if not provided
+        input_file = args.input
+        test_config = args.test_config
+        output_dir = args.output
+
+        if not input_file:
+            logger.info("No --input specified, auto-detecting latest run...")
+            csv_file, config_file = find_latest_temporal_test()
+
+            if not csv_file:
+                logger.error("❌ No temporal test runs found in eval_output/")
+                logger.error("   Run an evaluation first or specify --input manually")
+                return 1
+
+            input_file = str(csv_file)
+            if not test_config and config_file:
+                test_config = str(config_file)
+
+            # Auto-generate output directory based on run
+            if not output_dir:
+                run_dir = csv_file.parent.parent
+                output_dir = str(run_dir / "version_analysis")
+        else:
+            # Manual input specified
+            if not output_dir:
+                output_dir = "analysis_output"
+
+        logger.info(f"\n📊 Analyzing version distribution...")
+        logger.info(f"Input:  {input_file}")
+        if test_config:
+            logger.info(f"Config: {test_config}")
+        logger.info(f"Output: {output_dir}\n")
+
+        analyzer = VersionDistributionAnalyzer(input_file, test_config)
         analyzer.load_data()
 
-        output_dir = Path(args.output)
-        output_dir.mkdir(parents=True, exist_ok=True)
+        output_path = Path(output_dir)
+        output_path.mkdir(parents=True, exist_ok=True)
 
-        analyzer.generate_report(output_dir)
+        analyzer.generate_report(output_path)
+
+        logger.info(f"\n✅ Analysis complete! Reports saved to: {output_path}")
 
         return 0
     except Exception as e:

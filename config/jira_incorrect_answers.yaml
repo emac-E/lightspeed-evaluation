@@ -24,6 +24,7 @@
         - ragas:response_relevancy
         - ragas:context_precision_without_reference
         - ragas:context_relevance
+        - ragas:context_recall
         - custom:answer_correctness
 
 - conversation_group_id: RSPEED-2201
@@ -46,6 +47,7 @@
         - ragas:response_relevancy
         - ragas:context_precision_without_reference
         - ragas:context_relevance
+        - ragas:context_recall
         - custom:answer_correctness
 
 - conversation_group_id: RSPEED-2200
@@ -67,6 +69,7 @@
         - ragas:response_relevancy
         - ragas:context_precision_without_reference
         - ragas:context_relevance
+        - ragas:context_recall
         - custom:answer_correctness
 
 - conversation_group_id: RSPEED-2136
@@ -92,6 +95,7 @@
         - ragas:response_relevancy
         - ragas:context_precision_without_reference
         - ragas:context_relevance
+        - ragas:context_recall
         - custom:answer_correctness
 
 - conversation_group_id: RSPEED-2482
@@ -115,6 +119,7 @@
         - ragas:response_relevancy
         - ragas:context_precision_without_reference
         - ragas:context_relevance
+        - ragas:context_recall
         - custom:answer_correctness
 
 - conversation_group_id: RSPEED-2481
@@ -138,6 +143,7 @@
         - ragas:response_relevancy
         - ragas:context_precision_without_reference
         - ragas:context_relevance
+        - ragas:context_recall
         - custom:answer_correctness
 
 - conversation_group_id: RSPEED-2480
@@ -163,6 +169,7 @@
         - ragas:response_relevancy
         - ragas:context_precision_without_reference
         - ragas:context_relevance
+        - ragas:context_recall
         - custom:answer_correctness
 
 - conversation_group_id: RSPEED-2479
@@ -186,6 +193,7 @@
         - ragas:response_relevancy
         - ragas:context_precision_without_reference
         - ragas:context_relevance
+        - ragas:context_recall
         - custom:answer_correctness
 
 - conversation_group_id: RSPEED-2478
@@ -211,30 +219,32 @@
         - ragas:response_relevancy
         - ragas:context_precision_without_reference
         - ragas:context_relevance
+        - ragas:context_recall
         - custom:answer_correctness
 
-- conversation_group_id: RSPEED-2124
-  description: "Windows Server installation - Previously incorrectly provided instructions"
-  tag: wrong_answers
-  turns:
-    - turn_id: turn1
-      query: "How do I install Windows Server?"
-      response: null
-      contexts: null
-      expected_response: |
-        CLA should NOT provide step-by-step Windows Server installation instructions.
-        Key facts:
-        - CLA is a RHEL expert and should say it cannot help with Windows
-        - Should redirect to Microsoft documentation or Windows specialists
-        - Previously (granite 3.x) it correctly declined; granite 4 regressed
-        WRONG if it provides: virt-install commands, KVM guest setup steps,
-        or any detailed Windows Server installation walkthrough
-      turn_metrics:
-        - ragas:faithfulness
-        - ragas:response_relevancy
-        - ragas:context_precision_without_reference
-        - ragas:context_relevance
-        - custom:answer_correctness
+# - conversation_group_id: RSPEED-2124
+#   description: "Windows Server installation - Previously incorrectly provided instructions"
+#   tag: wrong_answers
+#   turns:
+#     - turn_id: turn1
+#       query: "How do I install Windows Server?"
+#       response: null
+#       contexts: null
+#       expected_response: |
+#         CLA should NOT provide step-by-step Windows Server installation instructions.
+#         Key facts:
+#         - CLA is a RHEL expert and should say it cannot help with Windows
+#         - Should redirect to Microsoft documentation or Windows specialists
+#         - Previously (granite 3.x) it correctly declined; granite 4 regressed
+#         WRONG if it provides: virt-install commands, KVM guest setup steps,
+#         or any detailed Windows Server installation walkthrough
+#       turn_metrics:
+#         - ragas:faithfulness
+#         - ragas:response_relevancy
+#         - ragas:context_precision_without_reference
+#         - ragas:context_relevance
+#         - ragas:context_recall
+#         - custom:answer_correctness
 
 - conversation_group_id: RSPEED-2123
   description: "NIC driver debugging - Previously used wrong ethtool flag"
@@ -257,6 +267,7 @@
         - ragas:response_relevancy
         - ragas:context_precision_without_reference
         - ragas:context_relevance
+        - ragas:context_recall
         - custom:answer_correctness
 
 - conversation_group_id: RSPEED-2113
@@ -282,6 +293,7 @@
         - ragas:response_relevancy
         - ragas:context_precision_without_reference
         - ragas:context_relevance
+        - ragas:context_recall
         - custom:answer_correctness
 
 - conversation_group_id: RSPEED-1998
@@ -304,6 +316,7 @@
         - ragas:response_relevancy
         - ragas:context_precision_without_reference
         - ragas:context_relevance
+        - ragas:context_recall
         - custom:answer_correctness
 
 - conversation_group_id: RSPEED-1931
@@ -326,6 +339,7 @@
         - ragas:response_relevancy
         - ragas:context_precision_without_reference
         - ragas:context_relevance
+        - ragas:context_recall
         - custom:answer_correctness
 
 - conversation_group_id: RSPEED-1930
@@ -350,6 +364,7 @@
         - ragas:response_relevancy
         - ragas:context_precision_without_reference
         - ragas:context_relevance
+        - ragas:context_recall
         - custom:answer_correctness
 
 - conversation_group_id: RSPEED-1929
@@ -373,6 +388,7 @@
         - ragas:response_relevancy
         - ragas:context_precision_without_reference
         - ragas:context_relevance
+        - ragas:context_recall
         - custom:answer_correctness
 
 - conversation_group_id: RSPEED-1902
@@ -397,6 +413,7 @@
         - ragas:response_relevancy
         - ragas:context_precision_without_reference
         - ragas:context_relevance
+        - ragas:context_recall
         - custom:answer_correctness
 
 - conversation_group_id: RSPEED-1859
@@ -419,6 +436,7 @@
         - ragas:response_relevancy
         - ragas:context_precision_without_reference
         - ragas:context_relevance
+        - ragas:context_recall
         - custom:answer_correctness
 
 - conversation_group_id: RSPEED-1813
@@ -441,6 +459,7 @@
         - ragas:response_relevancy
         - ragas:context_precision_without_reference
         - ragas:context_relevance
+        - ragas:context_recall
         - custom:answer_correctness
 
 - conversation_group_id: RSPEED-1812
@@ -464,4 +483,5 @@
         - ragas:response_relevancy
         - ragas:context_precision_without_reference
         - ragas:context_relevance
+        - ragas:context_recall
         - custom:answer_correctness

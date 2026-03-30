@@ -9,11 +9,11 @@ core:
 # LLM as a judge configuration
 llm:
   provider: "vertex"                  # LLM Provider (openai, watsonx, gemini, vertex, hosted_vllm etc..)
-  model: "gemini-2.5-flash"           # Model name for the provider (Vertex AI format)
+  model: "gemini-2.5-pro"             # Model name for the provider (Vertex AI format)
   ssl_verify: true                    # Verify SSL certificates for specified provider
   ssl_cert_file: null                 # Path to custom CA
   temperature: 0.0                    # Generation temperature
-  max_tokens: 4096                    # Maximum tokens in response
+  max_tokens: 16384                   # Maximum tokens in response
   timeout: 300                        # Request timeout in seconds
   num_retries: 3                      # Retry attempts
   cache_dir: ".caches/llm_cache"      # Directory with LLM cache
@@ -112,23 +112,19 @@ metrics_metadata:
       description: "Script-based evaluation for infrastructure/environment validation"
 
     # NLP-based metrics (non-LLM text comparison)
-    "nlp:bleu":
-      threshold: 0.5
-      description: "BLEU score - measures n-gram overlap between response and expected_response"
-      max_ngram: 4  # Options: 1 (unigrams), 2 (bigrams), 3 (trigrams), 4 (standard BLEU-4)
-      default: false
+    # analysis_output/time_series/heatmap_ragas:context_relevance.png analysis_output/time_series/heatmap_custom:answer_correctness.png analysis_output/time_series/heatmap_ragas:faithfulness.png analysis_output/time_series/heatmap_ragas:response_relevancy.png
 
-    "nlp:rouge":
-      threshold: 0.3  # Note: ROUGE measures n-gram overlap, not semantic meaning. Meaningful responses with different wording may score low.
-      description: "ROUGE score - measures n-gram overlap. Returns fmeasure (F1) with precision/recall in reason."
-      rouge_type: "rougeL"  # Options: rouge1, rouge2, rougeL, rougeLsum
-      default: false
+    # "nlp:rouge":
+    #   threshold: 0.3  # Note: ROUGE measures n-gram overlap, not semantic meaning. Meaningful responses with different wording may score low.
+    #   description: "ROUGE score - measures n-gram overlap. Returns fmeasure (F1) with precision/recall in reason."
+    #   rouge_type: "rougeL"  # Options: rouge1, rouge2, rougeL, rougeLsum
+    #   default: false
 
-    "nlp:semantic_similarity_distance":
-      threshold: 0.7
-      description: "String distance metrics (Levenshtein, Jaro, etc.) - NOT recommended for LLM outputs as it measures character similarity, not semantic meaning"
-      distance_measure: "levenshtein"  # Options: levenshtein, hamming, jaro, jaro_winkler
-      default: false  # Use custom:answer_correctness for semantic comparison instead
+    # "nlp:semantic_similarity_distance":
+    #   threshold: 0.7
+    #   description: "String distance metrics (Levenshtein, Jaro, etc.) - NOT recommended for LLM outputs as it measures character similarity, not semantic meaning"
+    #   distance_measure: "levenshtein"  # Options: levenshtein, hamming, jaro, jaro_winkler
+    #   default: false  # Use custom:answer_correctness for semantic comparison instead
 
     # GEval turn-level metrics (criteria = required; evaluation_steps, rubrics = optional)
     "geval:technical_accuracy":

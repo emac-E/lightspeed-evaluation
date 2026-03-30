@@ -148,7 +148,9 @@ def create_comparison_table(
                     # Calculate delta
                     if pd.notna(score_current) and pd.notna(score_prev):
                         delta = score_current - score_prev
-                        delta_color = "green" if delta > 0 else "red" if delta < 0 else "white"
+                        delta_color = (
+                            "green" if delta > 0 else "red" if delta < 0 else "white"
+                        )
                         delta_str = f"[{delta_color}]{delta:+.4f}[/{delta_color}]"
                     else:
                         delta_str = "N/A"
@@ -218,11 +220,17 @@ def print_summary_stats(
 
             # Format delta with color
             if "rate" in key.lower() or "total" in key.lower():
-                delta_color = "green" if delta > 0 and "pass" in key.lower() else "red" if delta < 0 and "pass" in key.lower() else "white"
+                delta_color = (
+                    "green"
+                    if delta > 0 and "pass" in key.lower()
+                    else "red" if delta < 0 and "pass" in key.lower() else "white"
+                )
             else:
                 delta_color = "white"
 
-            row_data.extend([f"{prev_val:,}", f"[{delta_color}]{delta:+,}[/{delta_color}]"])
+            row_data.extend(
+                [f"{prev_val:,}", f"[{delta_color}]{delta:+,}[/{delta_color}]"]
+            )
 
         table.add_row(*row_data)
 
@@ -237,7 +245,9 @@ def main() -> None:
     if len(sys.argv) > 1:
         output_dir = Path(sys.argv[1])
     else:
-        output_dir = Path("/home/emackey/Work/lightspeed-core/lightspeed-evaluation/eval_output")
+        output_dir = Path(
+            "/home/emackey/Work/lightspeed-core/lightspeed-evaluation/eval_output"
+        )
 
     if not output_dir.exists():
         console.print(f"[red]Error: Directory not found: {output_dir}[/red]")

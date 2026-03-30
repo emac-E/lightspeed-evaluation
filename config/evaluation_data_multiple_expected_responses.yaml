@@ -16,7 +16,12 @@
                           "I am an AI assistant designed to help you find information, answer questions, and assist with various tasks. How can I help you today?"]
       expected_tool_calls: null
       turn_metrics:
+        - ragas:faithfulness
+        - ragas:response_relevancy
+        - ragas:context_precision_without_reference
+        - ragas:context_relevance
         - ragas:context_recall
+        - custom:answer_correctness
       turn_metrics_metadata:
         ragas:context_recall:
           threshold: 0.5

@@ -14,6 +14,10 @@
       turn_metrics:
         - ragas:faithfulness
         - ragas:response_relevancy
+        - ragas:context_precision_without_reference
+        - ragas:context_relevance
+        - ragas:context_recall
+        - custom:answer_correctness
 
     - turn_id: apache_deployment
       query: How do I deploy a web server with Apache in RHEL 10?
@@ -21,6 +25,10 @@
       turn_metrics:
         - ragas:faithfulness
         - ragas:response_relevancy
+        - ragas:context_precision_without_reference
+        - ragas:context_relevance
+        - ragas:context_recall
+        - custom:answer_correctness
 
     - turn_id: gnome_configuration
       query: How do I configure the GNOME desktop environment in RHEL 10?
@@ -28,6 +36,10 @@
       turn_metrics:
         - ragas:faithfulness
         - ragas:response_relevancy
+        - ragas:context_precision_without_reference
+        - ragas:context_relevance
+        - ragas:context_recall
+        - custom:answer_correctness
 
 - conversation_group_id: rhel10_new_features
   description: RHEL 10 specific new features and changes
@@ -41,6 +53,9 @@
         - ragas:faithfulness
         - ragas:response_relevancy
         - ragas:context_precision_without_reference
+        - ragas:context_relevance
+        - ragas:context_recall
+        - custom:answer_correctness
 
     - turn_id: dnf_modularity_deprecation
       query: Explain the DNF modularity deprecation in RHEL 10 and what replaces it
@@ -48,6 +63,9 @@
       turn_metrics:
         - ragas:faithfulness
         - ragas:response_relevancy
+        - ragas:context_precision_without_reference
+        - ragas:context_relevance
+        - custom:answer_correctness
         - ragas:context_recall
 
 - conversation_group_id: rhel_general_security
@@ -61,3 +79,7 @@
       turn_metrics:
         - ragas:faithfulness
         - ragas:response_relevancy
+        - ragas:context_precision_without_reference
+        - ragas:context_relevance
+        - ragas:context_recall
+        - custom:answer_correctness
