@@ -2,6 +2,7 @@
 
 import math
 from typing import Any, Optional
+import logging
 
 import litellm
 from datasets import Dataset
@@ -24,6 +25,27 @@ from lightspeed_evaluation.core.llm.ragas import RagasLLMManager
 from lightspeed_evaluation.core.models import EvaluationScope, TurnData
 
 
+logger = logging.getLogger(__name__)
+
+# Add success/failure callbacks for litellm                                                            
+def log_llm_response(kwargs, response_obj, start_time, end_time):
+      """Log successful LLM responses."""                                                                
+      logger.debug(                                                                                      
+          f"LLM Response:\n"                                                                             
+          f"Model: {kwargs.get('model')}\n"                                                              
+          f"Messages: {json.dumps(kwargs.get('messages'), indent=2)}\n"                                  
+          f"Response: {json.dumps(response_obj.dict(), indent=2, default=str)}\n"                        
+      )                                                                                                  
+                                                                                                         
+def log_llm_failure(kwargs, exception, start_time, end_time):                                          
+      """Log failed LLM responses."""                                                                    
+      logger.error(                                                                                      
+          f"LLM Failure:\n"
+          f"Model: {kwargs.get('model')}\n"                                                              
+          f"Messages: {json.dumps(kwargs.get('messages'), indent=2)}\n"                                  
+          f"Exception: {exception}\n"                                                                    
+      ) 
+
 # Decide if Dataset will be used or not ?
 class RagasMetrics:  # pylint: disable=too-few-public-methods
     """Handles Ragas metrics evaluation using LLM Manager."""
@@ -42,7 +64,12 @@ class RagasMetrics:  # pylint: disable=too-few-public-methods
             # We can't use Ragas's Cacher here, because we use litellm here and that conflicts with
             # litellm cache from DeepEval code
             litellm.cache = Cache(type=LiteLLMCacheType.DISK, disk_cache_dir=cache_dir)
+            litellm.success_callback = [log_llm_response]
+            litellm.failure_callback = [log_llm_failure]
 
+            logging.getLogger("ragas").setLevel(logging.DEBUG)
+            logging.getLogger("litellm").setLevel(logging.DEBUG)
+            
         # Note, it's not actually used, it modifies
         # global ragas.metrics settings during instance init
         self.llm_manager = RagasLLMManager(llm_manager)

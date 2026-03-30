@@ -133,7 +133,6 @@ class APIClient:
             elif self.config.endpoint_type == "infer":
                 response = self._rlsapi_infer_query(api_request)
 
-
             if self.config.cache_enabled:
                 self._add_response_to_cache(api_request, response)
 
@@ -244,21 +243,28 @@ class APIClient:
             raise
         except Exception as e:
             raise self._handle_unexpected_error(e, "streaming query") from e
-        
+
     def _rlsapi_infer_query(self, api_request: APIRequest) -> APIResponse:
-        """ special handling for rlsapi endpoint that provides the metadata on 
-            tool calls and rag chunks - CLA backend test case
+        """special handling for rlsapi endpoint that can provide the metadata on
+        tool calls and rag chunks - RHEL CLA backend test case
         """
         if not self.client:
             raise APIError("HTTP client not initialized")
         try:
             # convert form from "query" to "question" as expected by rlsapi
             request_data = api_request.model_dump(exclude_none=True)
-            infer_request = {"question": request_data.pop("query"), "include_metadata":True}
+            infer_request = {
+                "question": request_data.pop("query"),
+                "include_metadata": True,
+            }
 
             logger.debug(f"RLS API infer request URL: /{self.config.version}/infer")
-            logger.debug(f"RLS API infer request body: {json.dumps(infer_request, indent=2)}")
-            logger.debug(f"Original request_data (remaining): {json.dumps(request_data, indent=2)}")
+            logger.debug(
+                f"RLS API infer request body: {json.dumps(infer_request, indent=2)}"
+            )
+            logger.debug(
+                f"Original request_data (remaining): {json.dumps(request_data, indent=2)}"
+            )
 
             response = self.client.post(
                 f"/api/lightspeed/{self.config.version}/infer",
@@ -272,28 +278,41 @@ class APIClient:
             response.raise_for_status()
 
             response_data = response.json()
-            logger.debug(f"RLS API response data keys: {response_data.keys() if isinstance(response_data, dict) else type(response_data)}")
+            logger.debug(
+                f"RLS API response data keys: {response_data.keys() if isinstance(response_data, dict) else type(response_data)}"
+            )
 
             # parse out data needed for tests
-            if "data" in response_data:         # the outer key
+            if "data" in response_data:  # the outer key
                 data = response_data["data"]
-                if "text" in data:              # answer to the question
+                # temporary!!! TODO: remove this
+                RED = "\033[31m"
+                RESET = "\033[0m"
+                if "text" in data:  # answer to the question
                     response_data["response"] = data["text"]
-                if "request_id" in data:        
+                if "request_id" in data:
                     response_data["conversation_id"] = data["request_id"]
-                if "input_tokens" in data:      
+                if "input_tokens" in data:
                     response_data["input_tokens"] = data["input_tokens"]
+                    logger.debug(
+                        f"{RED}RLS API INPUT TOKENS: {response_data["input_tokens"]}{RESET}"
+                    )
                 if "output_tokens" in data:
                     response_data["output_tokens"] = data["output_tokens"]
+                    logger.debug(
+                        f"{RED}output_tokens: {response_data["output_tokens"]}{RESET}"
+                    )
                 if "tool_calls" in data:
                     response_data["tool_calls"] = data["tool_calls"]
-                if "tool_results" in data:      # RAG "chunks" are in the tool calls
-                    tool_results = data["tool_results"] # list of dicts
+                if "tool_results" in data:  # RAG "chunks" are in the tool calls
+                    tool_results = data["tool_results"]  # list of dicts
                     for result in tool_results:
-                        if (result["type"]) == "mcp_call":      # mcp rag call was made
+                        if (result["type"]) == "mcp_call":  # mcp rag call was made
                             # break into individual dict entries - this might be weak but draft
                             content = result["content"].split("---")
-                            response_data["rag_chunks"] = [{"content": x} for x in content]   # delimiter is --- between references pulled
+                            response_data["rag_chunks"] = [
+                                {"content": x} for x in content
+                            ]  # delimiter is --- between references pulled
 
             # empty text check
             if "response" not in response_data:
@@ -303,25 +322,35 @@ class APIClient:
             if "tool_calls" in response_data and response_data["tool_calls"]:
                 raw_tool_calls = response_data["tool_calls"]
                 formatted_tool_calls = []
-                
 
                 # Convert list[dict] to list[list[dict]] format
                 for tool_call in raw_tool_calls:
                     if isinstance(tool_call, dict):
                         formatted_tool: dict[str, object] = {
                             "tool_name": tool_call.get("tool_name")
-                            or tool_call.get("name")  # rlsapi (mcp_list_tools or search_documentation)
+                            or tool_call.get(
+                                "name"
+                            )  # rlsapi (mcp_list_tools or search_documentation)
                             or "",
                             "arguments": tool_call.get("arguments")
-                            or tool_call.get("args")  # rlsapi /v1/infer - preserve called args
+                            or tool_call.get(
+                                "args"
+                            )  # rlsapi /v1/infer - preserve called args
                             or {},
                         }
-                        
+
                         # status of call - this comes from tool_result["status"]
                         # match by id to retrieve corresponding sts
                         if "tool_results" in response_data:
                             id = tool_call.get("id")
-                            stat = next((x for x in response_data["tool_results"] if x.get("id") == id), None)
+                            stat = next(
+                                (
+                                    x
+                                    for x in response_data["tool_results"]
+                                    if x.get("id") == id
+                                ),
+                                None,
+                            )
                             if stat:
                                 formatted_tool["result"] = stat["status"]
 
@@ -334,7 +363,9 @@ class APIClient:
         except httpx.TimeoutException as e:
             raise self._handle_timeout_error("infer", self.config.timeout) from e
         except httpx.HTTPStatusError as e:
-            logger.error(f"RLS API HTTP error - Status: {e.response.status_code}, Body: {e.response.text}")
+            logger.error(
+                f"RLS API HTTP error - Status: {e.response.status_code}, Body: {e.response.text}"
+            )
             raise self._handle_http_error(e) from e
         except ValueError as e:
             raise self._handle_validation_error(e) from e
@@ -342,7 +373,6 @@ class APIClient:
             raise
         except Exception as e:
             raise self._handle_unexpected_error(e, "infer query") from e
-
 
     def _handle_response_errors(self, response: httpx.Response) -> None:
         """Handle HTTP response errors for streaming endpoint."""

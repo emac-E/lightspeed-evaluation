@@ -1,0 +1,131 @@
+# LightSpeed Evaluation Data - CLA Negative Tests
+# These test cases are converted from the cla-tests/data directory
+# All tests here are expected to fail (expected_fail=true)
+#
+# These represent scenarios where the system should provide incorrect responses
+# or where known issues exist that need to be tracked
+
+- conversation_group_id: CLA-NEG-001
+  description: "Samba as Active Directory domain controller - should incorrectly claim support"
+  tag: evals_rhel_specific
+  turns:
+    - turn_id: turn1
+      query: "Is samba able to serve as an Active Directory domain controller?"
+      response: null
+      contexts: null
+      expected_response: "No, Samba on Red Hat Enterprise Linux cannot serve as an Active Directory domain controller. While upstream Samba 4.0+ supports this, RHEL's samba package excludes AD DC functionality due to MIT Kerberos incompatibility"
+      turn_metrics:
+        - ragas:faithfulness
+        - ragas:response_relevancy
+        - ragas:context_precision_without_reference
+        - ragas:context_relevance
+        - custom:answer_correctness
+
+- conversation_group_id: CLA-NEG-002
+  description: "Hugepages configuration - should omit required default_hugepagesz parameter"
+  tag: evals_rhel_specific
+  turns:
+    - turn_id: turn1
+      query: "How to configure 64 hugepages of size 1G at boot time in RHEL 10?"
+      response: null
+      contexts: null
+      expected_response: |
+        The page size which the HugeTLB subsystem supports depends on the architecture. The x86_64 architecture supports 2 MB huge pages and 1 GB gigantic pages. To configure 64 hugepages of size 1G at boot time on RHEL 10 in x86_64 architecture, follow these steps: 1. Use the `grubby` command to update the kernel boot parameters like `sudo grubby --update-kernel=ALL --args="default_hugepagesz=1G hugepagesz=1G hugepages=64`" 2. After updating the kernel parameters,
+        reboot your system to apply the changes `sudo systemctl reboot` 3. Verify the configuration using `sudo cat /proc/meminfo | grep -i Hugepages`
+      turn_metrics:
+        - ragas:faithfulness
+        - ragas:response_relevancy
+        - ragas:context_precision_without_reference
+        - ragas:context_relevance
+        - custom:answer_correctness
+
+- conversation_group_id: CLA-NEG-003
+  description: "Satellite versions support - should provide incorrect version information"
+  tag: evals_satellite
+  turns:
+    - turn_id: turn1
+      query: "What are currently supported Satellite versions?"
+      response: null
+      contexts: null
+      expected_response: |
+        The support policy for Red Hat Satellite is defined as N-2, where N is the latest ".Y" (minor) release of Satellite, effectively meaning that the current and the 2 previous versions will be concurrently supported within the same time frame.
+
+        For example, if the latest available version is Satellite 6.18, then support is also offered for Satellite 6.17 and 6.16.
+
+        When a version hits the End of Life (EOL) while still able to sync repositories, no technical support will be provided other than those concerning Satellite upgrade to a fully supported version.
+
+        More information as well as Satellite life-cycle date table can be found in: https://access.redhat.com/support/policy/updates/satellite
+      turn_metrics:
+        - ragas:faithfulness
+        - ragas:response_relevancy
+        - ragas:context_precision_without_reference
+        - ragas:context_relevance
+        - custom:answer_correctness
+
+- conversation_group_id: CLA-NEG-004
+  description: "AWS Secure Boot - should incorrectly claim unavailable"
+  tag: evals_sst_aws
+  turns:
+    - turn_id: turn1
+      query: "How to configure RHEL on AWS with Secure Boot?"
+      response: null
+      contexts: null
+      expected_response: |
+        Currently, AWS supports the Secure Boot mechanism for the Nitro instances. You can use the feature for both Marketplace AMIs and custom RHEL Amazon Machine Images (AMI).
+        1.Configuring an RHEL instance with the Secure Boot mechanism on the AWS Marketplace
+        For detailed steps, see https://docs.redhat.com/en/documentation/red_hat_enterprise_linux/10/html/deploying_and_managing_rhel_on_amazon_web_services/configuring-rhel-on-aws-with-secure-boot#configuring-a-rhel-instance-with-secure-boot-on-the-aws-marketplace
+        2.Configuring an RHEL instance with the Secure Boot mechanism from a custom RHEL image
+        For detailed steps, see https://docs.redhat.com/en/documentation/red_hat_enterprise_linux/10/html/deploying_and_managing_rhel_on_amazon_web_services/configuring-rhel-on-aws-with-secure-boot#configuring-a-rhel-instance-with-secure-boot-from-a-custom-rhel-image
+        Additional resources
+        https://docs.redhat.com/en/documentation/red_hat_enterprise_linux/9/html/deploying_rhel_9_on_amazon_web_services/configuring-rhel-on-aws-with-secure-boot_deploying-a-virtual-machine-on-aws
+        https://docs.redhat.com/en/documentation/red_hat_enterprise_linux/10/html/deploying_and_managing_rhel_on_amazon_web_services/configuring-rhel-on-aws-with-secure-boot
+      turn_metrics:
+        - ragas:faithfulness
+        - ragas:response_relevancy
+        - ragas:context_precision_without_reference
+        - ragas:context_relevance
+        - custom:answer_correctness
+
+- conversation_group_id: CLA-NEG-005
+  description: "HA cluster resource ordering - should use incorrect constraint syntax"
+  tag: evals_sst_high_availability
+  turns:
+    - turn_id: turn1
+      query: "Give me a command to make resources r1 and r2 to start in sequence and run on the same node"
+      response: null
+      contexts: null
+      expected_response: |
+        To make resources r1 and r2 start in sequence (r1 then r2) and run on the same node in a Red Hat High Availability cluster, you would use the pcs command-line utility.
+        Here are the commands:
+        1. Create an order constraint to ensure r1 starts before r2:
+          'pcs constraint order start r1 then start r2'
+            or
+          'pcs constraint order r1 then r2'
+        This command tells the cluster that r1 must be started successfully before r2 can be started.
+        2. Create a colocation constraint to ensure r2 runs on the same node as r1:
+          'pcs constraint colocation add r2 with r1 INFINITY'
+        This command ensures that r2 will always run on the same node as r1. INFINITY is a high score that makes this a mandatory colocation.
+        These commands are part of the Red Hat High Availability Add-On, which provides robust clustering capabilities for critical applications on Red Hat Enterprise Linux.
+      turn_metrics:
+        - ragas:faithfulness
+        - ragas:response_relevancy
+        - ragas:context_precision_without_reference
+        - ragas:context_relevance
+        - custom:answer_correctness
+
+- conversation_group_id: CLA-NEG-006
+  description: "HA cluster batch resource creation - should provide incomplete workflow"
+  tag: evals_sst_high_availability
+  turns:
+    - turn_id: turn1
+      query: "I would like to create a lot of cluster resources and it's taking a long time, how can I speed it up?"
+      response: null
+      contexts: null
+      expected_response: |
+        Running many pcs commands on an online cluster can take a long time since each command has to interact with Pacemaker. To speed up the process, you can leverage the `-f` option of pcs to work on an offline CIB file. This significantly speeds up the process as pcs doesn't need to interact with the live cluster during every command. When the resources are created in a separate file, the changes can be applied by pushing the CIB. Here's a step-by-step guide: 1. **Copy the current CIB into a file**: `pcs cluster cib > original.xml`. 2. **Create a copy of the CIB to obtain a diff**: `cp original.xml new.xml` 3. **Run the `pcs resource create` commands**: Execute the commands with the `-f` switch specifying the `new.xml` CIB file: ``` pcs resource create <resource-id> <resource-agent> -f new.xml ``` Replace `<resource-id>` and `<resource-agent>` with the actual resource ids and resource agent names. 4. **Apply the differences to the CIB**: To make sure that any changes to the original CIB since it was copied into a file are not overwritten, only the differences between the `original.xml` and `new.xml` should be applied to the CIB: `pcs cluster cib-push new.xml diff-against=original.xml`. 5. **Wait for the cluster to settle into a stable state:** Adding large number of resources into the CIB might take some time to process. Use the `crm_resource --wait` command or `pcs status wait [<timeout>]` command which is available since pcs 0.11.8.
+      turn_metrics:
+        - ragas:faithfulness
+        - ragas:response_relevancy
+        - ragas:context_precision_without_reference
+        - ragas:context_relevance
+        - custom:answer_correctness

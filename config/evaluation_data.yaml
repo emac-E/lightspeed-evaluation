@@ -18,9 +18,11 @@
       expected_response: Expected Response
       expected_tool_calls: null
       turn_metrics:
-      - ragas:faithfulness
-      - ragas:response_relevancy
-      - ragas:context_precision_without_reference
+        - ragas:faithfulness
+        - ragas:response_relevancy
+        - ragas:context_precision_without_reference
+        - ragas:context_relevance
+        - custom:answer_correctness
       turn_metrics_metadata:
         ragas:faithfulness:
           threshold: 0.99
@@ -40,9 +42,13 @@
         - Context 1
       expected_response: Expected Response
       turn_metrics:
-        - ragas:context_recall
+        - ragas:faithfulness
+        - ragas:response_relevancy
+        - ragas:context_precision_without_reference
         - ragas:context_relevance
+        - ragas:context_recall
         - ragas:context_precision_with_reference
+        - custom:answer_correctness
 
 - conversation_group_id: conv_group_3
   description: conversation group description

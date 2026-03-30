@@ -180,7 +180,7 @@ cython_debug/
 .caches/
 
 # Evaluation output folder
-eval_output*/
+eval_output/
 
 # DeepEval telemetry and configuration
 .deepeval/
@@ -192,3 +192,11 @@ wip*/
 
 # Used in e2e tests local testing
 .secrets
+
+# analysis output
+analysis_output/
+
+
+# other stuff added by EM but not needed
+JIRA_TICKET_CREATION_SPEC.md 
+RSPEED-*

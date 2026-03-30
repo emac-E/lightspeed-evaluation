@@ -13,6 +13,10 @@
       turn_metrics:
         - ragas:faithfulness
         - ragas:response_relevancy
+        - ragas:context_precision_without_reference
+        - ragas:context_relevance
+        - ragas:context_recall
+        - custom:answer_correctness
 
     - turn_id: rhel10_kernel_version
       query: What kernel version does RHEL 10 use?
@@ -20,6 +24,10 @@
       turn_metrics:
         - ragas:faithfulness
         - ragas:response_relevancy
+        - ragas:context_precision_without_reference
+        - ragas:context_relevance
+        - ragas:context_recall
+        - custom:answer_correctness
 
 - conversation_group_id: rhel10_hugepages
   description: RHEL 10 hugepages configuration - testing the specific instruction about kernel boot parameters
@@ -32,7 +40,11 @@
       turn_metrics:
         - ragas:faithfulness
         - ragas:response_relevancy
-        - nlp:bleu
+        - ragas:context_precision_without_reference
+        - ragas:context_relevance
+        - ragas:context_recall
+        - custom:answer_correctness
+        
       turn_metrics_metadata:
         nlp:bleu:
           threshold: 0.3
@@ -42,6 +54,11 @@
       expected_response: Complete grubby command with all three parameters (default_hugepagesz, hugepagesz, hugepages)
       turn_metrics:
         - ragas:faithfulness
+        - ragas:response_relevancy
+        - ragas:context_precision_without_reference
+        - ragas:context_relevance
+        - ragas:context_recall
+        - custom:answer_correctness
 
 - conversation_group_id: rhel10_deprecated_features
   description: Testing awareness of deprecated/removed features in RHEL 10
@@ -54,6 +71,10 @@
       turn_metrics:
         - ragas:faithfulness
         - ragas:response_relevancy
+        - ragas:context_precision_without_reference
+        - ragas:context_relevance
+        - ragas:context_recall
+        - custom:answer_correctness
 
 - conversation_group_id: source_attribution
   description: Verify all responses include proper source attribution
@@ -66,3 +87,7 @@
       turn_metrics:
         - ragas:faithfulness
         - ragas:response_relevancy
+        - ragas:context_precision_without_reference
+        - ragas:context_relevance
+        - ragas:context_recall
+        - custom:answer_correctness

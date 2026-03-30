@@ -18,6 +18,9 @@
       turn_metrics:
         - ragas:faithfulness
         - ragas:response_relevancy
+        - ragas:context_precision_without_reference
+        - ragas:context_relevance
+        - custom:answer_correctness
       contexts:
         - "https://access.redhat.com/support/policy/rhel-container-compatibility"
 
@@ -32,6 +35,10 @@
       turn_metrics:
         - ragas:faithfulness
         - ragas:response_relevancy
+        - ragas:context_precision_without_reference
+        - ragas:context_relevance
+        - ragas:context_recall
+        - custom:answer_correctness
 
     - turn_id: virt_manager_status
       query: Can I use virt-manager to manage virtual machines in RHEL 9?
@@ -39,6 +46,10 @@
       turn_metrics:
         - ragas:faithfulness
         - ragas:response_relevancy
+        - ragas:context_precision_without_reference
+        - ragas:context_relevance
+        - ragas:context_recall
+        - custom:answer_correctness
 
 - conversation_group_id: eus_support_timeline
   description: EUS support duration and availability
@@ -51,6 +62,10 @@
       turn_metrics:
         - ragas:faithfulness
         - ragas:response_relevancy
+        - ragas:context_precision_without_reference
+        - ragas:context_relevance
+        - ragas:context_recall
+        - custom:answer_correctness
 
     - turn_id: rhel9_eus_availability
       query: Which RHEL 9 minor releases have EUS support?
@@ -58,3 +73,7 @@
       turn_metrics:
         - ragas:faithfulness
         - ragas:response_relevancy
+        - ragas:context_precision_without_reference
+        - ragas:context_relevance
+        - ragas:context_recall
+        - custom:answer_correctness

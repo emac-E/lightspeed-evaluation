@@ -44,9 +44,10 @@
         - "RHEL 10"
 
       turn_metrics:
-        - ragas:context_relevance
-        - ragas:context_precision_without_reference
         - ragas:faithfulness
+        - ragas:response_relevancy
+        - ragas:context_precision_without_reference
+        - ragas:context_relevance
         - custom:answer_correctness
 
 - conversation_group_id: TEMPORAL-REMOVED-002
@@ -80,8 +81,10 @@
         - "nmcli"
 
       turn_metrics:
-        - ragas:context_relevance
         - ragas:faithfulness
+        - ragas:response_relevancy
+        - ragas:context_precision_without_reference
+        - ragas:context_relevance
         - custom:answer_correctness
 
 - conversation_group_id: TEMPORAL-REMOVED-003
@@ -114,6 +117,9 @@
         - "removed"
 
       turn_metrics:
+        - ragas:faithfulness
+        - ragas:response_relevancy
+        - ragas:context_precision_without_reference
         - ragas:context_relevance
         - custom:answer_correctness
 
@@ -151,8 +157,10 @@
         - "default"
 
       turn_metrics:
-        - ragas:context_relevance
         - ragas:faithfulness
+        - ragas:response_relevancy
+        - ragas:context_precision_without_reference
+        - ragas:context_relevance
         - custom:answer_correctness
 
 - conversation_group_id: TEMPORAL-ADDED-002
@@ -185,6 +193,9 @@
         - "RHEL 10"
 
       turn_metrics:
+        - ragas:faithfulness
+        - ragas:response_relevancy
+        - ragas:context_precision_without_reference
         - ragas:context_relevance
         - custom:answer_correctness
 
@@ -216,6 +227,9 @@
         - "RHEL 10"
 
       turn_metrics:
+        - ragas:faithfulness
+        - ragas:response_relevancy
+        - ragas:context_precision_without_reference
         - ragas:context_relevance
         - custom:answer_correctness
 
@@ -250,6 +264,9 @@
         - "default"
 
       turn_metrics:
+        - ragas:faithfulness
+        - ragas:response_relevancy
+        - ragas:context_precision_without_reference
         - ragas:context_relevance
         - custom:answer_correctness
 
@@ -281,6 +298,9 @@
 
       turn_metrics:
         - ragas:faithfulness
+        - ragas:response_relevancy
+        - ragas:context_precision_without_reference
+        - ragas:context_relevance
         - custom:answer_correctness
 
 # ==============================================================================
@@ -327,8 +347,10 @@
         - "RHEL 10"
 
       turn_metrics:
-        - ragas:context_relevance
         - ragas:faithfulness
+        - ragas:response_relevancy
+        - ragas:context_precision_without_reference
+        - ragas:context_relevance
         - custom:answer_correctness
 
 - conversation_group_id: TEMPORAL-MIGRATION-002
@@ -367,6 +389,9 @@
         - "Python 3.12"
 
       turn_metrics:
+        - ragas:faithfulness
+        - ragas:response_relevancy
+        - ragas:context_precision_without_reference
         - ragas:context_relevance
         - custom:answer_correctness
 
@@ -467,8 +492,10 @@
         nmcli con mod eth0 ipv4.addresses 192.168.1.100/24
 
       turn_metrics:
-        - ragas:context_relevance
         - ragas:faithfulness
+        - ragas:response_relevancy
+        - ragas:context_precision_without_reference
+        - ragas:context_relevance
         - custom:answer_correctness
 
       turn_metrics_metadata:
@@ -544,6 +571,9 @@
         - "removed"
 
       turn_metrics:
+        - ragas:faithfulness
+        - ragas:response_relevancy
+        - ragas:context_precision_without_reference
         - ragas:context_relevance
         - custom:answer_correctness
 
@@ -584,6 +614,9 @@
         - "NetworkManager"
 
       turn_metrics:
+        - ragas:faithfulness
+        - ragas:response_relevancy
+        - ragas:context_precision_without_reference
         - ragas:context_relevance
         - custom:answer_correctness
 
@@ -620,6 +653,9 @@
         - "dhcpd.conf"
 
       turn_metrics:
+        - ragas:faithfulness
+        - ragas:response_relevancy
+        - ragas:context_precision_without_reference
         - ragas:context_relevance
         - custom:answer_correctness
 
@@ -647,6 +683,9 @@
         - "Python 3.12"
 
       turn_metrics:
+        - ragas:faithfulness
+        - ragas:response_relevancy
+        - ragas:context_precision_without_reference
         - ragas:context_relevance
         - custom:answer_correctness
 

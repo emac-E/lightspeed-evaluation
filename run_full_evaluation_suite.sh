@@ -8,10 +8,28 @@
 # 3. Runs version distribution analysis on temporal tests
 # 4. Generates comprehensive RAG quality report for okp-mcp developers
 #
-# Usage: ./run_full_evaluation_suite_v2.sh
+# Usage:
+#   ./run_full_evaluation_suite.sh              # Normal mode (fresh queries)
+#   ./run_full_evaluation_suite.sh --debug-test # Debug mode (reuse cached data)
 #
 
 set -e  # Exit on error
+
+# Parse arguments
+DEBUG_TEST=false
+for arg in "$@"; do
+    case $arg in
+        --debug-test)
+            DEBUG_TEST=true
+            shift
+            ;;
+        *)
+            echo "Unknown argument: $arg"
+            echo "Usage: $0 [--debug-test]"
+            exit 1
+            ;;
+    esac
+done
 
 # Colors for output
 RED='\033[0;31m'
@@ -34,6 +52,7 @@ echo -e "${BLUE}========================================${NC}"
 echo -e "${BLUE}Full Evaluation Suite Runner${NC}"
 echo -e "${BLUE}========================================${NC}"
 echo ""
+echo -e "Mode: $([ "$DEBUG_TEST" = true ] && echo "${YELLOW}DEBUG (reusing cached data)${NC}" || echo "${GREEN}NORMAL (fresh queries)${NC}")"
 echo -e "Timestamp: ${TIMESTAMP}"
 echo -e "Output directory: ${OUTPUT_BASE}"
 echo -e "Analysis directory: ${ANALYSIS_OUTPUT}"
@@ -53,19 +72,52 @@ TEST_CONFIGS=(
 SUCCESSFUL_EVALS=()
 FAILED_EVALS=()
 
+if [ "$DEBUG_TEST" = false ]; then
+    echo -e "${GREEN}Step 0: Cache warmup - Clearing ALL caches before suite...${NC}"
+    echo ""
+    # Clear all caches once at the start to ensure fresh API/MCP data
+    rm -rf .caches/*
+    mkdir -p .caches/llm_cache
+    mkdir -p .caches/api_cache
+    mkdir -p .caches/embedding_cache
+    echo -e "${GREEN}✓ All caches cleared - fresh data will be fetched${NC}"
+    echo ""
+else
+    echo -e "${YELLOW}Step 0: Debug mode - Reusing existing cached data...${NC}"
+    echo ""
+    # Ensure cache directories exist but don't clear them
+    mkdir -p .caches/llm_cache
+    mkdir -p .caches/api_cache
+    mkdir -p .caches/embedding_cache
+    echo -e "${YELLOW}✓ Cache directories ready - will reuse cached responses${NC}"
+    echo ""
+fi
+
 echo -e "${GREEN}Step 1: Running all evaluation configs...${NC}"
 echo ""
 
-for config in "${TEST_CONFIGS[@]}"; do
+for i in "${!TEST_CONFIGS[@]}"; do
+    config="${TEST_CONFIGS[$i]}"
     config_name=$(basename "${config}" .yaml)
     output_dir="${OUTPUT_BASE}/${config_name}"
 
     echo -e "${YELLOW}Running: ${config}${NC}"
 
+    # Clear ONLY LLM judge cache between test configs (after first run)
+    # This ensures fresh evaluations but reuses API responses for consistent data
+    # SKIP in debug mode to reuse judge evaluations too
+    if [ "$DEBUG_TEST" = false ] && [ $i -gt 0 ]; then
+        echo -e "${BLUE}  Clearing LLM judge cache for fresh evaluations...${NC}"
+        rm -rf .caches/llm_cache/*
+        mkdir -p .caches/llm_cache
+    elif [ "$DEBUG_TEST" = true ] && [ $i -gt 0 ]; then
+        echo -e "${BLUE}  Debug mode: Reusing LLM judge cache...${NC}"
+    fi
+
     if lightspeed-eval \
         --system-config config/system.yaml \
         --eval-data "${config}" \
-        --output-dir "${output_dir}"; then
+        --output-dir "${output_dir}" 2>&1 | tee -a faithfulness.log; then
 
         echo -e "${GREEN}✓ Success: ${config_name}${NC}"
         SUCCESSFUL_EVALS+=("${config_name}")
@@ -186,6 +238,9 @@ QUESTION_REPORT="${OUTPUT_BASE}/QUESTION_METRICS_REPORT.md"
 
 echo -e "${GREEN}All outputs saved to:${NC} ${OUTPUT_BASE}"
 echo -e "${GREEN}Analysis saved to:${NC} ${ANALYSIS_OUTPUT}"
+if [ "$DEBUG_TEST" = true ]; then
+    echo -e "${YELLOW}⚠ Debug mode: Results based on CACHED data (no new LLM queries)${NC}"
+fi
 echo -e "${GREEN}Reports generated:${NC}"
 echo -e "  - RAG Quality Report: ${RAG_REPORT}"
 echo -e "  - Question Metrics Report: ${QUESTION_REPORT}"
