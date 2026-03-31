@@ -1,0 +1,406 @@
+# Chronically Failing Questions - Top 10 Worst Performers
+#
+# These questions consistently fail across 15+ evaluation runs with:
+# - Low context_recall (< 40%)
+# - Low answer_correctness (< 50%)
+# - High RAG_BYPASS rate (LLM uses parametric knowledge instead of contexts)
+#
+# Root causes identified:
+# 1. okp-mcp retrieves lifecycle/policy docs instead of technical docs
+# 2. No version filtering (RHEL 5/6/7 docs retrieved for RHEL 10 questions)
+# 3. Missing documentation (Kea DHCP, rpm-ostree not well indexed)
+# 4. Over-retrieval without semantic deduplication
+#
+# Use this config to:
+# - Test okp-mcp improvements (lifecycle de-boost, version filtering)
+# - Measure baseline before/after changes
+# - Focus on questions that matter most for accuracy
+#
+# Expected improvements after fixes:
+# - context_recall: 35% → 70%+
+# - answer_correctness: 45% → 75%+
+# - Lifecycle docs per query: 6.5 → < 2
+#
+# ==============================================================================
+# TOP 10 CHRONICALLY FAILING QUESTIONS
+# Sorted by failure rate (worst first)
+# ==============================================================================
+
+# ==============================================================================
+# RANK 1: TEMPORAL-ADDED-003 (23% correct, 16 evaluations)
+# Problem: Retrieves 37 lifecycle docs, ZERO kernel version docs
+# ==============================================================================
+
+- conversation_group_id: TEMPORAL-ADDED-003
+  description: "Kernel 6.x in RHEL 10 - WORST PERFORMER (23% correct)"
+  tag: chronically_failing
+
+  turns:
+    - turn_id: turn1
+      query: "What kernel version does RHEL 10 use?"
+      response: null
+      contexts: null
+
+      expected_response: |
+        RHEL 10 uses kernel 6.x (major upgrade from RHEL 9's kernel 5.14).
+
+
+      # Expected URLs that should be retrieved from Solr (for debugging/validation)
+      # Uncomment to enable URL validation in future metrics
+      expected_urls:
+        - https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/10/html-single/10.1_release_notes
+        - https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/10/html-single/10.0_release_notes
+        - https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/10/html-single/considerations_in_adopting_rhel_10
+
+
+      turn_metrics:
+        - ragas:faithfulness
+        - ragas:response_relevancy
+        - ragas:context_precision_without_reference
+        - ragas:context_relevance
+        - ragas:context_recall
+        - custom:answer_correctness
+
+# ==============================================================================
+# RANK 2: TEMPORAL-MIGRATION-001 (33% correct, 15 evaluations)
+# Problem: Retrieves 8 upgrade docs, ZERO Kea migration docs
+# ==============================================================================
+
+- conversation_group_id: TEMPORAL-MIGRATION-001
+  description: "Migrating DHCP server from RHEL 9 to RHEL 10 (33% correct)"
+  tag: chronically_failing
+
+  turns:
+    - turn_id: turn1
+      query: "How do I migrate my DHCP server from RHEL 9 to RHEL 10?"
+      response: null
+      contexts: null
+
+      expected_response: |
+        ISC DHCP (RHEL 9) to Kea (RHEL 10) migration:
+        1. Backup RHEL 9 config (/etc/dhcp/dhcpd.conf)
+        2. Convert to Kea JSON format
+        3. Install Kea: dnf install kea
+        4. Configure /etc/kea/kea-dhcp4.conf
+        5. Test before production
+
+
+      # Expected URLs that should be retrieved from Solr (for debugging/validation)
+      # Uncomment to enable URL validation in future metrics
+      expected_urls:
+        - https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/10/html-single/managing_networking_infrastructure_services
+        - https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/9/html-single/managing_networking_infrastructure_services
+        - https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/10/html-single/considerations_in_adopting_rhel_10
+
+
+      turn_metrics:
+        - ragas:faithfulness
+        - ragas:response_relevancy
+        - ragas:context_precision_without_reference
+        - ragas:context_relevance
+        - ragas:context_recall
+        - custom:answer_correctness
+
+# ==============================================================================
+# RANK 3: TEMPORAL-MIGRATION-002 (38% correct, 16 evaluations)
+# Problem: Retrieves 9 lifecycle docs, ZERO Python version comparison docs
+# ==============================================================================
+
+- conversation_group_id: TEMPORAL-MIGRATION-002
+  description: "Understanding Python changes from RHEL 9 to RHEL 10 (38% correct)"
+  tag: chronically_failing
+
+  turns:
+    - turn_id: turn1
+      query: "What changed in Python between RHEL 9 and RHEL 10?"
+      response: null
+      contexts: null
+
+      expected_response: |
+        Python changes from RHEL 9 to RHEL 10:
+        RHEL 9: Default Python 3.9, Alternative Python 3.11
+        RHEL 10: Default Python 3.12, Alternative Python 3.13
+        Performance improvements and new syntax features in 3.12
+
+
+      # Expected URLs that should be retrieved from Solr (for debugging/validation)
+      # Uncomment to enable URL validation in future metrics
+      expected_urls:
+        - https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/10/html-single/installing_and_using_dynamic_programming_languages
+        - https://access.redhat.com/support/policy/updates/rhel-app-streams-life-cycle
+
+
+      turn_metrics:
+        - ragas:faithfulness
+        - ragas:response_relevancy
+        - ragas:context_precision_without_reference
+        - ragas:context_relevance
+        - ragas:context_recall
+        - custom:answer_correctness
+
+# ==============================================================================
+# RANK 4: RSPEED-1998 (49% correct, 29 evaluations)
+# Problem: LLM says "Kea is NOT a Red Hat product" (WRONG!)
+# ==============================================================================
+
+- conversation_group_id: RSPEED-1998
+  description: "Kea DHCP server - LLM incorrectly states not a Red Hat product (49% correct)"
+  tag: chronically_failing
+
+  turns:
+    - turn_id: turn1
+      query: "How to set up Kea?"
+      response: null
+      contexts: null
+      expected_response: |
+        Kea IS a Red Hat product — it is included in RHEL 10. Key facts:
+        - Kea is the ONLY DHCP server in RHEL 10 (ISC DHCP was removed)
+        - Available in RHEL 10 AppStream — install with dnf install kea
+        - Reference: RHEL 10 Considerations in Adopting guide, Infrastructure Services
+        - Should NOT suggest installing from EPEL or third-party repos
+        WRONG if it says: "Kea is not a Red Hat product" or suggests EPEL installation
+
+      # Expected URLs that should be retrieved from Solr (for debugging/validation)
+      # Uncomment to enable URL validation in future metrics
+      expected_urls:
+        - https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/10/html-single/managing_networking_infrastructure_services
+        - https://access.redhat.com/solutions/7126352
+
+
+      turn_metrics:
+        - ragas:faithfulness
+        - ragas:response_relevancy
+        - ragas:context_precision_without_reference
+        - ragas:context_relevance
+        - ragas:context_recall
+        - custom:answer_correctness
+
+# ==============================================================================
+# RANK 5: RSPEED-1930 (51% correct, 29 evaluations)
+# Problem: ZERO contexts retrieved, LLM uses parametric knowledge
+# ==============================================================================
+
+- conversation_group_id: RSPEED-1930
+  description: "rpm-ostree package installation - ZERO contexts retrieved (51% correct)"
+  tag: chronically_failing
+
+  turns:
+    - turn_id: turn1
+      query: "How do I install a package on a system using rpm-ostree?"
+      response: null
+      contexts: null
+      expected_response: |
+        rpm-ostree CAN install packages — it layers them on top of the base image.
+        Key facts:
+        - Correct: rpm-ostree install <package> (e.g., rpm-ostree install tmux)
+        - A reboot is required to activate the new deployment with the package
+        - rpm-ostree override and rpm-ostree uninstall are related commands
+        - dnf is NOT the right tool on rpm-ostree/ostree managed systems
+        WRONG if it says: rpm-ostree "is not designed for installing packages"
+        or recommends using dnf instead
+
+      # Expected URLs that should be retrieved from Solr (for debugging/validation)
+      # Uncomment to enable URL validation in future metrics
+      expected_urls:
+        - https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/10/html-single/using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems
+        - https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/10/html-single/composing_installing_and_managing_rhel_for_edge_images
+
+
+      turn_metrics:
+        - ragas:faithfulness
+        - ragas:response_relevancy
+        - ragas:context_precision_without_reference
+        - ragas:context_relevance
+        - ragas:context_recall
+        - custom:answer_correctness
+
+# ==============================================================================
+# RANK 6: TEMPORAL-IMPLICIT-001 (52% correct, 15 evaluations)
+# Problem: 39 contexts but only 7.7% are RHEL 10 (rest are RHEL 7/8/9)
+# ==============================================================================
+
+- conversation_group_id: TEMPORAL-IMPLICIT-001
+  description: "DHCP query without version - retrieves mixed RHEL versions (52% correct)"
+  tag: chronically_failing
+
+  turns:
+    - turn_id: turn1
+      query: "How do I set up a DHCP server?"
+      response: null
+      contexts: null
+
+      expected_response: |
+        For current RHEL (RHEL 10):
+        Install Kea: dnf install kea
+        Configure: /etc/kea/kea-dhcp4.conf
+
+
+      # Expected URLs that should be retrieved from Solr (for debugging/validation)
+      # Uncomment to enable URL validation in future metrics
+      expected_urls:
+        - https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/10/html-single/managing_networking_infrastructure_services
+
+
+      turn_metrics:
+        - ragas:faithfulness
+        - ragas:response_relevancy
+        - ragas:context_precision_without_reference
+        - ragas:context_relevance
+        - ragas:context_recall
+        - custom:answer_correctness
+
+# ==============================================================================
+# RANK 7: TEMPORAL-REMOVED-001 (53% correct, 15 evaluations)
+# Problem: Retrieves RHEL 6 docs (5 major versions old!)
+# ==============================================================================
+
+- conversation_group_id: TEMPORAL-REMOVED-001
+  description: "ISC DHCP removed in RHEL 10 - retrieves RHEL 6 docs (53% correct)"
+  tag: chronically_failing
+
+  turns:
+    - turn_id: turn1
+      query: "How to install and configure a DHCP server in RHEL 10?"
+      response: null
+      contexts: null
+
+      expected_response: |
+        Kea is the DHCP server in RHEL 10. ISC DHCP was removed.
+        Installation: dnf install kea
+        Configuration: /etc/kea/kea-dhcp4.conf or kea-dhcp6.conf
+        Start service: systemctl enable --now kea-dhcp4
+
+
+      # Expected URLs that should be retrieved from Solr (for debugging/validation)
+      # Uncomment to enable URL validation in future metrics
+      expected_urls:
+        - https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/10/html-single/managing_networking_infrastructure_services
+        - https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/10/html-single/10.0_release_notes
+        - https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/10/html-single/configuring_and_managing_networking
+
+
+      turn_metrics:
+        - ragas:faithfulness
+        - ragas:response_relevancy
+        - ragas:context_precision_without_reference
+        - ragas:context_relevance
+        - ragas:context_recall
+        - custom:answer_correctness
+
+# ==============================================================================
+# RANK 8: TEMPORAL-ADDED-002 (54% correct, 17 evaluations)
+# Problem: Retrieves general DHCP docs, not Kea-specific
+# ==============================================================================
+
+- conversation_group_id: TEMPORAL-ADDED-002
+  description: "Kea DHCP new in RHEL 10 - retrieves generic DHCP docs (54% correct)"
+  tag: chronically_failing
+
+  turns:
+    - turn_id: turn1
+      query: "What DHCP server options are available in RHEL 10?"
+      response: null
+      contexts: null
+
+      expected_response: |
+        Kea is the ONLY DHCP server option in RHEL 10.
+        ISC DHCP was removed.
+        Kea supports DHCPv4 and DHCPv6.
+
+
+      # Expected URLs that should be retrieved from Solr (for debugging/validation)
+      # Uncomment to enable URL validation in future metrics
+      expected_urls:
+        - https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/10/html-single/managing_networking_infrastructure_services
+        - https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/10/html-single/10.0_release_notes
+
+
+      turn_metrics:
+        - ragas:faithfulness
+        - ragas:response_relevancy
+        - ragas:context_precision_without_reference
+        - ragas:context_relevance
+        - ragas:context_recall
+        - custom:answer_correctness
+
+# ==============================================================================
+# RANK 9: RSPEED-2294 (55% correct, 28 evaluations)
+# Problem: LLM says "RHEL 10 not released yet" (WRONG!)
+# ==============================================================================
+
+- conversation_group_id: RSPEED-2294
+  description: "Python version for RHEL 10 - LLM claims RHEL 10 not released (55% correct)"
+  tag: chronically_failing
+
+  turns:
+    - turn_id: turn1
+      query: "What is most current version of Python for RHEL 10?"
+      response: null
+      contexts: null
+      expected_response: |
+        RHEL 10 HAS been officially released. The answer must acknowledge this.
+        Key facts:
+        - RHEL 10 is released; RHEL 10.1 is the latest minor release
+        - Python 3.12 is the default system Python in RHEL 10
+        - Should reference RHEL 10 release notes or AppStream documentation
+        WRONG if it says: "RHEL 10 has not been officially released yet"
+
+      # Expected URLs that should be retrieved from Solr (for debugging/validation)
+      # Uncomment to enable URL validation in future metrics
+      expected_urls:
+        - https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/10/html-single/installing_and_using_dynamic_programming_languages
+        - https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/10/html-single/10.0_release_notes
+        - https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/10/html-single/10.1_release_notes
+
+
+      turn_metrics:
+        - ragas:faithfulness
+        - ragas:response_relevancy
+        - ragas:context_precision_without_reference
+        - ragas:context_relevance
+        - ragas:context_recall
+        - custom:answer_correctness
+
+# ==============================================================================
+# RANK 10: RSPEED-1812 (56% correct, 29 evaluations)
+# Problem: LLM provides broken/fabricated URLs
+# ==============================================================================
+
+- conversation_group_id: RSPEED-1812
+  description: "RHEL System Roles documentation - LLM provides broken URLs (56% correct)"
+  tag: chronically_failing
+
+  turns:
+    - turn_id: turn1
+      query: "Where can I find documentation for RHEL System Roles?"
+      response: null
+      contexts: null
+      expected_response: |
+        Should point to the official RHEL System Roles documentation. Key facts:
+        - Primary doc: docs.redhat.com RHEL 9 or 10 "Automating system administration
+          by using RHEL system roles" guide
+        - KCS article: https://access.redhat.com/articles/3050101
+        - Links must be real, working URLs — not hallucinated or broken
+        - Should reference the current RHEL version documentation
+        WRONG if it provides: broken links, fabricated URLs, or outdated doc paths
+
+      # Expected URLs that should be retrieved from Solr (for debugging/validation)
+      # Uncomment to enable URL validation in future metrics
+      expected_urls:
+        - https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/10/html-single/automating_system_administration_by_using_rhel_system_roles
+        - https://access.redhat.com/articles/3050101
+
+
+      turn_metrics:
+        - ragas:faithfulness
+        - ragas:response_relevancy
+        - ragas:context_precision_without_reference
+        - ragas:context_relevance
+        - ragas:context_recall
+        - custom:answer_correctness
+
+# ==============================================================================
+# Total: 10 test cases (chronically failing across 15+ runs)
+# Average baseline performance: 45% correct
+# Target after fixes: 75%+ correct
+# ==============================================================================

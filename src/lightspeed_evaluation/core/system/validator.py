@@ -29,16 +29,16 @@ METRIC_REQUIREMENTS = {
         "description": "requires 'response', 'contexts', and 'expected_response' fields",
     },
     "ragas:context_relevance": {
-        "required_fields": ["response", "contexts"],
-        "description": "requires 'response' and 'contexts' fields",
+        "required_fields": ["query", "contexts"],
+        "description": "requires 'query' and 'contexts' fields",
     },
     "ragas:context_precision_with_reference": {
         "required_fields": ["response", "contexts", "expected_response"],
         "description": "requires 'response', 'contexts', and 'expected_response' fields",
     },
     "ragas:context_precision_without_reference": {
-        "required_fields": ["response", "contexts"],
-        "description": "requires 'response' and 'contexts' fields",
+        "required_fields": ["query", "contexts"],
+        "description": "requires 'query' and 'contexts' fields",
     },
     "custom:keywords_eval": {
         "required_fields": ["response", "expected_keywords"],
@@ -58,6 +58,10 @@ METRIC_REQUIREMENTS = {
             "requires 'tool_calls' and 'expected_tool_calls' fields "
             "with 'tool_name', 'arguments', and optional 'result'"
         ),
+    },
+    "custom:url_retrieval_eval": {
+        "required_fields": ["tool_calls", "expected_urls"],
+        "description": "requires 'tool_calls' and 'expected_urls' fields",
     },
     "script:action_eval": {
         "required_fields": ["verify_script"],

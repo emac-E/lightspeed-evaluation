@@ -1,0 +1,184 @@
+LSC Evaluation Framework - Summary Report
+==================================================
+
+Generated: 2026-03-30 23:47:03
+Total Evaluations: 60
+
+Overall Statistics:
+--------------------
+Pass: 20 (33.3%)
+Fail: 39 (65.0%)
+Error: 1 (1.7%)
+Skipped: 0 (0.0%)
+
+Token Usage (Judge LLM):
+--------------------
+Input Tokens: 424,736
+Output Tokens: 223,844
+Total Tokens: 648,580
+
+Token Usage (API Calls):
+--------------------
+Input Tokens: 104,363
+Output Tokens: 4,295
+Total Tokens: 108,658
+
+By Metric:
+---------
+ragas:faithfulness:
+  Pass: 4 (40.0%)
+  Fail: 5 (50.0%)
+  Error: 1 (10.0%)
+  Score Statistics:
+    Mean: 0.703
+    Median: 0.667
+    Min: 0.235, Max: 1.000
+    Std Dev: 0.317
+
+ragas:response_relevancy:
+  Pass: 7 (70.0%)
+  Fail: 3 (30.0%)
+  Error: 0 (0.0%)
+  Score Statistics:
+    Mean: 0.630
+    Median: 0.900
+    Min: 0.000, Max: 0.900
+    Std Dev: 0.435
+
+ragas:context_precision_without_reference:
+  Pass: 3 (30.0%)
+  Fail: 7 (70.0%)
+  Error: 0 (0.0%)
+  Score Statistics:
+    Mean: 0.571
+    Median: 0.500
+    Min: 0.292, Max: 1.000
+    Std Dev: 0.225
+
+ragas:context_relevance:
+  Pass: 3 (30.0%)
+  Fail: 7 (70.0%)
+  Error: 0 (0.0%)
+  Score Statistics:
+    Mean: 0.450
+    Median: 0.500
+    Min: 0.000, Max: 1.000
+    Std Dev: 0.438
+
+ragas:context_recall:
+  Pass: 0 (0.0%)
+  Fail: 10 (100.0%)
+  Error: 0 (0.0%)
+  Score Statistics:
+    Mean: 0.190
+    Median: 0.000
+    Min: 0.000, Max: 0.667
+    Std Dev: 0.259
+
+custom:answer_correctness:
+  Pass: 3 (30.0%)
+  Fail: 7 (70.0%)
+  Error: 0 (0.0%)
+  Score Statistics:
+    Mean: 0.480
+    Median: 0.350
+    Min: 0.000, Max: 1.000
+    Std Dev: 0.413
+
+By Conversation:
+---------------
+TEMPORAL-ADDED-002:
+  Pass: 3 (50.0%)
+  Fail: 3 (50.0%)
+  Error: 0 (0.0%)
+
+TEMPORAL-ADDED-003:
+  Pass: 1 (16.7%)
+  Fail: 5 (83.3%)
+  Error: 0 (0.0%)
+
+RSPEED-1812:
+  Pass: 2 (33.3%)
+  Fail: 4 (66.7%)
+  Error: 0 (0.0%)
+
+RSPEED-2294:
+  Pass: 2 (33.3%)
+  Fail: 4 (66.7%)
+  Error: 0 (0.0%)
+
+RSPEED-1998:
+  Pass: 5 (83.3%)
+  Fail: 1 (16.7%)
+  Error: 0 (0.0%)
+
+TEMPORAL-MIGRATION-002:
+  Pass: 2 (33.3%)
+  Fail: 4 (66.7%)
+  Error: 0 (0.0%)
+
+TEMPORAL-IMPLICIT-001:
+  Pass: 2 (33.3%)
+  Fail: 4 (66.7%)
+  Error: 0 (0.0%)
+
+RSPEED-1930:
+  Pass: 0 (0.0%)
+  Fail: 6 (100.0%)
+  Error: 0 (0.0%)
+
+TEMPORAL-MIGRATION-001:
+  Pass: 1 (16.7%)
+  Fail: 5 (83.3%)
+  Error: 0 (0.0%)
+
+TEMPORAL-REMOVED-001:
+  Pass: 2 (33.3%)
+  Fail: 3 (50.0%)
+  Error: 1 (16.7%)
+
+By Tag:
+------
+chronically_failing:
+  Pass: 20 (33.3%)
+  Fail: 39 (65.0%)
+  Error: 1 (1.7%)
+  Score Statistics:
+    Mean: 0.501
+    Median: 0.500
+    Min: 0.000, Max: 1.000
+    Std Dev: 0.381
+
+Configuration Parameters:
+-------------------------
+
+Llm:
+  Provider: vertex
+  Model: gemini-2.5-pro
+  Ssl Verify: True
+  Ssl Cert File: None
+  Temperature: 0.0
+  Max Tokens: 16384
+  Timeout: 300
+  Num Retries: 3
+  Cache Enabled: True
+
+Embedding:
+  Provider: huggingface
+  Model: sentence-transformers/all-MiniLM-L6-v2
+  Provider Kwargs: {}
+  Cache Enabled: True
+
+Api:
+  Enabled: True
+  Api Base: http://127.0.0.1:8443/api/lightspeed
+  Version: v1
+  Endpoint Type: infer
+  Timeout: 300
+  Provider: vertex
+  Model: google/gemini-2.5-flash
+  No Tools: None
+  System Prompt: None
+  Cache Enabled: True
+  Num Retries: 3
+

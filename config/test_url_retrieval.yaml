@@ -1,0 +1,73 @@
+# Test configuration for URL retrieval evaluation metric
+# This demonstrates the new custom:url_retrieval_eval metric
+
+- conversation_group_id: TEST-URL-RETRIEVAL-001
+  description: "Test URL retrieval metric - DHCP installation question"
+  tag: url_retrieval_test
+
+  turns:
+    - turn_id: turn1
+      query: "How to install and configure a DHCP server in RHEL 10?"
+      response: null
+      contexts: null
+
+      expected_response: |
+        Kea is the DHCP server in RHEL 10. ISC DHCP was removed.
+        Installation: dnf install kea
+        Configuration: /etc/kea/kea-dhcp4.conf or kea-dhcp6.conf
+        Start service: systemctl enable --now kea-dhcp4
+
+      expected_urls:
+        - https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/10/html-single/managing_networking_infrastructure_services
+        - https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/10/html-single/10.0_release_notes
+
+      turn_metrics:
+        - custom:url_retrieval_eval
+        - custom:answer_correctness
+        - ragas:context_recall
+
+- conversation_group_id: TEST-URL-RETRIEVAL-002
+  description: "Test URL retrieval metric - System Roles documentation"
+  tag: url_retrieval_test
+
+  turns:
+    - turn_id: turn1
+      query: "Where can I find documentation for RHEL System Roles?"
+      response: null
+      contexts: null
+
+      expected_response: |
+        You can find documentation for RHEL System Roles at:
+        - RHEL 10 documentation: Automating system administration by using RHEL system roles
+        - Knowledge base article: https://access.redhat.com/articles/3050101
+
+      expected_urls:
+        - https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/10/html-single/automating_system_administration_by_using_rhel_system_roles
+        - https://access.redhat.com/articles/3050101
+
+      turn_metrics:
+        - custom:url_retrieval_eval
+        - custom:answer_correctness
+
+- conversation_group_id: TEST-URL-RETRIEVAL-003
+  description: "Test URL retrieval metric - rpm-ostree usage"
+  tag: url_retrieval_test
+
+  turns:
+    - turn_id: turn1
+      query: "How do I install a package on a system using rpm-ostree?"
+      response: null
+      contexts: null
+
+      expected_response: |
+        To install a package using rpm-ostree:
+        1. Use rpm-ostree install <package-name>
+        2. Reboot to activate the new deployment
+
+      expected_urls:
+        - https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/10/html-single/using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems
+        - https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/10/html-single/composing_installing_and_managing_rhel_for_edge_images
+
+      turn_metrics:
+        - custom:url_retrieval_eval
+        - custom:answer_correctness

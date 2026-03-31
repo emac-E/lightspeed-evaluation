@@ -2,12 +2,12 @@
 """
 Generate comprehensive RAG quality report for okp-mcp developers.
 
-This script analyzes evaluation outputs and creates a focused report
-explaining retrieval quality issues in terms that make sense for
-okp-mcp developers working on the Solr-based retrieval system.
+This script analyzes evaluation outputs and creates a data-driven report
+explaining retrieval quality issues with actual examples and metrics.
 """
 
 import argparse
+import json
 import re
 import sys
 from datetime import datetime
@@ -18,372 +18,70 @@ import pandas as pd
 
 
 # ============================================================================
-# ISSUE DETECTION PATTERNS
+# DATA LOADING
 # ============================================================================
 
-ISSUE_PATTERNS = {
-    "over_retrieval": {
-        "name": "Over-Retrieval",
-        "severity": "high",
-        "metric_check": lambda m: m.get("context_precision_mean", 1.0) < 0.5,
-        "threshold": 0.5,
-        "metric": "context_precision",
-        "symptom": "context_precision scores consistently below 0.5",
-        "root_cause": "okp-mcp returns too many contexts (often 100-250+ instead of 10-20)",
-        "why_matters": [
-            "LLM must wade through noise to find signal",
-            "Increases token costs",
-            "Slows response time",
-            "Buries relevant docs among irrelevant ones"
-        ],
-        "fix_title": "Limit Result Count",
-        "fix_code": """# In okp-mcp Solr query
-solr_params = {
-    'rows': 10,  # Limit to top 10 results (currently unlimited or very high)
-    'q': query,
-}""",
-        "expected_improvement": "context_precision +30-50%"
-    },
+def load_all_detailed_csvs(output_base: Path) -> Optional[pd.DataFrame]:
+    """Load all detailed CSV files from the evaluation run."""
+    csv_files = list(output_base.glob("*/evaluation_*_detailed.csv"))
 
-    "poor_ranking": {
-        "name": "Poor Ranking",
-        "severity": "high",
-        "metric_check": lambda m: m.get("context_relevance_mean", 1.0) < 0.7,
-        "threshold": 0.7,
-        "metric": "context_relevance",
-        "symptom": "context_relevance below 0.7, relevant docs not in top positions",
-        "root_cause": "Boilerplate (legal notices, warnings) ranks higher than actual documentation",
-        "why_matters": [
-            "LLM sees boilerplate first",
-            "Wastes token budget on non-content",
-            "Reduces context window for actual docs"
-        ],
-        "fix_title": "Boost Content Over Metadata",
-        "fix_code": """# Boost content over metadata
-solr_params = {
-    'qf': 'content^5.0 title^2.0 metadata^1.0',  # Weight content 5x higher
-    'defType': 'edismax',
-}""",
-        "expected_improvement": "context_relevance +20-30%"
-    },
-
-    "low_faithfulness": {
-        "name": "Low Faithfulness",
-        "severity": "medium",
-        "metric_check": lambda m: m.get("faithfulness_mean", 1.0) < 0.7,
-        "threshold": 0.7,
-        "metric": "faithfulness",
-        "symptom": "faithfulness scores below 0.7",
-        "root_cause": "LLM cannot extract useful information from retrieved contexts, or contexts don't contain needed information",
-        "why_matters": [
-            "LLM forced to use parametric knowledge instead of RAG",
-            "Defeats purpose of retrieval system",
-            "May produce outdated or incorrect answers"
-        ],
-        "fix_title": "Improve Context Quality",
-        "fix_code": """# Filter out low-quality contexts
-def is_useful_context(doc):
-    # Minimum content length
-    if len(doc.get('content', '')) < 100:
-        return False
-
-    # Filter out boilerplate
-    if doc.get('type') in ['legal_notice', 'warning', 'metadata']:
-        return False
-
-    return True
-
-contexts = [doc for doc in solr_results if is_useful_context(doc)]""",
-        "expected_improvement": "faithfulness +15-25%"
-    },
-
-    "version_filtering": {
-        "name": "Missing Version Filtering",
-        "severity": "high",
-        "metric_check": lambda m: m.get("version_accuracy", 1.0) < 0.8,
-        "threshold": 0.8,
-        "metric": "version_accuracy",
-        "symptom": "RHEL 10 queries return RHEL 9 or RHEL 8 documentation",
-        "root_cause": "Version not boosted in retrieval query",
-        "why_matters": [
-            "Outdated commands (e.g., ISC DHCP for RHEL 10)",
-            "Wrong package names",
-            "Deprecated syntax",
-            "User gets incorrect instructions"
-        ],
-        "fix_title": "Add Version Boost",
-        "fix_code": """# Extract and boost target version
-import re
-
-def extract_rhel_version(query):
-    patterns = [r'RHEL\\s*(\\d+)', r'Red Hat Enterprise Linux\\s*(\\d+)']
-    for pattern in patterns:
-        match = re.search(pattern, query, re.IGNORECASE)
-        if match:
-            return match.group(1)
-    return None  # Default to latest if not specified
-
-target_version = extract_rhel_version(query)
-if target_version:
-    solr_params['bq'] = f'version:{target_version}^10.0'  # Boost 10x""",
-        "expected_improvement": "version_accuracy 50% → 80%+"
-    },
-
-    "boilerplate_pollution": {
-        "name": "Boilerplate Pollution",
-        "severity": "medium",
-        "metric_check": lambda m: (
-            m.get("context_precision_mean", 1.0) < 0.4 and
-            m.get("context_relevance_mean", 1.0) < 0.6
-        ),
-        "threshold": 0.4,
-        "metric": "context_precision + context_relevance",
-        "symptom": "High % of contexts are legal notices, deprecation warnings, title fragments",
-        "root_cause": "No content filtering before sending to LLM",
-        "why_matters": [
-            "Wastes 50-90% of context window",
-            "Dilutes signal-to-noise ratio",
-            "Increases context_precision penalty"
-        ],
-        "fix_title": "Filter Boilerplate",
-        "fix_code": """# Filter out boilerplate before returning contexts
-def is_useful_context(doc):
-    content = doc.get('content', '')
-    doc_type = doc.get('type', '')
-    title = doc.get('title', '')
-
-    # Too short - likely metadata fragment
-    if len(content) < 100:
-        return False
-
-    # Known boilerplate types
-    if doc_type in ['legal_notice', 'warning', 'metadata', 'copyright']:
-        return False
-
-    # Generic deprecation warnings (unless version-specific)
-    if 'deprecated' in title.lower():
-        if not any(f'RHEL {v}' in content for v in ['8', '9', '10']):
-            return False
-
-    return True
-
-filtered_contexts = [doc for doc in solr_results if is_useful_context(doc)]""",
-        "expected_improvement": "context_precision +25-40%"
-    },
-
-    "poor_answer_quality": {
-        "name": "Poor Answer Quality",
-        "severity": "critical",
-        "metric_check": lambda m: m.get("answer_correctness_mean", 1.0) < 0.75,
-        "threshold": 0.75,
-        "metric": "answer_correctness",
-        "symptom": "answer_correctness below 0.75, despite good retrieval metrics",
-        "root_cause": "Retrieved contexts contain correct information, but LLM produces incorrect answers",
-        "why_matters": [
-            "End users get wrong instructions",
-            "Defeats entire purpose of the system",
-            "May damage user trust and adoption"
-        ],
-        "fix_title": "Improve Context Presentation",
-        "fix_code": """# Improve context presentation to LLM
-def format_context_for_llm(contexts):
-    formatted = []
-    for i, ctx in enumerate(contexts, 1):
-        # Add metadata to help LLM understand context
-        context_block = f'''
---- Context {i} ---
-Source: {ctx.get('source', 'Unknown')}
-Version: {ctx.get('version', 'Unknown')}
-Type: {ctx.get('doc_type', 'Documentation')}
-
-{ctx['content']}
----
-'''
-        formatted.append(context_block)
-    return '\\n'.join(formatted)""",
-        "expected_improvement": "answer_correctness +10-20%"
-    }
-}
-
-
-# ============================================================================
-# METRIC EXTRACTION
-# ============================================================================
-
-def extract_metric_stats(summary_text: str) -> Dict[str, float]:
-    """Extract and aggregate metric statistics from correlation summary report(s).
-
-    Handles both single reports and combined reports from multiple test configs.
-    Computes overall averages across all configs.
-    """
-    stats = {}
-
-    if not summary_text:
-        return stats
-
-    # Track all values for each metric to compute averages
-    metric_values = {}
-
-    # Parse metric statistics section
-    lines = summary_text.split('\n')
-    current_metric = None
-
-    for line in lines:
-        # Detect metric name
-        if line.strip() and not line.startswith(' ') and ':' in line:
-            parts = line.split(':')
-            if len(parts) >= 2:
-                metric_name = parts[0].strip()
-                if any(m in metric_name for m in ['context_precision', 'context_relevance',
-                                                    'faithfulness', 'answer_correctness']):
-                    current_metric = metric_name
-
-        # Extract mean value
-        if current_metric and 'Mean:' in line:
-            match = re.search(r'Mean:\s*([\d.]+)', line)
-            if match:
-                mean_val = float(match.group(1))
-                metric_key = f"{current_metric}_mean"
-
-                # Collect all values
-                if metric_key not in metric_values:
-                    metric_values[metric_key] = []
-                metric_values[metric_key].append(mean_val)
-
-        # Extract pass rate
-        if current_metric and ('Pass Rate' in line or 'PASS' in line):
-            match = re.search(r'([\d.]+)%', line)
-            if match:
-                pass_rate = float(match.group(1)) / 100.0
-                metric_key = f"{current_metric}_pass_rate"
-
-                if metric_key not in metric_values:
-                    metric_values[metric_key] = []
-                metric_values[metric_key].append(pass_rate)
-
-    # Compute overall averages
-    for metric_key, values in metric_values.items():
-        if values:
-            stats[metric_key] = sum(values) / len(values)
-
-    return stats
-
-
-def extract_version_accuracy(version_text: str) -> Optional[float]:
-    """Extract version accuracy from version distribution report."""
-    if not version_text:
+    if not csv_files:
         return None
 
-    # Look for average version accuracy
-    match = re.search(r'Average version accuracy:\s*([\d.]+)%', version_text)
-    if match:
-        return float(match.group(1)) / 100.0
+    dfs = []
+    for csv_file in csv_files:
+        try:
+            df = pd.read_csv(csv_file)
+            df['test_config'] = csv_file.parent.name
+            dfs.append(df)
+        except Exception as e:
+            print(f"  ⚠ Failed to load {csv_file}: {e}")
 
-    return None
+    if not dfs:
+        return None
 
+    return pd.concat(dfs, ignore_index=True)
 
-# ============================================================================
-# ISSUE DETECTION
-# ============================================================================
-
-def detect_issues(
-    correlation_summary: Optional[str],
-    version_summary: Optional[str]
-) -> List[Tuple[str, Dict[str, Any]]]:
-    """Detect which issues apply based on metric values.
-
-    Returns:
-        List of (issue_key, issue_config) tuples, sorted by severity
-    """
-    # Extract metrics
-    metrics = extract_metric_stats(correlation_summary or "")
-
-    # Add version accuracy if available
-    version_acc = extract_version_accuracy(version_summary or "")
-    if version_acc is not None:
-        metrics["version_accuracy"] = version_acc
-
-    # Detect which issues apply
-    detected = []
-    for issue_key, issue_config in ISSUE_PATTERNS.items():
-        if issue_config["metric_check"](metrics):
-            detected.append((issue_key, issue_config))
-
-    # Sort by severity
-    severity_order = {"critical": 0, "high": 1, "medium": 2, "low": 3}
-    detected.sort(key=lambda x: severity_order.get(x[1]["severity"], 99))
-
-    return detected
-
-
-# ============================================================================
-# FILE LOADING
-# ============================================================================
 
 def load_correlation_summary(analysis_dir: Path) -> Optional[str]:
-    """Load correlation analysis summary report(s).
-
-    Combines multiple summary reports if they exist (one per test config).
-    """
-    # Try exact name first
-    summary_file = analysis_dir / "summary_report.txt"
-    if summary_file.exists():
-        return summary_file.read_text()
-
-    # Try pattern match for files like "evaluation_TIMESTAMP_detailed_summary_report.txt"
+    """Load correlation analysis summary report(s)."""
     summary_files = list(analysis_dir.glob("*_summary_report.txt"))
-    if summary_files:
-        # Sort by timestamp for consistent ordering
-        summary_files.sort(key=lambda x: x.name)
+    if not summary_files:
+        return None
 
-        # Combine all summary reports
-        combined = []
-        combined.append("=" * 80)
-        combined.append("COMBINED CORRELATION ANALYSIS")
-        combined.append(f"Total test configs analyzed: {len(summary_files)}")
+    summary_files.sort(key=lambda x: x.name)
+
+    combined = []
+    combined.append("=" * 80)
+    combined.append("COMBINED CORRELATION ANALYSIS")
+    combined.append(f"Total test configs analyzed: {len(summary_files)}")
+    combined.append("=" * 80)
+    combined.append("")
+
+    for i, summary_file in enumerate(summary_files, 1):
+        combined.append(f"\n{'=' * 80}")
+        combined.append(f"TEST CONFIG {i}/{len(summary_files)}: {summary_file.stem}")
         combined.append("=" * 80)
         combined.append("")
+        combined.append(summary_file.read_text())
+        combined.append("")
 
-        for i, summary_file in enumerate(summary_files, 1):
-            combined.append(f"\n{'=' * 80}")
-            combined.append(f"TEST CONFIG {i}/{len(summary_files)}: {summary_file.stem}")
-            combined.append("=" * 80)
-            combined.append("")
-            combined.append(summary_file.read_text())
-            combined.append("")
-
-        return "\n".join(combined)
-
-    return None
+    return "\n".join(combined)
 
 
 def load_version_distribution(analysis_dir: Path) -> Optional[str]:
     """Load version distribution report."""
-    # Try exact name first
-    version_report = analysis_dir / "version_distribution_report.txt"
-    if version_report.exists():
-        return version_report.read_text()
-
-    # Try pattern match
     version_files = list(analysis_dir.glob("*version_distribution_report.txt"))
     if version_files:
         version_files.sort(key=lambda x: x.stat().st_mtime, reverse=True)
         return version_files[0].read_text()
-
     return None
 
 
 def load_anomalies(analysis_dir: Path) -> Optional[pd.DataFrame]:
     """Load anomalies CSV if available."""
-    # Try exact name first
-    anomalies_file = analysis_dir / "anomalies.csv"
-    if anomalies_file.exists():
-        return pd.read_csv(anomalies_file)
-
-    # Try pattern match for files like "evaluation_TIMESTAMP_detailed_anomalies.csv"
     anomaly_files = list(analysis_dir.glob("*_anomalies.csv"))
     if anomaly_files:
-        # Combine all anomaly files if multiple exist
         dfs = []
         for file in anomaly_files:
             try:
@@ -393,8 +91,220 @@ def load_anomalies(analysis_dir: Path) -> Optional[pd.DataFrame]:
                 continue
         if dfs:
             return pd.concat(dfs, ignore_index=True)
-
     return None
+
+
+# ============================================================================
+# RAG BYPASS ANALYSIS
+# ============================================================================
+
+def analyze_rag_bypass(df: pd.DataFrame) -> Dict[str, Any]:
+    """Analyze performance of questions that bypassed RAG vs used RAG.
+
+    Returns:
+        Dictionary with bypass analysis results
+    """
+    # Identify questions with/without contexts
+    questions = {}
+
+    for _, row in df.iterrows():
+        qid = f"{row['conversation_group_id']}/{row['turn_id']}"
+        test_config = row.get('test_config', 'unknown')
+
+        if qid not in questions:
+            # Check if contexts exist (either in contexts or tool_calls field)
+            has_contexts = bool(row.get('contexts', '').strip())
+            if not has_contexts and row.get('tool_calls', '').strip():
+                # Check tool_calls structure
+                try:
+                    tool_calls = json.loads(row['tool_calls'])
+                    if tool_calls and len(tool_calls) > 0:
+                        if 'result' in tool_calls[0][0]:
+                            contexts = tool_calls[0][0]['result'].get('contexts', [])
+                            has_contexts = len(contexts) > 0
+                except:
+                    pass
+
+            questions[qid] = {
+                'query': row.get('query', ''),
+                'test_config': test_config,
+                'has_contexts': has_contexts,
+                'metrics': {}
+            }
+
+        # Collect answer_correctness and response_relevancy
+        metric = row['metric_identifier']
+        if metric == 'custom:answer_correctness':
+            try:
+                questions[qid]['metrics']['answer_correctness'] = float(row['score']) if row['score'] else None
+            except:
+                pass
+        elif metric == 'ragas:response_relevancy':
+            try:
+                questions[qid]['metrics']['response_relevancy'] = float(row['score']) if row['score'] else None
+            except:
+                pass
+
+    # Separate into WITH vs WITHOUT RAG
+    with_rag = []
+    without_rag = []
+    without_rag_questions = []
+
+    for qid, data in questions.items():
+        ac = data['metrics'].get('answer_correctness')
+        if ac is not None:
+            if data['has_contexts']:
+                with_rag.append(ac)
+            else:
+                without_rag.append(ac)
+                without_rag_questions.append({
+                    'qid': qid,
+                    'query': data['query'],
+                    'test_config': data['test_config'],
+                    'score': ac
+                })
+
+    return {
+        'with_rag_count': len(with_rag),
+        'with_rag_scores': with_rag,
+        'with_rag_mean': sum(with_rag) / len(with_rag) if with_rag else 0,
+        'with_rag_perfect': sum(1 for s in with_rag if s == 1.0),
+        'without_rag_count': len(without_rag),
+        'without_rag_scores': without_rag,
+        'without_rag_mean': sum(without_rag) / len(without_rag) if without_rag else 0,
+        'without_rag_perfect': sum(1 for s in without_rag if s == 1.0),
+        'without_rag_questions': without_rag_questions,
+    }
+
+
+# ============================================================================
+# METRIC ANALYSIS
+# ============================================================================
+
+def extract_metric_stats(df: pd.DataFrame) -> Dict[str, Any]:
+    """Extract metric statistics from detailed CSV data."""
+    stats = {}
+
+    # Group by metric and calculate stats
+    for metric in df['metric_identifier'].unique():
+        metric_data = df[df['metric_identifier'] == metric]
+
+        # Get scores (filter out non-numeric)
+        scores = []
+        for score_val in metric_data['score']:
+            try:
+                score = float(score_val) if score_val else None
+                if score is not None:
+                    scores.append(score)
+            except:
+                pass
+
+        if scores:
+            metric_key = metric.replace(':', '_').replace('-', '_')
+            stats[f'{metric_key}_mean'] = sum(scores) / len(scores)
+            stats[f'{metric_key}_min'] = min(scores)
+            stats[f'{metric_key}_max'] = max(scores)
+            stats[f'{metric_key}_count'] = len(scores)
+
+            # Count PASS/FAIL
+            pass_count = len(metric_data[metric_data['result'] == 'PASS'])
+            total_count = len(metric_data[metric_data['result'].isin(['PASS', 'FAIL'])])
+            if total_count > 0:
+                stats[f'{metric_key}_pass_rate'] = pass_count / total_count
+
+    return stats
+
+
+def get_worst_questions(df: pd.DataFrame, metric: str, n: int = 5) -> List[Tuple[str, float, str]]:
+    """Get N worst-performing questions for a given metric."""
+    metric_data = df[df['metric_identifier'] == metric].copy()
+
+    # Convert scores to float
+    metric_data['score_float'] = pd.to_numeric(metric_data['score'], errors='coerce')
+    metric_data = metric_data.dropna(subset=['score_float'])
+
+    # Sort by score (ascending = worst first)
+    worst = metric_data.nsmallest(n, 'score_float')
+
+    results = []
+    for _, row in worst.iterrows():
+        qid = f"{row['conversation_group_id']}/{row['turn_id']}"
+        score = row['score_float']
+        query = row.get('query', 'N/A')
+        results.append((qid, score, query))
+
+    return results
+
+
+# ============================================================================
+# ISSUE DETECTION (DATA-DRIVEN)
+# ============================================================================
+
+def detect_issues(df: pd.DataFrame, stats: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """Detect issues based on actual data, not templates."""
+    issues = []
+
+    # Issue 1: Low Context Precision
+    cp_mean = stats.get('ragas_context_precision_without_reference_mean', 1.0)
+    if cp_mean < 0.5:
+        worst = get_worst_questions(df, 'ragas:context_precision_without_reference', n=3)
+        issues.append({
+            'name': 'Over-Retrieval (Low Context Precision)',
+            'severity': 'high',
+            'mean_score': cp_mean,
+            'threshold': 0.7,
+            'description': f'Average context precision is {cp_mean:.3f}, meaning only {cp_mean*100:.1f}% of retrieved contexts are useful. You are retrieving {(1-cp_mean)*100:.1f}% noise.',
+            'worst_examples': worst,
+            'recommendation': f'Based on actual data: {len(worst)} questions have precision below {min(s for _, s, _ in worst):.3f}. Consider limiting result count or improving ranking.'
+        })
+
+    # Issue 2: Low Context Relevance
+    cr_mean = stats.get('ragas_context_relevance_mean', 1.0)
+    if cr_mean < 0.7:
+        worst = get_worst_questions(df, 'ragas:context_relevance', n=3)
+        issues.append({
+            'name': 'Poor Ranking (Low Context Relevance)',
+            'severity': 'high',
+            'mean_score': cr_mean,
+            'threshold': 0.7,
+            'description': f'Average context relevance is {cr_mean:.3f}. Relevant documents are not ranking at the top.',
+            'worst_examples': worst,
+            'recommendation': f'Worst-performing queries show relevance as low as {min(s for _, s, _ in worst):.3f}. Review ranking algorithm and boosting parameters.'
+        })
+
+    # Issue 3: Low Faithfulness
+    f_mean = stats.get('ragas_faithfulness_mean', 1.0)
+    if f_mean < 0.7:
+        worst = get_worst_questions(df, 'ragas:faithfulness', n=3)
+        issues.append({
+            'name': 'Low Faithfulness (LLM Not Using Contexts)',
+            'severity': 'medium',
+            'mean_score': f_mean,
+            'threshold': 0.8,
+            'description': f'Average faithfulness is {f_mean:.3f}, meaning LLM responses are only {f_mean*100:.1f}% based on retrieved contexts. LLM is using parametric knowledge instead.',
+            'worst_examples': worst,
+            'recommendation': f'{len([s for _, s, _ in worst if s < 0.5])} questions have faithfulness below 0.5. Retrieved contexts may not contain the needed information.'
+        })
+
+    # Issue 4: Low Answer Correctness
+    ac_mean = stats.get('custom_answer_correctness_mean', 1.0)
+    if ac_mean < 0.75:
+        worst = get_worst_questions(df, 'custom:answer_correctness', n=3)
+        issues.append({
+            'name': 'Poor Answer Quality',
+            'severity': 'critical',
+            'mean_score': ac_mean,
+            'threshold': 0.75,
+            'description': f'Average answer correctness is {ac_mean:.3f}. Only {ac_mean*100:.1f}% of answers are correct.',
+            'worst_examples': worst,
+            'recommendation': f'{len([s for _, s, _ in worst if s == 0.0])} questions got completely incorrect answers. Review retrieval quality for these specific queries.'
+        })
+
+    # Sort by severity
+    severity_order = {"critical": 0, "high": 1, "medium": 2, "low": 3}
+    issues.sort(key=lambda x: severity_order.get(x["severity"], 99))
+
+    return issues
 
 
 # ============================================================================
@@ -403,52 +313,44 @@ def load_anomalies(analysis_dir: Path) -> Optional[pd.DataFrame]:
 
 def generate_report(
     output_dir: Path,
+    df: Optional[pd.DataFrame],
     correlation_analysis_dir: Optional[Path] = None,
     version_analysis_dir: Optional[Path] = None,
-    timestamp: Optional[str] = None,
+    generation_time: Optional[datetime] = None,
+    runtime_seconds: Optional[float] = None,
 ) -> str:
-    """Generate comprehensive RAG quality report."""
+    """Generate comprehensive data-driven RAG quality report."""
 
-    if timestamp is None:
-        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    if generation_time is None:
+        generation_time = datetime.now()
+
+    timestamp_str = generation_time.strftime("%Y-%m-%d %H:%M:%S")
 
     # Load analysis results
     correlation_summary = None
     version_summary = None
     anomalies_df = None
-    correlation_dir_status = None
-    version_dir_status = None
 
-    if correlation_analysis_dir:
-        if correlation_analysis_dir.exists():
-            correlation_summary = load_correlation_summary(correlation_analysis_dir)
-            anomalies_df = load_anomalies(correlation_analysis_dir)
-            if not correlation_summary:
-                correlation_dir_status = f"Directory exists but summary_report.txt not found in {correlation_analysis_dir}"
-        else:
-            correlation_dir_status = f"Directory not found: {correlation_analysis_dir}"
-    else:
-        correlation_dir_status = "No correlation analysis directory specified"
+    if correlation_analysis_dir and correlation_analysis_dir.exists():
+        correlation_summary = load_correlation_summary(correlation_analysis_dir)
+        anomalies_df = load_anomalies(correlation_analysis_dir)
 
-    if version_analysis_dir:
-        if version_analysis_dir.exists():
-            version_summary = load_version_distribution(version_analysis_dir)
-            if not version_summary:
-                version_dir_status = f"Directory exists but version_distribution_report.txt not found in {version_analysis_dir}"
-        else:
-            version_dir_status = f"Directory not found: {version_analysis_dir}"
-    else:
-        version_dir_status = "No version analysis directory specified"
+    if version_analysis_dir and version_analysis_dir.exists():
+        version_summary = load_version_distribution(version_analysis_dir)
 
-    # Detect issues
-    detected_issues = detect_issues(correlation_summary, version_summary)
-
-    # Build report
+    # Build report header
     report = f"""# RAG Retrieval Quality Report for okp-mcp Developers
 
-**Generated:** {timestamp}
+**Generated:** {timestamp_str}
 **Evaluation Run:** {output_dir.name}
+"""
 
+    if runtime_seconds is not None:
+        minutes = int(runtime_seconds // 60)
+        seconds = int(runtime_seconds % 60)
+        report += f"**Evaluation Runtime:** {minutes}m {seconds}s\n"
+
+    report += """
 ---
 
 ## Executive Summary
@@ -466,86 +368,118 @@ This report analyzes the retrieval quality of the okp-mcp server from the perspe
 
 ---
 
-## Critical Issues Found
-
 """
 
-    # Add correlation analysis section
+    # RAG Bypass Analysis
+    if df is not None:
+        report += "## RAG Bypass Performance Analysis\n\n"
+        bypass_analysis = analyze_rag_bypass(df)
+
+        if bypass_analysis['without_rag_count'] > 0 or bypass_analysis['with_rag_count'] > 0:
+            report += "### Questions That Bypassed RAG (No Retrieval)\n\n"
+
+            if bypass_analysis['without_rag_count'] > 0:
+                report += f"- **Count:** {bypass_analysis['without_rag_count']} questions\n"
+                report += f"- **Avg Answer Correctness:** {bypass_analysis['without_rag_mean']:.3f} ({bypass_analysis['without_rag_mean']*100:.1f}%)\n"
+                report += f"- **Perfect Scores (1.0):** {bypass_analysis['without_rag_perfect']}/{bypass_analysis['without_rag_count']}\n\n"
+
+                # List bypassed questions
+                report += "**Questions that bypassed retrieval:**\n\n"
+                for q in bypass_analysis['without_rag_questions'][:10]:  # Show up to 10
+                    report += f"- `{q['qid']}` (score: {q['score']:.2f}): {q['query']}\n"
+                report += "\n"
+            else:
+                report += "- **No questions bypassed RAG** - All questions used retrieval\n\n"
+
+            report += "### Questions That Used RAG (With Retrieval)\n\n"
+
+            if bypass_analysis['with_rag_count'] > 0:
+                report += f"- **Count:** {bypass_analysis['with_rag_count']} questions\n"
+                report += f"- **Avg Answer Correctness:** {bypass_analysis['with_rag_mean']:.3f} ({bypass_analysis['with_rag_mean']*100:.1f}%)\n"
+                report += f"- **Perfect Scores (1.0):** {bypass_analysis['with_rag_perfect']}/{bypass_analysis['with_rag_count']}\n\n"
+
+            # Interpretation
+            if bypass_analysis['without_rag_count'] > 0 and bypass_analysis['with_rag_count'] > 0:
+                diff = bypass_analysis['without_rag_mean'] - bypass_analysis['with_rag_mean']
+                report += "### Interpretation\n\n"
+
+                if diff > 0.1:
+                    report += f"**LLM performs {diff*100:.1f}% BETTER when bypassing RAG.** This suggests:\n\n"
+                    report += "- LLM has strong parametric knowledge for these questions\n"
+                    report += "- Retrieved contexts may be adding noise rather than signal\n"
+                    report += "- This is **SMART adaptive behavior** - LLM skips retrieval when it would hurt performance\n\n"
+                    report += "**Recommendation:** Don't force mandatory tool use. Instead, fix retrieval quality so LLM chooses to use it.\n\n"
+                elif diff < -0.1:
+                    report += f"**LLM performs {abs(diff)*100:.1f}% WORSE when bypassing RAG.** This suggests:\n\n"
+                    report += "- RAG is providing valuable information\n"
+                    report += "- LLM should be using retrieval more often\n"
+                    report += "- Consider prompting to encourage tool use for these question types\n\n"
+                else:
+                    report += "**RAG bypass has minimal impact on performance** (< 10% difference).\n\n"
+
+        report += "---\n\n"
+
+    # Metric Performance Analysis
+    report += "## Metric Performance Analysis\n\n"
+
     if correlation_summary:
-        report += "### Metric Performance Analysis\n\n"
         report += "```\n"
         report += correlation_summary
         report += "\n```\n\n"
     else:
-        report += "⚠️ **Correlation analysis not available**\n\n"
-        if correlation_dir_status:
-            report += f"**Reason:** {correlation_dir_status}\n\n"
-        report += "**To fix:**\n"
-        report += "1. Ensure evaluation ran successfully (check for CSV files)\n"
-        report += "2. Verify correlation analysis step completed (look for summary_report.txt)\n"
-        report += "3. Re-run: `python scripts/analyze_metric_correlations.py --input eval_output/*/evaluation_*_detailed.csv --output analysis_output/correlation/`\n\n"
+        report += "⚠️ **Correlation analysis not available** - Cannot generate detailed insights without metric data.\n\n"
 
-    # Add version distribution section
+    # Version Distribution
     if version_summary:
         report += "### RHEL Version Filtering Analysis\n\n"
         report += "```\n"
         report += version_summary
         report += "\n```\n\n"
-    else:
-        report += "⚠️ **Version distribution analysis not available**\n\n"
-        if version_dir_status:
-            report += f"**Reason:** {version_dir_status}\n\n"
-        report += "**Note:** Version analysis only runs for temporal validity tests. If you didn't run temporal tests, this is expected.\n\n"
-        report += "**To fix (if needed):**\n"
-        report += "1. Run temporal tests: `lightspeed-eval --eval-data config/temporal_validity_tests_runnable.yaml`\n"
-        report += "2. Run version analysis: `python scripts/analyze_version_distribution.py --input <csv> --test-config config/temporal_validity_tests_runnable.yaml`\n\n"
 
-    # Add root cause analysis - DYNAMIC based on detected issues
     report += "---\n\n"
-    report += "## Root Cause Analysis\n\n"
 
-    if detected_issues:
-        report += f"**{len(detected_issues)} issue(s) detected** based on metric analysis:\n\n"
+    # Data-Driven Issue Detection
+    report += "## Issues Detected (Based on Actual Data)\n\n"
 
-        for i, (issue_key, issue) in enumerate(detected_issues, 1):
-            severity_emoji = {
-                "critical": "🔴",
-                "high": "🟠",
-                "medium": "🟡",
-                "low": "🟢"
-            }
+    if df is not None:
+        stats = extract_metric_stats(df)
+        issues = detect_issues(df, stats)
 
-            report += f"### {i}. {issue['name']} {severity_emoji.get(issue['severity'], '')}\n\n"
-            report += f"**Severity:** {issue['severity'].upper()}\n\n"
-            report += f"**Symptom:** {issue['symptom']}\n\n"
-            report += f"**Root Cause:** {issue['root_cause']}\n\n"
-            report += "**Why This Matters:**\n"
-            for matter in issue['why_matters']:
-                report += f"- {matter}\n"
-            report += "\n"
+        if issues:
+            for i, issue in enumerate(issues, 1):
+                severity_emoji = {
+                    "critical": "🔴",
+                    "high": "🟠",
+                    "medium": "🟡",
+                    "low": "🟢"
+                }
 
-            report += f"**Fix - {issue['fix_title']}:**\n"
-            report += "```python\n"
-            report += issue['fix_code']
-            report += "\n```\n\n"
+                report += f"### {i}. {issue['name']} {severity_emoji.get(issue['severity'], '')}\n\n"
+                report += f"**Severity:** {issue['severity'].upper()}\n\n"
+                report += f"**Current Score:** {issue['mean_score']:.3f} (target: {issue['threshold']:.2f})\n\n"
+                report += f"**Description:** {issue['description']}\n\n"
 
-            report += f"**Expected Improvement:** {issue['expected_improvement']}\n\n"
-            report += "---\n\n"
+                if issue.get('worst_examples'):
+                    report += "**Worst-Performing Questions:**\n\n"
+                    for qid, score, query in issue['worst_examples']:
+                        # Truncate query
+                        query_short = query[:80] + "..." if len(query) > 80 else query
+                        report += f"- `{qid}` (score: {score:.3f}): {query_short}\n"
+                    report += "\n"
+
+                report += f"**Recommendation:** {issue['recommendation']}\n\n"
+                report += "---\n\n"
+        else:
+            report += "✅ **No major issues detected!**\n\n"
+            report += "All metrics are within acceptable ranges.\n\n"
     else:
-        report += "✅ **No major issues detected!**\n\n"
-        report += "Metrics are within acceptable ranges. Continue monitoring for any degradation.\n\n"
-        report += "**Recommendations:**\n"
-        report += "- Maintain current retrieval configuration\n"
-        report += "- Monitor metrics over time for any regression\n"
-        report += "- Consider A/B testing optimizations for marginal improvements\n\n"
+        report += "⚠️ **Cannot analyze issues** - No detailed CSV data available.\n\n"
 
-    # Add anomaly examples if available
+    # Anomaly Examples
     if anomalies_df is not None and not anomalies_df.empty:
-        report += "## Specific Examples\n\n"
-        report += "### Anomalous Cases Detected\n\n"
+        report += "## Specific Anomalous Cases\n\n"
         report += "These cases show specific retrieval problems:\n\n"
 
-        # Show top 10 anomalies
         top_anomalies = anomalies_df.head(10)
         report += "| Conversation | Anomaly Type | Description |\n"
         report += "|--------------|--------------|-------------|\n"
@@ -553,140 +487,35 @@ This report analyzes the retrieval quality of the okp-mcp server from the perspe
         for _, row in top_anomalies.iterrows():
             conv_id = row.get("conversation_group_id", "N/A")
             anomaly_type = row.get("anomaly_type", "N/A")
-            # Truncate description
             desc = str(row.get("description", ""))[:60] + "..." if len(str(row.get("description", ""))) > 60 else str(row.get("description", ""))
             report += f"| {conv_id} | {anomaly_type} | {desc} |\n"
 
-        report += "\n"
-        report += f"**Total anomalies detected:** {len(anomalies_df)}\n\n"
-        report += "See full list in `anomalies.csv`\n\n"
+        report += f"\n**Total anomalies detected:** {len(anomalies_df)}\n\n"
+        report += "---\n\n"
 
-    # Add recommended action plan - DYNAMIC based on detected issues
-    report += "---\n\n"
-    report += "## Recommended Action Plan\n\n"
+    # Next Steps
+    report += """## Next Steps
 
-    if detected_issues:
-        # Separate by severity
-        critical = [i for i in detected_issues if i[1]["severity"] == "critical"]
-        high = [i for i in detected_issues if i[1]["severity"] == "high"]
-        medium = [i for i in detected_issues if i[1]["severity"] == "medium"]
-
-        if critical:
-            report += "### 🔴 Critical (Fix Immediately)\n\n"
-            for issue_key, issue in critical:
-                report += f"1. **{issue['name']}**\n"
-                report += f"   - Implement: {issue['fix_title']}\n"
-                report += f"   - Expected: {issue['expected_improvement']}\n\n"
-
-        if high:
-            report += "### 🟠 High Priority (This Week)\n\n"
-            for issue_key, issue in high:
-                report += f"1. **{issue['name']}**\n"
-                report += f"   - Implement: {issue['fix_title']}\n"
-                report += f"   - Expected: {issue['expected_improvement']}\n\n"
-
-        if medium:
-            report += "### 🟡 Medium Priority (Next 2-4 Weeks)\n\n"
-            for issue_key, issue in medium:
-                report += f"1. **{issue['name']}**\n"
-                report += f"   - Implement: {issue['fix_title']}\n"
-                report += f"   - Expected: {issue['expected_improvement']}\n\n"
-    else:
-        report += "✅ **System is performing well**\n\n"
-        report += "Continue with normal operations and monitoring.\n\n"
-
-    # Add validation section
-    report += "---\n\n"
-    report += "## Validation\n\n"
-    report += "Run this evaluation suite again after fixes:\n\n"
-    report += "```bash\n"
-    report += "./run_full_evaluation_suite.sh\n"
-    report += "```\n\n"
-    report += "Compare reports to measure improvement.\n\n"
-
-    # Add appendix
-    report += """---
-
-## Appendix: Understanding the Metrics
-
-### context_precision_without_reference
-
-**Formula:** (Useful contexts) / (Total contexts retrieved)
-
-**Example:**
-- Query: "Install DHCP in RHEL 10"
-- Retrieved 200 contexts
-- Only 8 mention Kea DHCP (correct for RHEL 10)
-- Score: 8/200 = 0.04 (4%)
-
-**okp-mcp Takeaway:** You're retrieving 192 irrelevant contexts (96% noise)
-
-### context_relevance
-
-**Formula:** LLM judges how well contexts match query intent
-
-**Example:**
-- Query: "Install DHCP in RHEL 10"
-- Top 3 contexts:
-  1. "Legal notice" (not relevant)
-  2. "RHEL 9 deprecated features" (wrong version)
-  3. "Kea DHCP installation" (relevant!)
-- Score: 0.33 (1 out of 3 relevant)
-
-**okp-mcp Takeaway:** Relevant doc is at position 3, should be position 1
-
-### faithfulness
-
-**Formula:** LLM checks if response claims are supported by contexts
-
-**Example:**
-- Contexts say: "RHEL 10 uses Kea"
-- Response says: "RHEL 10 uses Kea for DHCP"
-- Score: 1.0 (faithful)
-
-But:
-- Contexts say: "RHEL 9 uses ISC DHCP"
-- Response says: "RHEL 10 uses Kea for DHCP"
-- Score: 0.0 (not faithful - info not in contexts)
-
-**okp-mcp Takeaway:** If faithfulness is low, contexts don't contain needed info
-
-### answer_correctness
-
-**Formula:** LLM compares response to expected correct answer
-
-**Example:**
-- Expected: "Use Kea package for DHCP in RHEL 10"
-- Response: "Use Kea package for DHCP in RHEL 10"
-- Score: 1.0 (correct)
-
-**okp-mcp Takeaway:** High score despite low precision means LLM found signal in noise (lucky!) or used parametric knowledge (bypassed RAG)
+1. **Review worst-performing questions** (listed above with actual scores)
+2. **Compare baseline vs current run** to track improvements
+3. **Run MCP direct mode** to iterate quickly on retrieval changes:
+   ```bash
+   ./run_mcp_retrieval_suite.sh --runs 5
+   ```
+4. **Re-run full evaluation** after fixes to measure impact
 
 ---
 
-## Key Takeaways for okp-mcp Team
+## Analysis Files Location
 
 """
 
-    if detected_issues:
-        report += f"1. **{len(detected_issues)} issues detected** - See Root Cause Analysis section\n"
-        critical_high = [i for i in detected_issues if i[1]["severity"] in ["critical", "high"]]
-        if critical_high:
-            report += f"2. **{len(critical_high)} critical/high priority issues** - Immediate attention needed\n"
-        report += "3. **Fixes are straightforward** - Most are simple Solr parameter changes\n"
-        report += "4. **Quick wins available** - Some fixes can improve metrics 30-50%\n"
-    else:
-        report += "1. **System is healthy** - No major issues detected\n"
-        report += "2. **Continue monitoring** - Metrics are within acceptable ranges\n"
-        report += "3. **Consider optimizations** - Room for marginal improvements\n"
+    if correlation_analysis_dir:
+        report += f"- Correlation analysis: `{correlation_analysis_dir.relative_to(Path.cwd())}/`\n"
+    if version_analysis_dir:
+        report += f"- Version analysis: `{version_analysis_dir.relative_to(Path.cwd())}/`\n"
 
-    report += "\n**These are NOT test framework bugs** - they are accurate measurements of current retrieval quality.\n\n"
-    report += "---\n\n"
-    report += "**Questions?** Contact evaluation team or see full analysis in the output directory.\n\n"
-    report += "**Analysis Location:**\n"
-    report += f"- Correlation analysis: `{correlation_analysis_dir.name if correlation_analysis_dir else 'N/A'}/`\n"
-    report += f"- Version analysis: `{version_analysis_dir.name if version_analysis_dir else 'N/A'}/`\n\n"
-    report += "---\n\n"
+    report += "\n---\n\n"
     report += "*Generated by LightSpeed Evaluation Framework*\n"
 
     return report
@@ -699,7 +528,7 @@ But:
 def main():
     """Main entry point."""
     parser = argparse.ArgumentParser(
-        description="Generate okp-mcp RAG quality report from evaluation outputs"
+        description="Generate data-driven okp-mcp RAG quality report"
     )
     parser.add_argument(
         "--output-base",
@@ -718,82 +547,70 @@ def main():
         help="Path to version distribution analysis directory",
     )
     parser.add_argument(
-        "--output-file",
-        type=Path,
-        help="Output report file path (default: <output-base>/RAG_QUALITY_REPORT.md)",
+        "--runtime-seconds",
+        type=float,
+        help="Total runtime of evaluation in seconds",
     )
 
     args = parser.parse_args()
 
-    # Determine output file
-    if args.output_file:
-        output_file = args.output_file
-    else:
-        output_file = args.output_base / "RAG_QUALITY_REPORT_FOR_OKP_MCP.md"
+    output_file = args.output_base / "RAG_QUALITY_REPORT_FOR_OKP_MCP.md"
 
-    # Generate report
-    print(f"Generating RAG quality report...")
+    print(f"Generating data-driven RAG quality report...")
     print(f"  Output base: {args.output_base}")
+
+    # Load detailed CSVs for data-driven analysis
+    print(f"  Loading detailed CSV files...")
+    df = load_all_detailed_csvs(args.output_base)
+    if df is not None:
+        print(f"    ✓ Loaded {len(df)} rows from CSV files")
+    else:
+        print(f"    ⚠ No CSV files found - report will have limited insights")
 
     # Check correlation analysis
     if args.correlation_analysis:
         print(f"  Correlation analysis dir: {args.correlation_analysis}")
         if args.correlation_analysis.exists():
-            # Check for exact name
-            summary_file = args.correlation_analysis / "summary_report.txt"
-            if summary_file.exists():
-                print(f"    ✓ Found summary_report.txt")
+            summary_files = list(args.correlation_analysis.glob("*_summary_report.txt"))
+            if summary_files:
+                print(f"    ✓ Found {len(summary_files)} summary report(s)")
             else:
-                # Check for pattern match
-                summary_files = list(args.correlation_analysis.glob("*_summary_report.txt"))
-                if summary_files:
-                    print(f"    ✓ Found {len(summary_files)} summary report file(s)")
-                    if len(summary_files) > 1:
-                        print(f"      (will combine all {len(summary_files)} test configs)")
-                else:
-                    print(f"    ⚠ No summary report files found - correlation data will be missing from report")
+                print(f"    ⚠ No summary reports found")
         else:
             print(f"    ✗ Directory does not exist")
-    else:
-        print(f"  Correlation analysis: Not specified")
 
     # Check version analysis
     if args.version_analysis:
         print(f"  Version analysis dir: {args.version_analysis}")
         if args.version_analysis.exists():
-            # Check for exact name
-            version_file = args.version_analysis / "version_distribution_report.txt"
-            if version_file.exists():
-                print(f"    ✓ Found version_distribution_report.txt")
+            version_files = list(args.version_analysis.glob("*version_distribution_report.txt"))
+            if version_files:
+                print(f"    ✓ Found version report")
             else:
-                # Check for pattern match
-                version_files = list(args.version_analysis.glob("*version_distribution_report.txt"))
-                if version_files:
-                    print(f"    ✓ Found version report: {version_files[0].name}")
-                else:
-                    print(f"    ⚠ No version distribution report found - version data will be missing from report")
+                print(f"    ⚠ No version report found")
         else:
             print(f"    ✗ Directory does not exist")
-    else:
-        print(f"  Version analysis: Not specified")
 
     print()
 
+    generation_time = datetime.now()
+
     report = generate_report(
         output_dir=args.output_base,
+        df=df,
         correlation_analysis_dir=args.correlation_analysis,
         version_analysis_dir=args.version_analysis,
+        generation_time=generation_time,
+        runtime_seconds=args.runtime_seconds,
     )
 
     # Write report
     output_file.parent.mkdir(parents=True, exist_ok=True)
     output_file.write_text(report)
 
-    print(f"\n✓ Report generated: {output_file}")
+    print(f"✓ Report generated: {output_file}")
     print(f"\nView the report:")
     print(f"  cat {output_file}")
-    print(f"  # or")
-    print(f"  less {output_file}")
 
     return 0
 

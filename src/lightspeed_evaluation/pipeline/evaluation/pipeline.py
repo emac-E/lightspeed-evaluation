@@ -9,6 +9,7 @@ import litellm
 import tqdm
 
 from lightspeed_evaluation.core.api import APIClient
+from lightspeed_evaluation.core.api.mcp_client import MCPDirectClient
 from lightspeed_evaluation.core.metrics.manager import MetricManager
 from lightspeed_evaluation.core.models import (
     EvaluationData,
@@ -92,8 +93,12 @@ class EvaluationPipeline:
             processor_components,
         )
 
-    def _create_api_client(self) -> Optional[APIClient]:
-        """Create API client if enabled."""
+    def _create_api_client(self) -> Optional[APIClient | MCPDirectClient]:
+        """Create API client if enabled.
+
+        Returns either APIClient (for standard /v1/infer) or MCPDirectClient
+        (for direct okp-mcp queries) based on api.mode configuration.
+        """
         config = self.config_loader.system_config
         if config is None:
             raise ValueError("SystemConfig must be loaded before creating API client")
@@ -101,11 +106,19 @@ class EvaluationPipeline:
             return None
 
         api_config = config.api
-        logger.info("Setting up API client: %s", api_config.api_base)
 
-        client = APIClient(config.api)
+        # Check mode to determine which client to create
+        mode = api_config.mode or "infer"
 
-        logger.info("API client initialized for %s endpoint", api_config.endpoint_type)
+        if mode == "mcp_direct":
+            logger.info("Setting up MCP Direct client: %s", api_config.mcp_url or "http://localhost:8001")
+            client = MCPDirectClient(config.api)
+            logger.info("MCP Direct client initialized")
+        else:
+            logger.info("Setting up API client: %s", api_config.api_base)
+            client = APIClient(config.api)
+            logger.info("API client initialized for %s endpoint", api_config.endpoint_type)
+
         return client
 
     def run_evaluation(

@@ -1,0 +1,117 @@
+# LightSpeed Evaluation Framework Configuration - MCP Direct Mode
+#
+# This configuration uses MCP direct mode to query okp-mcp without going through
+# /v1/infer. This is useful for testing retrieval quality without LLM responses.
+#
+# Key differences from standard system.yaml:
+# - api.mode: mcp_direct (queries okp-mcp directly)
+# - api.mcp_url: URL of okp-mcp MCP server
+# - Only retrieval metrics enabled (context_recall, context_precision, etc.)
+# - Response-based metrics disabled (faithfulness, response_relevancy, answer_correctness)
+
+# Core evaluation parameters
+core:
+  max_threads: 50             # Maximum number of threads
+  fail_on_invalid_data: true  # If False don't fail on invalid conversations
+  skip_on_failure: false      # If True, skip remaining turns when a turn evaluation fails
+
+# LLM as a judge configuration (still used for Ragas metrics that need judge LLM)
+llm:
+  provider: "vertex"
+  model: "gemini-2.5-pro"
+  ssl_verify: true
+  ssl_cert_file: null
+  temperature: 0.0
+  max_tokens: 32768
+  timeout: 300
+  num_retries: 3
+  cache_dir: ".caches/llm_cache"
+  cache_enabled: true
+
+# Default embedding configuration
+embedding:
+  provider: "huggingface"
+  model: "sentence-transformers/all-MiniLM-L6-v2"
+  provider_kwargs: {}
+  cache_dir: ".caches/embedding_cache"
+  cache_enabled: true
+
+# MCP Direct API Configuration
+# Queries okp-mcp directly without generating LLM responses
+api:
+  enabled: true
+  mode: "mcp_direct"                       # MCP direct mode (instead of "infer")
+  mcp_url: "http://localhost:8001"         # MCP server URL
+  timeout: 300
+
+  # Provider/model for cache key generation (not used for actual queries)
+  provider: "mcp_direct"
+  model: "okp-mcp"
+  no_tools: null
+  system_prompt: null
+
+  cache_dir: ".caches/mcp_direct_cache"    # Separate cache for MCP direct queries
+  cache_enabled: true
+  num_retries: 3
+
+# Metrics configuration - only retrieval-focused metrics
+# These metrics work with ONLY question + contexts (no expected_response needed)
+metrics_metadata:
+  # Turn-level metrics metadata
+  turn_level:
+    # Ragas Context/Retrieval Evaluation metrics (NO ground truth needed)
+    "ragas:context_precision_without_reference":
+      threshold: 0.7
+      description: "How precise the retrieved context is (without reference)"
+      default: true
+
+    "ragas:context_relevance":
+      threshold: 0.7
+      description: "How relevant the context is to the question"
+      default: true
+
+    # Custom URL retrieval metric (needs expected_urls field)
+    "custom:url_retrieval_eval":
+      threshold: 0.7
+      description: "URL retrieval quality - F1 score of expected vs retrieved documentation URLs"
+      default: true
+
+    # DISABLED: These metrics need expected_response (ground truth)
+    # "ragas:context_recall":
+    #   threshold: 0.8
+    #   description: "Did we fetch every fact the answer needs?"
+    #   default: false
+
+    # "ragas:context_precision_with_reference":
+    #   threshold: 0.7
+    #   description: "How precise the retrieved context is (with reference/ground truth)"
+    #   default: false
+
+    # DISABLED: Ragas Response Evaluation metrics (NEED LLM response)
+    # "ragas:response_relevancy":
+    #   threshold: 0.8
+    #   description: "How relevant the response is to the question"
+    #   default: false
+
+    # "ragas:faithfulness":
+    #   threshold: 0.8
+    #   description: "How faithful the response is to the provided context"
+    #   default: false
+
+    # DISABLED: Custom answer correctness (NEEDS LLM response)
+    # "custom:answer_correctness":
+    #   threshold: 0.75
+    #   description: "Correctness vs expected answer using custom LLM evaluation"
+    #   default: false
+
+  # Conversation-level metrics (not applicable for retrieval testing)
+  conversation_level: {}
+
+# Output configuration
+output:
+  output_dir: "./eval_output"
+  base_filename: "evaluation"
+  enabled_outputs:
+    - csv
+    - json
+    - txt

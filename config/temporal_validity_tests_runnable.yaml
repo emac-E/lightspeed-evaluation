@@ -28,6 +28,12 @@
         Configuration: /etc/kea/kea-dhcp4.conf or kea-dhcp6.conf
         Start service: systemctl enable --now kea-dhcp4
 
+      # Expected URLs that should be retrieved from Solr (for debugging/validation)
+      # Uncomment to enable URL validation in future metrics
+      # expected_urls:
+      #   - https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/10/html-single/managing_networking_infrastructure_services
+      #   - https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/10/html-single/10.0_release_notes
+
       turn_metrics:
         - ragas:faithfulness
         - ragas:response_relevancy
@@ -127,6 +133,13 @@
         ISC DHCP was removed.
         Kea supports DHCPv4 and DHCPv6.
 
+
+      # Expected URLs that should be retrieved from Solr (for debugging/validation)
+      # Uncomment to enable URL validation in future metrics
+      # expected_urls:
+      #   - https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/10/html-single/managing_networking_infrastructure_services
+      #   - https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/10/html-single/10.0_release_notes
+
       turn_metrics:
         - ragas:faithfulness
         - ragas:response_relevancy
@@ -147,6 +160,13 @@
 
       expected_response: |
         RHEL 10 uses kernel 6.x (major upgrade from RHEL 9's kernel 5.14).
+
+
+      # Expected URLs that should be retrieved from Solr (for debugging/validation)
+      # Uncomment to enable URL validation in future metrics
+      # expected_urls:
+      #   - https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/10/html-single/10.1_release_notes
+      #   - https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/10/html-single/10.0_release_notes
 
       turn_metrics:
         - ragas:faithfulness
@@ -226,6 +246,13 @@
         4. Configure /etc/kea/kea-dhcp4.conf
         5. Test before production
 
+
+      # Expected URLs that should be retrieved from Solr (for debugging/validation)
+      # Uncomment to enable URL validation in future metrics
+      # expected_urls:
+      #   - https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/10/html-single/managing_networking_infrastructure_services
+      #   - https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/9/html-single/managing_networking_infrastructure_services
+
       turn_metrics:
         - ragas:faithfulness
         - ragas:response_relevancy
@@ -249,6 +276,13 @@
         RHEL 9: Default Python 3.9, Alternative Python 3.11
         RHEL 10: Default Python 3.12, Alternative Python 3.13
         Performance improvements and new syntax features in 3.12
+
+
+      # Expected URLs that should be retrieved from Solr (for debugging/validation)
+      # Uncomment to enable URL validation in future metrics
+      # expected_urls:
+      #   - https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/10/html-single/installing_and_using_dynamic_programming_languages
+      #   - https://access.redhat.com/support/policy/updates/rhel-app-streams-life-cycle
 
       turn_metrics:
         - ragas:faithfulness
@@ -327,6 +361,12 @@
         For current RHEL (RHEL 10):
         Install Kea: dnf install kea
         Configure: /etc/kea/kea-dhcp4.conf
+
+
+      # Expected URLs that should be retrieved from Solr (for debugging/validation)
+      # Uncomment to enable URL validation in future metrics
+      # expected_urls:
+      #   - https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/10/html-single/managing_networking_infrastructure_services
 
       turn_metrics:
         - ragas:faithfulness
