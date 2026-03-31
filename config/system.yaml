@@ -13,7 +13,7 @@ llm:
   ssl_verify: true                    # Verify SSL certificates for specified provider
   ssl_cert_file: null                 # Path to custom CA
   temperature: 0.0                    # Generation temperature
-  max_tokens: 16384                   # Maximum tokens in response
+  max_tokens: 32768                   # Maximum tokens in response - "malformed json" error is caused by this limit, increase it
   timeout: 300                        # Request timeout in seconds
   num_retries: 3                      # Retry attempts
   cache_dir: ".caches/llm_cache"      # Directory with LLM cache
@@ -106,6 +106,11 @@ metrics_metadata:
       description: "Tool call evaluation comparing expected vs actual tool calls"
       ordered: true       # true (default): sequence order matters, false: any order allowed
       full_match: true    # true (default): exact 1:1 match, false: expected tools found in actual (extras allowed)
+
+    "custom:url_retrieval_eval":
+      threshold: 0.7
+      description: "URL retrieval quality - F1 score of expected vs retrieved documentation URLs"
+      default: false
 
     # Script-based metrics
     "script:action_eval":

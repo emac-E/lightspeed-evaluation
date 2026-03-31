@@ -1,3 +1,0 @@
-metric_identifier,ragas:faithfulness,ragas:response_relevancy
-ragas:faithfulness,1.0,0.9999999999999999
-ragas:response_relevancy,0.9999999999999999,1.0

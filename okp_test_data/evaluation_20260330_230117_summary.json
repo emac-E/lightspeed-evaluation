@@ -1,0 +1,1917 @@
+{
+  "timestamp": "2026-03-30T23:01:19.846300",
+  "total_evaluations": 60,
+  "summary_stats": {
+    "overall": {
+      "TOTAL": 60,
+      "PASS": 16,
+      "FAIL": 44,
+      "ERROR": 0,
+      "SKIPPED": 0,
+      "pass_rate": 26.666666666666668,
+      "fail_rate": 73.33333333333333,
+      "error_rate": 0.0,
+      "skipped_rate": 0.0,
+      "total_judge_llm_input_tokens": 462689,
+      "total_judge_llm_output_tokens": 228931,
+      "total_judge_llm_tokens": 691620,
+      "total_api_input_tokens": 110494,
+      "total_api_output_tokens": 4578,
+      "total_api_tokens": 115072,
+      "total_tokens": 806692
+    },
+    "by_metric": {
+      "ragas:faithfulness": {
+        "pass": 3,
+        "fail": 7,
+        "error": 0,
+        "skipped": 0,
+        "scores": [
+          0.6666666666666666,
+          0.3333333333333333,
+          0.4,
+          1.0,
+          0.6521739130434783,
+          1.0,
+          0.25,
+          0.1111111111111111,
+          0.9411764705882353,
+          0.15151515151515152
+        ],
+        "pass_rate": 30.0,
+        "fail_rate": 70.0,
+        "error_rate": 0.0,
+        "skipped_rate": 0.0,
+        "score_statistics": {
+          "count": 10,
+          "mean": 0.5505976646257976,
+          "median": 0.5260869565217392,
+          "std": 0.34847670963719724,
+          "min": 0.1111111111111111,
+          "max": 1.0,
+          "confidence_interval": {
+            "low": 0.34352695755509055,
+            "mean": 0.5505862977602108,
+            "high": 0.752374564054871,
+            "confidence_level": 95
+          }
+        }
+      },
+      "ragas:response_relevancy": {
+        "pass": 7,
+        "fail": 3,
+        "error": 0,
+        "skipped": 0,
+        "scores": [
+          0.0,
+          0.0,
+          0.8307438182341661,
+          0.8307438182341661,
+          0.8307438182341661,
+          0.8307438182341661,
+          0.8307438182341661,
+          0.0,
+          0.8307438182341661,
+          0.8307438182341661
+        ],
+        "pass_rate": 70.0,
+        "fail_rate": 30.0,
+        "error_rate": 0.0,
+        "skipped_rate": 0.0,
+        "score_statistics": {
+          "count": 10,
+          "mean": 0.5815206727639163,
+          "median": 0.8307438182341661,
+          "std": 0.401287388319974,
+          "min": 0.0,
+          "max": 0.8307438182341661,
+          "confidence_interval": {
+            "low": 0.33229752729366624,
+            "mean": 0.5815206727639162,
+            "high": 0.8307438182341659,
+            "confidence_level": 95
+          }
+        }
+      },
+      "ragas:context_precision_without_reference": {
+        "pass": 4,
+        "fail": 6,
+        "error": 0,
+        "skipped": 0,
+        "scores": [
+          0.9999999999875,
+          0.999999999975,
+          0.3333333333,
+          0.4166666666458333,
+          0.9999999999666667,
+          0.3333333333,
+          0.3333333333,
+          0.14285714284285714,
+          0.749999999975,
+          0.4166666666458333
+        ],
+        "pass_rate": 40.0,
+        "fail_rate": 60.0,
+        "error_rate": 0.0,
+        "skipped_rate": 0.0,
+        "score_statistics": {
+          "count": 10,
+          "mean": 0.5726190475938691,
+          "median": 0.4166666666458333,
+          "std": 0.3307462911294745,
+          "min": 0.14285714284285714,
+          "max": 0.9999999999875,
+          "confidence_interval": {
+            "low": 0.3725595237795918,
+            "mean": 0.5726190475917857,
+            "high": 0.7583333333095833,
+            "confidence_level": 95
+          }
+        }
+      },
+      "ragas:context_relevance": {
+        "pass": 1,
+        "fail": 9,
+        "error": 0,
+        "skipped": 0,
+        "scores": [
+          0.0,
+          0.5,
+          0.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          0.0,
+          1.0,
+          0.0
+        ],
+        "pass_rate": 10.0,
+        "fail_rate": 90.0,
+        "error_rate": 0.0,
+        "skipped_rate": 0.0,
+        "score_statistics": {
+          "count": 10,
+          "mean": 0.2,
+          "median": 0.0,
+          "std": 0.3496029493900505,
+          "min": 0.0,
+          "max": 1.0,
+          "confidence_interval": {
+            "low": 0.0,
+            "mean": 0.2,
+            "high": 0.4,
+            "confidence_level": 95
+          }
+        }
+      },
+      "ragas:context_recall": {
+        "pass": 0,
+        "fail": 10,
+        "error": 0,
+        "skipped": 0,
+        "scores": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0
+        ],
+        "pass_rate": 0.0,
+        "fail_rate": 100.0,
+        "error_rate": 0.0,
+        "skipped_rate": 0.0,
+        "score_statistics": {
+          "count": 10,
+          "mean": 0.05,
+          "median": 0.0,
+          "std": 0.15811388300841897,
+          "min": 0.0,
+          "max": 0.5,
+          "confidence_interval": {
+            "low": -0.04999999999999999,
+            "mean": 0.05,
+            "high": 0.1,
+            "confidence_level": 95
+          }
+        }
+      },
+      "custom:answer_correctness": {
+        "pass": 1,
+        "fail": 9,
+        "error": 0,
+        "skipped": 0,
+        "scores": [
+          0.0,
+          0.0,
+          0.5,
+          0.3,
+          0.0,
+          0.3,
+          0.2,
+          0.4,
+          1.0,
+          0.3
+        ],
+        "pass_rate": 10.0,
+        "fail_rate": 90.0,
+        "error_rate": 0.0,
+        "skipped_rate": 0.0,
+        "score_statistics": {
+          "count": 10,
+          "mean": 0.3,
+          "median": 0.3,
+          "std": 0.30184617127124724,
+          "min": 0.0,
+          "max": 1.0,
+          "confidence_interval": {
+            "low": 0.10999999999999993,
+            "mean": 0.29000000000000004,
+            "high": 0.45999999999999996,
+            "confidence_level": 95
+          }
+        }
+      }
+    },
+    "by_conversation": {
+      "TEMPORAL-REMOVED-001": {
+        "pass": 1,
+        "fail": 5,
+        "error": 0,
+        "skipped": 0,
+        "pass_rate": 16.666666666666664,
+        "fail_rate": 83.33333333333334,
+        "error_rate": 0.0,
+        "skipped_rate": 0.0
+      },
+      "TEMPORAL-ADDED-003": {
+        "pass": 1,
+        "fail": 5,
+        "error": 0,
+        "skipped": 0,
+        "pass_rate": 16.666666666666664,
+        "fail_rate": 83.33333333333334,
+        "error_rate": 0.0,
+        "skipped_rate": 0.0
+      },
+      "TEMPORAL-MIGRATION-002": {
+        "pass": 1,
+        "fail": 5,
+        "error": 0,
+        "skipped": 0,
+        "pass_rate": 16.666666666666664,
+        "fail_rate": 83.33333333333334,
+        "error_rate": 0.0,
+        "skipped_rate": 0.0
+      },
+      "RSPEED-1812": {
+        "pass": 2,
+        "fail": 4,
+        "error": 0,
+        "skipped": 0,
+        "pass_rate": 33.33333333333333,
+        "fail_rate": 66.66666666666666,
+        "error_rate": 0.0,
+        "skipped_rate": 0.0
+      },
+      "TEMPORAL-ADDED-002": {
+        "pass": 2,
+        "fail": 4,
+        "error": 0,
+        "skipped": 0,
+        "pass_rate": 33.33333333333333,
+        "fail_rate": 66.66666666666666,
+        "error_rate": 0.0,
+        "skipped_rate": 0.0
+      },
+      "RSPEED-2294": {
+        "pass": 2,
+        "fail": 4,
+        "error": 0,
+        "skipped": 0,
+        "pass_rate": 33.33333333333333,
+        "fail_rate": 66.66666666666666,
+        "error_rate": 0.0,
+        "skipped_rate": 0.0
+      },
+      "TEMPORAL-MIGRATION-001": {
+        "pass": 1,
+        "fail": 5,
+        "error": 0,
+        "skipped": 0,
+        "pass_rate": 16.666666666666664,
+        "fail_rate": 83.33333333333334,
+        "error_rate": 0.0,
+        "skipped_rate": 0.0
+      },
+      "RSPEED-1930": {
+        "pass": 0,
+        "fail": 6,
+        "error": 0,
+        "skipped": 0,
+        "pass_rate": 0.0,
+        "fail_rate": 100.0,
+        "error_rate": 0.0,
+        "skipped_rate": 0.0
+      },
+      "RSPEED-1998": {
+        "pass": 5,
+        "fail": 1,
+        "error": 0,
+        "skipped": 0,
+        "pass_rate": 83.33333333333334,
+        "fail_rate": 16.666666666666664,
+        "error_rate": 0.0,
+        "skipped_rate": 0.0
+      },
+      "TEMPORAL-IMPLICIT-001": {
+        "pass": 1,
+        "fail": 5,
+        "error": 0,
+        "skipped": 0,
+        "pass_rate": 16.666666666666664,
+        "fail_rate": 83.33333333333334,
+        "error_rate": 0.0,
+        "skipped_rate": 0.0
+      }
+    },
+    "by_tag": {
+      "chronically_failing": {
+        "pass": 16,
+        "fail": 44,
+        "error": 0,
+        "skipped": 0,
+        "scores": [
+          0.6666666666666666,
+          0.0,
+          0.9999999999875,
+          0.0,
+          0.0,
+          0.0,
+          0.3333333333333333,
+          0.0,
+          0.999999999975,
+          0.5,
+          0.0,
+          0.0,
+          0.4,
+          0.8307438182341661,
+          0.3333333333,
+          0.0,
+          0.0,
+          0.5,
+          1.0,
+          0.8307438182341661,
+          0.4166666666458333,
+          0.0,
+          0.0,
+          0.3,
+          0.6521739130434783,
+          0.8307438182341661,
+          0.9999999999666667,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.8307438182341661,
+          0.3333333333,
+          0.5,
+          0.0,
+          0.3,
+          0.25,
+          0.8307438182341661,
+          0.3333333333,
+          0.0,
+          0.0,
+          0.2,
+          0.1111111111111111,
+          0.0,
+          0.14285714284285714,
+          0.0,
+          0.0,
+          0.4,
+          0.9411764705882353,
+          0.8307438182341661,
+          0.749999999975,
+          1.0,
+          0.5,
+          1.0,
+          0.15151515151515152,
+          0.8307438182341661,
+          0.4166666666458333,
+          0.0,
+          0.0,
+          0.3
+        ],
+        "pass_rate": 26.666666666666668,
+        "fail_rate": 73.33333333333333,
+        "error_rate": 0.0,
+        "skipped_rate": 0.0,
+        "score_statistics": {
+          "count": 60,
+          "mean": 0.3757895641639305,
+          "median": 0.31666666665,
+          "std": 0.3731643207042935,
+          "min": 0.0,
+          "max": 1.0,
+          "confidence_interval": {
+            "low": 0.2821828210374931,
+            "mean": 0.3756719289291447,
+            "high": 0.46946625929878405,
+            "confidence_level": 95
+          }
+        }
+      }
+    },
+    "streaming_performance": {
+      "time_to_first_token": {
+        "count": 0
+      },
+      "streaming_duration": {
+        "count": 0
+      },
+      "tokens_per_second": {
+        "count": 0
+      }
+    }
+  },
+  "configuration": {
+    "llm": {
+      "provider": "vertex",
+      "model": "gemini-2.5-pro",
+      "ssl_verify": true,
+      "ssl_cert_file": null,
+      "temperature": 0.0,
+      "max_tokens": 16384,
+      "timeout": 300,
+      "num_retries": 3,
+      "cache_enabled": true
+    },
+    "embedding": {
+      "provider": "huggingface",
+      "model": "sentence-transformers/all-MiniLM-L6-v2",
+      "provider_kwargs": {},
+      "cache_enabled": true
+    },
+    "api": {
+      "enabled": true,
+      "api_base": "http://127.0.0.1:8443/api/lightspeed",
+      "version": "v1",
+      "endpoint_type": "infer",
+      "timeout": 300,
+      "provider": "vertex",
+      "model": "google/gemini-2.5-flash",
+      "no_tools": null,
+      "system_prompt": null,
+      "cache_enabled": true,
+      "num_retries": 3
+    }
+  },
+  "results": [
+    {
+      "conversation_group_id": "TEMPORAL-REMOVED-001",
+      "tag": "chronically_failing",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:faithfulness",
+      "result": "FAIL",
+      "score": 0.6666666666666666,
+      "threshold": 0.8,
+      "execution_time": 35.212,
+      "judge_llm_input_tokens": 9030,
+      "judge_llm_output_tokens": 3971,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.6666666666666666,
+          "reason": "Ragas faithfulness: 0.67",
+          "input_tokens": 9030,
+          "output_tokens": 3971
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "TEMPORAL-REMOVED-001",
+      "tag": "chronically_failing",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:response_relevancy",
+      "result": "FAIL",
+      "score": 0.0,
+      "threshold": 0.8,
+      "execution_time": 10.073,
+      "judge_llm_input_tokens": 464,
+      "judge_llm_output_tokens": 1075,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.0,
+          "reason": "Ragas response relevancy: 0.00",
+          "input_tokens": 464,
+          "output_tokens": 1075
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "TEMPORAL-REMOVED-001",
+      "tag": "chronically_failing",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:context_precision_without_reference",
+      "result": "PASS",
+      "score": 0.9999999999875,
+      "threshold": 0.7,
+      "execution_time": 64.092,
+      "judge_llm_input_tokens": 16134,
+      "judge_llm_output_tokens": 6529,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.9999999999875,
+          "reason": "Ragas context precision without reference: 1.00",
+          "input_tokens": 16134,
+          "output_tokens": 6529
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "TEMPORAL-REMOVED-001",
+      "tag": "chronically_failing",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:context_relevance",
+      "result": "FAIL",
+      "score": 0.0,
+      "threshold": 0.7,
+      "execution_time": 15.471,
+      "judge_llm_input_tokens": 1880,
+      "judge_llm_output_tokens": 1564,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.0,
+          "reason": "Ragas context relevance: 0.00",
+          "input_tokens": 1880,
+          "output_tokens": 1564
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "TEMPORAL-REMOVED-001",
+      "tag": "chronically_failing",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:context_recall",
+      "result": "FAIL",
+      "score": 0.0,
+      "threshold": 0.8,
+      "execution_time": 15.129,
+      "judge_llm_input_tokens": 8598,
+      "judge_llm_output_tokens": 1949,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.0,
+          "reason": "Ragas LLM context recall: 0.00",
+          "input_tokens": 8598,
+          "output_tokens": 1949
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "TEMPORAL-REMOVED-001",
+      "tag": "chronically_failing",
+      "turn_id": "turn1",
+      "metric_identifier": "custom:answer_correctness",
+      "result": "FAIL",
+      "score": 0.0,
+      "threshold": 0.75,
+      "execution_time": 11.881,
+      "judge_llm_input_tokens": 263,
+      "judge_llm_output_tokens": 1242,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.0,
+          "reason": "Custom answer correctness: 0.00 - The response completely fails to answer the user's question. Instead of providing the correct information, it states that it was unable to find any. This is a total failure of information retrieval.",
+          "input_tokens": 263,
+          "output_tokens": 1242
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "TEMPORAL-ADDED-003",
+      "tag": "chronically_failing",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:faithfulness",
+      "result": "FAIL",
+      "score": 0.3333333333333333,
+      "threshold": 0.8,
+      "execution_time": 32.001,
+      "judge_llm_input_tokens": 8683,
+      "judge_llm_output_tokens": 3611,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.3333333333333333,
+          "reason": "Ragas faithfulness: 0.33",
+          "input_tokens": 8683,
+          "output_tokens": 3611
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "TEMPORAL-ADDED-003",
+      "tag": "chronically_failing",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:response_relevancy",
+      "result": "FAIL",
+      "score": 0.0,
+      "threshold": 0.8,
+      "execution_time": 7.853,
+      "judge_llm_input_tokens": 567,
+      "judge_llm_output_tokens": 850,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.0,
+          "reason": "Ragas response relevancy: 0.00",
+          "input_tokens": 567,
+          "output_tokens": 850
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "TEMPORAL-ADDED-003",
+      "tag": "chronically_failing",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:context_precision_without_reference",
+      "result": "PASS",
+      "score": 0.999999999975,
+      "threshold": 0.7,
+      "execution_time": 80.808,
+      "judge_llm_input_tokens": 21101,
+      "judge_llm_output_tokens": 8516,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.999999999975,
+          "reason": "Ragas context precision without reference: 1.00",
+          "input_tokens": 21101,
+          "output_tokens": 8516
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "TEMPORAL-ADDED-003",
+      "tag": "chronically_failing",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:context_relevance",
+      "result": "FAIL",
+      "score": 0.5,
+      "threshold": 0.7,
+      "execution_time": 11.438,
+      "judge_llm_input_tokens": 1747,
+      "judge_llm_output_tokens": 1253,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.5,
+          "reason": "Ragas context relevance: 0.50",
+          "input_tokens": 1747,
+          "output_tokens": 1253
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "TEMPORAL-ADDED-003",
+      "tag": "chronically_failing",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:context_recall",
+      "result": "FAIL",
+      "score": 0.0,
+      "threshold": 0.8,
+      "execution_time": 11.918,
+      "judge_llm_input_tokens": 8125,
+      "judge_llm_output_tokens": 1215,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.0,
+          "reason": "Ragas LLM context recall: 0.00",
+          "input_tokens": 8125,
+          "output_tokens": 1215
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "TEMPORAL-ADDED-003",
+      "tag": "chronically_failing",
+      "turn_id": "turn1",
+      "metric_identifier": "custom:answer_correctness",
+      "result": "FAIL",
+      "score": 0.0,
+      "threshold": 0.75,
+      "execution_time": 14.28,
+      "judge_llm_input_tokens": 322,
+      "judge_llm_output_tokens": 1515,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.0,
+          "reason": "Custom answer correctness: 0.00 - The response incorrectly states that it could not find information about the RHEL 10 kernel version. This information is publicly available. The RHEL 10 Beta was released with a 6.x series kernel, which is a major and notable upgrade from the 5.14 kernel used in RHEL 9. While the final point-release version of the kernel might not be set in stone until the official release, the major version (6.x) is known and is the core of the answer the user was seeking. The provided response completely fails to deliver this key piece of information and wrongly claims it is unavailable.",
+          "input_tokens": 322,
+          "output_tokens": 1515
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "TEMPORAL-MIGRATION-002",
+      "tag": "chronically_failing",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:faithfulness",
+      "result": "FAIL",
+      "score": 0.4,
+      "threshold": 0.8,
+      "execution_time": 45.165,
+      "judge_llm_input_tokens": 9131,
+      "judge_llm_output_tokens": 5455,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.4,
+          "reason": "Ragas faithfulness: 0.40",
+          "input_tokens": 9131,
+          "output_tokens": 5455
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "TEMPORAL-MIGRATION-002",
+      "tag": "chronically_failing",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:response_relevancy",
+      "result": "PASS",
+      "score": 0.8307438182341661,
+      "threshold": 0.8,
+      "execution_time": 11.46,
+      "judge_llm_input_tokens": 512,
+      "judge_llm_output_tokens": 1217,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.8307438182341661,
+          "reason": "Ragas response relevancy: 0.83",
+          "input_tokens": 512,
+          "output_tokens": 1217
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "TEMPORAL-MIGRATION-002",
+      "tag": "chronically_failing",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:context_precision_without_reference",
+      "result": "FAIL",
+      "score": 0.3333333333,
+      "threshold": 0.7,
+      "execution_time": 64.724,
+      "judge_llm_input_tokens": 17659,
+      "judge_llm_output_tokens": 7031,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.3333333333,
+          "reason": "Ragas context precision without reference: 0.33",
+          "input_tokens": 17659,
+          "output_tokens": 7031
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "TEMPORAL-MIGRATION-002",
+      "tag": "chronically_failing",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:context_relevance",
+      "result": "FAIL",
+      "score": 0.0,
+      "threshold": 0.7,
+      "execution_time": 10.142,
+      "judge_llm_input_tokens": 1850,
+      "judge_llm_output_tokens": 1114,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.0,
+          "reason": "Ragas context relevance: 0.00",
+          "input_tokens": 1850,
+          "output_tokens": 1114
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "TEMPORAL-MIGRATION-002",
+      "tag": "chronically_failing",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:context_recall",
+      "result": "FAIL",
+      "score": 0.0,
+      "threshold": 0.8,
+      "execution_time": 13.217,
+      "judge_llm_input_tokens": 8618,
+      "judge_llm_output_tokens": 1527,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.0,
+          "reason": "Ragas LLM context recall: 0.00",
+          "input_tokens": 8618,
+          "output_tokens": 1527
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "TEMPORAL-MIGRATION-002",
+      "tag": "chronically_failing",
+      "turn_id": "turn1",
+      "metric_identifier": "custom:answer_correctness",
+      "result": "FAIL",
+      "score": 0.5,
+      "threshold": 0.75,
+      "execution_time": 17.809,
+      "judge_llm_input_tokens": 311,
+      "judge_llm_output_tokens": 1908,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.5,
+          "reason": "Custom answer correctness: 0.50 - The response is factually correct but significantly incomplete when compared to the expected response.",
+          "input_tokens": 311,
+          "output_tokens": 1908
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "RSPEED-1812",
+      "tag": "chronically_failing",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:faithfulness",
+      "result": "PASS",
+      "score": 1.0,
+      "threshold": 0.8,
+      "execution_time": 60.944,
+      "judge_llm_input_tokens": 8506,
+      "judge_llm_output_tokens": 7405,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 1.0,
+          "reason": "Ragas faithfulness: 1.00",
+          "input_tokens": 8506,
+          "output_tokens": 7405
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "RSPEED-1812",
+      "tag": "chronically_failing",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:response_relevancy",
+      "result": "PASS",
+      "score": 0.8307438182341661,
+      "threshold": 0.8,
+      "execution_time": 7.034,
+      "judge_llm_input_tokens": 752,
+      "judge_llm_output_tokens": 748,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.8307438182341661,
+          "reason": "Ragas response relevancy: 0.83",
+          "input_tokens": 752,
+          "output_tokens": 748
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "RSPEED-1812",
+      "tag": "chronically_failing",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:context_precision_without_reference",
+      "result": "FAIL",
+      "score": 0.4166666666458333,
+      "threshold": 0.7,
+      "execution_time": 56.131,
+      "judge_llm_input_tokens": 17542,
+      "judge_llm_output_tokens": 5775,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.4166666666458333,
+          "reason": "Ragas context precision without reference: 0.42",
+          "input_tokens": 17542,
+          "output_tokens": 5775
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "RSPEED-1812",
+      "tag": "chronically_failing",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:context_relevance",
+      "result": "FAIL",
+      "score": 0.0,
+      "threshold": 0.7,
+      "execution_time": 10.216,
+      "judge_llm_input_tokens": 1764,
+      "judge_llm_output_tokens": 1121,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.0,
+          "reason": "Ragas context relevance: 0.00",
+          "input_tokens": 1764,
+          "output_tokens": 1121
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "RSPEED-1812",
+      "tag": "chronically_failing",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:context_recall",
+      "result": "FAIL",
+      "score": 0.0,
+      "threshold": 0.8,
+      "execution_time": 17.444,
+      "judge_llm_input_tokens": 7781,
+      "judge_llm_output_tokens": 1935,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.0,
+          "reason": "Ragas LLM context recall: 0.00",
+          "input_tokens": 7781,
+          "output_tokens": 1935
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "RSPEED-1812",
+      "tag": "chronically_failing",
+      "turn_id": "turn1",
+      "metric_identifier": "custom:answer_correctness",
+      "result": "FAIL",
+      "score": 0.3,
+      "threshold": 0.75,
+      "execution_time": 11.659,
+      "judge_llm_input_tokens": 589,
+      "judge_llm_output_tokens": 1189,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.3,
+          "reason": "Custom answer correctness: 0.30 - The response correctly identifies that RHEL System Roles are Ansible-based and that documentation is available on the Red Hat Customer Portal. However, it fundamentally fails to answer the user's general question. Instead of providing the primary documentation for all RHEL System Roles, it incorrectly pivots to a very specific and niche use case: \"RHEL System Roles for SAP\".",
+          "input_tokens": 589,
+          "output_tokens": 1189
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "TEMPORAL-ADDED-002",
+      "tag": "chronically_failing",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:faithfulness",
+      "result": "FAIL",
+      "score": 0.6521739130434783,
+      "threshold": 0.8,
+      "execution_time": 70.054,
+      "judge_llm_input_tokens": 11617,
+      "judge_llm_output_tokens": 8842,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.6521739130434783,
+          "reason": "Ragas faithfulness: 0.65",
+          "input_tokens": 11617,
+          "output_tokens": 8842
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "TEMPORAL-ADDED-002",
+      "tag": "chronically_failing",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:response_relevancy",
+      "result": "PASS",
+      "score": 0.8307438182341661,
+      "threshold": 0.8,
+      "execution_time": 10.392,
+      "judge_llm_input_tokens": 871,
+      "judge_llm_output_tokens": 1212,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.8307438182341661,
+          "reason": "Ragas response relevancy: 0.83",
+          "input_tokens": 871,
+          "output_tokens": 1212
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "TEMPORAL-ADDED-002",
+      "tag": "chronically_failing",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:context_precision_without_reference",
+      "result": "PASS",
+      "score": 0.9999999999666667,
+      "threshold": 0.7,
+      "execution_time": 71.016,
+      "judge_llm_input_tokens": 21098,
+      "judge_llm_output_tokens": 7347,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.9999999999666667,
+          "reason": "Ragas context precision without reference: 1.00",
+          "input_tokens": 21098,
+          "output_tokens": 7347
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "TEMPORAL-ADDED-002",
+      "tag": "chronically_failing",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:context_relevance",
+      "result": "FAIL",
+      "score": 0.0,
+      "threshold": 0.7,
+      "execution_time": 10.138,
+      "judge_llm_input_tokens": 2755,
+      "judge_llm_output_tokens": 1137,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.0,
+          "reason": "Ragas context relevance: 0.00",
+          "input_tokens": 2755,
+          "output_tokens": 1137
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "TEMPORAL-ADDED-002",
+      "tag": "chronically_failing",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:context_recall",
+      "result": "FAIL",
+      "score": 0.0,
+      "threshold": 0.8,
+      "execution_time": 11.675,
+      "judge_llm_input_tokens": 10283,
+      "judge_llm_output_tokens": 1281,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.0,
+          "reason": "Ragas LLM context recall: 0.00",
+          "input_tokens": 10283,
+          "output_tokens": 1281
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "TEMPORAL-ADDED-002",
+      "tag": "chronically_failing",
+      "turn_id": "turn1",
+      "metric_identifier": "custom:answer_correctness",
+      "result": "FAIL",
+      "score": 0.0,
+      "threshold": 0.75,
+      "execution_time": 13.526,
+      "judge_llm_input_tokens": 619,
+      "judge_llm_output_tokens": 1351,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.0,
+          "reason": "Custom answer correctness: 0.00 - The response is factually incorrect and completely fails to answer the question for the specified version, RHEL 10.",
+          "input_tokens": 619,
+          "output_tokens": 1351
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "RSPEED-2294",
+      "tag": "chronically_failing",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:faithfulness",
+      "result": "PASS",
+      "score": 1.0,
+      "threshold": 0.8,
+      "execution_time": 26.81,
+      "judge_llm_input_tokens": 9894,
+      "judge_llm_output_tokens": 3041,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 1.0,
+          "reason": "Ragas faithfulness: 1.00",
+          "input_tokens": 9894,
+          "output_tokens": 3041
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "RSPEED-2294",
+      "tag": "chronically_failing",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:response_relevancy",
+      "result": "PASS",
+      "score": 0.8307438182341661,
+      "threshold": 0.8,
+      "execution_time": 6.964,
+      "judge_llm_input_tokens": 445,
+      "judge_llm_output_tokens": 769,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.8307438182341661,
+          "reason": "Ragas response relevancy: 0.83",
+          "input_tokens": 445,
+          "output_tokens": 769
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "RSPEED-2294",
+      "tag": "chronically_failing",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:context_precision_without_reference",
+      "result": "FAIL",
+      "score": 0.3333333333,
+      "threshold": 0.7,
+      "execution_time": 114.973,
+      "judge_llm_input_tokens": 28333,
+      "judge_llm_output_tokens": 12142,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.3333333333,
+          "reason": "Ragas context precision without reference: 0.33",
+          "input_tokens": 28333,
+          "output_tokens": 12142
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "RSPEED-2294",
+      "tag": "chronically_failing",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:context_relevance",
+      "result": "FAIL",
+      "score": 0.5,
+      "threshold": 0.7,
+      "execution_time": 25.193,
+      "judge_llm_input_tokens": 1630,
+      "judge_llm_output_tokens": 2780,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.5,
+          "reason": "Ragas context relevance: 0.50",
+          "input_tokens": 1630,
+          "output_tokens": 2780
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "RSPEED-2294",
+      "tag": "chronically_failing",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:context_recall",
+      "result": "FAIL",
+      "score": 0.0,
+      "threshold": 0.8,
+      "execution_time": 33.484,
+      "judge_llm_input_tokens": 9552,
+      "judge_llm_output_tokens": 3954,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.0,
+          "reason": "Ragas LLM context recall: 0.00",
+          "input_tokens": 9552,
+          "output_tokens": 3954
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "RSPEED-2294",
+      "tag": "chronically_failing",
+      "turn_id": "turn1",
+      "metric_identifier": "custom:answer_correctness",
+      "result": "FAIL",
+      "score": 0.3,
+      "threshold": 0.75,
+      "execution_time": 19.042,
+      "judge_llm_input_tokens": 271,
+      "judge_llm_output_tokens": 1992,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.3,
+          "reason": "Custom answer correctness: 0.30 - The response correctly identifies Python 3.12 as the version associated with RHEL 10, which aligns with the key facts. It also correctly operates under the premise that RHEL 10 has been released, avoiding the specific \"WRONG if\" condition.",
+          "input_tokens": 271,
+          "output_tokens": 1992
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "TEMPORAL-MIGRATION-001",
+      "tag": "chronically_failing",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:faithfulness",
+      "result": "FAIL",
+      "score": 0.25,
+      "threshold": 0.8,
+      "execution_time": 101.476,
+      "judge_llm_input_tokens": 9881,
+      "judge_llm_output_tokens": 12875,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.25,
+          "reason": "Ragas faithfulness: 0.25",
+          "input_tokens": 9881,
+          "output_tokens": 12875
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "TEMPORAL-MIGRATION-001",
+      "tag": "chronically_failing",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:response_relevancy",
+      "result": "PASS",
+      "score": 0.8307438182341661,
+      "threshold": 0.8,
+      "execution_time": 6.282,
+      "judge_llm_input_tokens": 1093,
+      "judge_llm_output_tokens": 721,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.8307438182341661,
+          "reason": "Ragas response relevancy: 0.83",
+          "input_tokens": 1093,
+          "output_tokens": 721
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "TEMPORAL-MIGRATION-001",
+      "tag": "chronically_failing",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:context_precision_without_reference",
+      "result": "FAIL",
+      "score": 0.3333333333,
+      "threshold": 0.7,
+      "execution_time": 68.378,
+      "judge_llm_input_tokens": 20806,
+      "judge_llm_output_tokens": 7019,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.3333333333,
+          "reason": "Ragas context precision without reference: 0.33",
+          "input_tokens": 20806,
+          "output_tokens": 7019
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "TEMPORAL-MIGRATION-001",
+      "tag": "chronically_failing",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:context_relevance",
+      "result": "FAIL",
+      "score": 0.0,
+      "threshold": 0.7,
+      "execution_time": 9.174,
+      "judge_llm_input_tokens": 1861,
+      "judge_llm_output_tokens": 1008,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.0,
+          "reason": "Ragas context relevance: 0.00",
+          "input_tokens": 1861,
+          "output_tokens": 1008
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "TEMPORAL-MIGRATION-001",
+      "tag": "chronically_failing",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:context_recall",
+      "result": "FAIL",
+      "score": 0.0,
+      "threshold": 0.8,
+      "execution_time": 21.123,
+      "judge_llm_input_tokens": 8230,
+      "judge_llm_output_tokens": 2546,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.0,
+          "reason": "Ragas LLM context recall: 0.00",
+          "input_tokens": 8230,
+          "output_tokens": 2546
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "TEMPORAL-MIGRATION-001",
+      "tag": "chronically_failing",
+      "turn_id": "turn1",
+      "metric_identifier": "custom:answer_correctness",
+      "result": "FAIL",
+      "score": 0.2,
+      "threshold": 0.75,
+      "execution_time": 17.202,
+      "judge_llm_input_tokens": 885,
+      "judge_llm_output_tokens": 1770,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.2,
+          "reason": "Custom answer correctness: 0.20 - The response is factually incorrect regarding the most critical part of the migration. While it correctly identifies `leapp` as the tool for the RHEL OS in-place upgrade, it completely fails to mention that RHEL 10 replaces the ISC DHCP server (used in RHEL 9) with the Kea DHCP server.",
+          "input_tokens": 885,
+          "output_tokens": 1770
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "RSPEED-1930",
+      "tag": "chronically_failing",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:faithfulness",
+      "result": "FAIL",
+      "score": 0.1111111111111111,
+      "threshold": 0.8,
+      "execution_time": 70.285,
+      "judge_llm_input_tokens": 10967,
+      "judge_llm_output_tokens": 8515,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.1111111111111111,
+          "reason": "Ragas faithfulness: 0.11",
+          "input_tokens": 10967,
+          "output_tokens": 8515
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "RSPEED-1930",
+      "tag": "chronically_failing",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:response_relevancy",
+      "result": "FAIL",
+      "score": 0.0,
+      "threshold": 0.8,
+      "execution_time": 22.915,
+      "judge_llm_input_tokens": 600,
+      "judge_llm_output_tokens": 2525,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.0,
+          "reason": "Ragas response relevancy: 0.00",
+          "input_tokens": 600,
+          "output_tokens": 2525
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "RSPEED-1930",
+      "tag": "chronically_failing",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:context_precision_without_reference",
+      "result": "FAIL",
+      "score": 0.14285714284285714,
+      "threshold": 0.7,
+      "execution_time": 82.161,
+      "judge_llm_input_tokens": 22488,
+      "judge_llm_output_tokens": 8393,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.14285714284285714,
+          "reason": "Ragas context precision without reference: 0.14",
+          "input_tokens": 22488,
+          "output_tokens": 8393
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "RSPEED-1930",
+      "tag": "chronically_failing",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:context_relevance",
+      "result": "FAIL",
+      "score": 0.0,
+      "threshold": 0.7,
+      "execution_time": 13.51,
+      "judge_llm_input_tokens": 2268,
+      "judge_llm_output_tokens": 1454,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.0,
+          "reason": "Ragas context relevance: 0.00",
+          "input_tokens": 2268,
+          "output_tokens": 1454
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "RSPEED-1930",
+      "tag": "chronically_failing",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:context_recall",
+      "result": "FAIL",
+      "score": 0.0,
+      "threshold": 0.8,
+      "execution_time": 24.273,
+      "judge_llm_input_tokens": 10316,
+      "judge_llm_output_tokens": 2972,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.0,
+          "reason": "Ragas LLM context recall: 0.00",
+          "input_tokens": 10316,
+          "output_tokens": 2972
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "RSPEED-1930",
+      "tag": "chronically_failing",
+      "turn_id": "turn1",
+      "metric_identifier": "custom:answer_correctness",
+      "result": "FAIL",
+      "score": 0.4,
+      "threshold": 0.75,
+      "execution_time": 15.962,
+      "judge_llm_input_tokens": 449,
+      "judge_llm_output_tokens": 1741,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.4,
+          "reason": "Custom answer correctness: 0.40 - The response is highly contradictory and confusing, which severely detracts from its correctness. It begins by incorrectly stating, \"The provided documentation does not contain specific instructions for installing packages directly using `rpm-ostree install`.\" This is factually wrong, as `rpm-ostree install` is the primary command for this purpose.",
+          "input_tokens": 449,
+          "output_tokens": 1741
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "RSPEED-1998",
+      "tag": "chronically_failing",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:faithfulness",
+      "result": "PASS",
+      "score": 0.9411764705882353,
+      "threshold": 0.8,
+      "execution_time": 134.884,
+      "judge_llm_input_tokens": 11187,
+      "judge_llm_output_tokens": 17032,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.9411764705882353,
+          "reason": "Ragas faithfulness: 0.94",
+          "input_tokens": 11187,
+          "output_tokens": 17032
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "RSPEED-1998",
+      "tag": "chronically_failing",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:response_relevancy",
+      "result": "PASS",
+      "score": 0.8307438182341661,
+      "threshold": 0.8,
+      "execution_time": 5.989,
+      "judge_llm_input_tokens": 1761,
+      "judge_llm_output_tokens": 641,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.8307438182341661,
+          "reason": "Ragas response relevancy: 0.83",
+          "input_tokens": 1761,
+          "output_tokens": 641
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "RSPEED-1998",
+      "tag": "chronically_failing",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:context_precision_without_reference",
+      "result": "PASS",
+      "score": 0.749999999975,
+      "threshold": 0.7,
+      "execution_time": 75.084,
+      "judge_llm_input_tokens": 29166,
+      "judge_llm_output_tokens": 7993,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.749999999975,
+          "reason": "Ragas context precision without reference: 0.75",
+          "input_tokens": 29166,
+          "output_tokens": 7993
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "RSPEED-1998",
+      "tag": "chronically_failing",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:context_relevance",
+      "result": "PASS",
+      "score": 1.0,
+      "threshold": 0.7,
+      "execution_time": 10.708,
+      "judge_llm_input_tokens": 2475,
+      "judge_llm_output_tokens": 1249,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 1.0,
+          "reason": "Ragas context relevance: 1.00",
+          "input_tokens": 2475,
+          "output_tokens": 1249
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "RSPEED-1998",
+      "tag": "chronically_failing",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:context_recall",
+      "result": "FAIL",
+      "score": 0.5,
+      "threshold": 0.8,
+      "execution_time": 19.389,
+      "judge_llm_input_tokens": 9010,
+      "judge_llm_output_tokens": 2270,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.5,
+          "reason": "Ragas LLM context recall: 0.50",
+          "input_tokens": 9010,
+          "output_tokens": 2270
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "RSPEED-1998",
+      "tag": "chronically_failing",
+      "turn_id": "turn1",
+      "metric_identifier": "custom:answer_correctness",
+      "result": "PASS",
+      "score": 1.0,
+      "threshold": 0.75,
+      "execution_time": 14.0,
+      "judge_llm_input_tokens": 1415,
+      "judge_llm_output_tokens": 1544,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 1.0,
+          "reason": "Custom answer correctness: 1.00 - The response is factually correct, comprehensive, and directly aligns with the key points outlined in the expected response.",
+          "input_tokens": 1415,
+          "output_tokens": 1544
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "TEMPORAL-IMPLICIT-001",
+      "tag": "chronically_failing",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:faithfulness",
+      "result": "FAIL",
+      "score": 0.15151515151515152,
+      "threshold": 0.8,
+      "execution_time": 100.976,
+      "judge_llm_input_tokens": 12095,
+      "judge_llm_output_tokens": 12961,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.15151515151515152,
+          "reason": "Ragas faithfulness: 0.15",
+          "input_tokens": 12095,
+          "output_tokens": 12961
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "TEMPORAL-IMPLICIT-001",
+      "tag": "chronically_failing",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:response_relevancy",
+      "result": "PASS",
+      "score": 0.8307438182341661,
+      "threshold": 0.8,
+      "execution_time": 7.433,
+      "judge_llm_input_tokens": 1445,
+      "judge_llm_output_tokens": 761,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.8307438182341661,
+          "reason": "Ragas response relevancy: 0.83",
+          "input_tokens": 1445,
+          "output_tokens": 761
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "TEMPORAL-IMPLICIT-001",
+      "tag": "chronically_failing",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:context_precision_without_reference",
+      "result": "FAIL",
+      "score": 0.4166666666458333,
+      "threshold": 0.7,
+      "execution_time": 125.118,
+      "judge_llm_input_tokens": 41611,
+      "judge_llm_output_tokens": 12751,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.4166666666458333,
+          "reason": "Ragas context precision without reference: 0.42",
+          "input_tokens": 41611,
+          "output_tokens": 12751
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "TEMPORAL-IMPLICIT-001",
+      "tag": "chronically_failing",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:context_relevance",
+      "result": "FAIL",
+      "score": 0.0,
+      "threshold": 0.7,
+      "execution_time": 7.926,
+      "judge_llm_input_tokens": 2245,
+      "judge_llm_output_tokens": 800,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.0,
+          "reason": "Ragas context relevance: 0.00",
+          "input_tokens": 2245,
+          "output_tokens": 800
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "TEMPORAL-IMPLICIT-001",
+      "tag": "chronically_failing",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:context_recall",
+      "result": "FAIL",
+      "score": 0.0,
+      "threshold": 0.8,
+      "execution_time": 17.597,
+      "judge_llm_input_tokens": 9997,
+      "judge_llm_output_tokens": 2019,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.0,
+          "reason": "Ragas LLM context recall: 0.00",
+          "input_tokens": 9997,
+          "output_tokens": 2019
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "TEMPORAL-IMPLICIT-001",
+      "tag": "chronically_failing",
+      "turn_id": "turn1",
+      "metric_identifier": "custom:answer_correctness",
+      "result": "FAIL",
+      "score": 0.3,
+      "threshold": 0.75,
+      "execution_time": 17.111,
+      "judge_llm_input_tokens": 1141,
+      "judge_llm_output_tokens": 1808,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.3,
+          "reason": "Custom answer correctness: 0.30 - The provided response gives a detailed and technically accurate guide for setting up the ISC DHCP server (`dhcp-server` package, `dhcpd` service). However, this information is critically outdated for modern Red Hat Enterprise Linux.",
+          "input_tokens": 1141,
+          "output_tokens": 1808
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    }
+  ]
+}

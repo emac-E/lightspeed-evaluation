@@ -188,6 +188,14 @@ class APIConfig(BaseModel):
     system_prompt: Optional[str] = Field(
         default=None, description="System prompt for API calls"
     )
+    mode: Optional[str] = Field(
+        default=None,
+        description="API mode: 'infer' (default, via /v1/infer) or 'mcp_direct' (query okp-mcp directly)",
+    )
+    mcp_url: Optional[str] = Field(
+        default=None,
+        description="MCP server URL (used when mode='mcp_direct', default: http://localhost:8001)",
+    )
     cache_dir: str = Field(
         default=DEFAULT_API_CACHE_DIR,
         min_length=1,

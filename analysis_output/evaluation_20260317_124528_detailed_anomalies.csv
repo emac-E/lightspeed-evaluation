@@ -1,8 +1,0 @@
-conversation_group_id,turn_id,custom:answer_correctness,ragas:context_precision_without_reference,ragas:context_relevance,ragas:faithfulness,ragas:response_relevancy,anomaly_type,description
-RSPEED-1859,turn1,0.95,0.0,0.0,,0.9886078497919416,RAG_BYPASS,LLM answered correctly despite poor context retrieval
-RSPEED-2200,turn1,1.0,0.1222222222161111,0.0,0.3333333333333333,0.9886078497919416,RAG_BYPASS,LLM answered correctly despite poor context retrieval
-RSPEED-1931,turn1,1.0,0.4209364548410796,1.0,0.6666666666666666,0.9886078497919416,UNFAITHFUL_RESPONSE,Relevant contexts but response not faithful to them
-RSPEED-1998,turn1,0.9,0.8333333332916666,1.0,0.6666666666666666,0.9886078497919416,UNFAITHFUL_RESPONSE,Relevant contexts but response not faithful to them
-RSPEED-1859,turn1,0.95,0.0,0.0,,0.9886078497919416,PARAMETRIC_KNOWLEDGE,Correct answer with zero context scores (parametric knowledge)
-RSPEED-1930,turn1,0.9,0.0,0.0,0.25,0.9886078497919416,PARAMETRIC_KNOWLEDGE,Correct answer with zero context scores (parametric knowledge)
-RSPEED-2478,turn1,0.2,0.9999999999,0.5,,0.9886078497919416,WRONG_DESPITE_GOOD_CONTEXT,Good context retrieval but incorrect answer

@@ -1,8 +1,0 @@
-metric_identifier,custom:tool_eval,ragas:context_precision_with_reference,ragas:context_precision_without_reference,ragas:context_recall,ragas:context_relevance,ragas:faithfulness,ragas:response_relevancy
-custom:tool_eval,,,,,,,
-ragas:context_precision_with_reference,,,,,,,
-ragas:context_precision_without_reference,,,,,,,
-ragas:context_recall,,,,,,,
-ragas:context_relevance,,,,,,,
-ragas:faithfulness,,,,,,,
-ragas:response_relevancy,,,,,,,

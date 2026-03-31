@@ -11,6 +11,9 @@ from lightspeed_evaluation.core.metrics.custom.prompts import (
 )
 from lightspeed_evaluation.core.metrics.custom.keywords_eval import evaluate_keywords
 from lightspeed_evaluation.core.metrics.custom.tool_eval import evaluate_tool_calls
+from lightspeed_evaluation.core.metrics.custom.url_retrieval_eval import (
+    evaluate_url_retrieval,
+)
 from lightspeed_evaluation.core.models import EvaluationScope, TurnData
 from lightspeed_evaluation.core.system.exceptions import LLMError
 
@@ -44,6 +47,7 @@ class CustomMetrics:  # pylint: disable=too-few-public-methods
             "answer_correctness": self._evaluate_answer_correctness,
             "intent_eval": self._evaluate_intent,
             "tool_eval": self._evaluate_tool_calls,
+            "url_retrieval_eval": evaluate_url_retrieval,
         }
 
         print(f"✅ Custom Metrics initialized: {self.llm.model_name}")

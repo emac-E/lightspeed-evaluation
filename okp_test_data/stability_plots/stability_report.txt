@@ -1,0 +1,176 @@
+================================================================================
+Evaluation Stability Analysis Report
+================================================================================
+
+Overall Statistics:
+--------------------------------------------------------------------------------
+Total evaluation runs: 4
+Test modes: flat
+Questions evaluated: 10
+Metrics evaluated: 6
+
+Runs by Mode:
+--------------------------------------------------------------------------------
+  FLAT: 4 runs
+
+Stability Metrics (Per Evaluation Metric):
+--------------------------------------------------------------------------------
+
+Metric: ragas:context_precision_without_reference
+  Average Score: 0.5418
+  Average Std Dev: 0.1658
+  Average CV: 0.3853
+  Consistency Score: 0.6147
+  Average Range: 0.3435
+  Stability: Poor (high variation)
+
+Metric: ragas:faithfulness
+  Average Score: 0.5938
+  Average Std Dev: 0.2500
+  Average CV: 0.5079
+  Consistency Score: 0.4921
+  Average Range: 0.5129
+  Stability: Poor (high variation)
+
+Metric: ragas:context_relevance
+  Average Score: 0.3250
+  Average Std Dev: 0.1926
+  Average CV: 0.6340
+  Consistency Score: 0.3660
+  Average Range: 0.4000
+  Stability: Poor (high variation)
+
+Metric: ragas:response_relevancy
+  Average Score: 0.5701
+  Average Std Dev: 0.2582
+  Average CV: 0.6417
+  Consistency Score: 0.3583
+  Average Range: 0.5434
+  Stability: Poor (high variation)
+
+Metric: custom:answer_correctness
+  Average Score: 0.4125
+  Average Std Dev: 0.2754
+  Average CV: 0.6552
+  Consistency Score: 0.3448
+  Average Range: 0.5300
+  Stability: Poor (high variation)
+
+Metric: ragas:context_recall
+  Average Score: 0.1242
+  Average Std Dev: 0.1138
+  Average CV: 0.9481
+  Consistency Score: 0.0519
+  Average Range: 0.2233
+  Stability: Poor (high variation)
+
+
+================================================================================
+Questions with Highest Variation:
+================================================================================
+
+Question: RSPEED-1930
+  Metric: ragas:response_relevancy
+  Mean: 0.224, Std: 0.447, CV: 2.000
+  Range: [0.000, 0.895]
+
+Question: RSPEED-1930
+  Metric: ragas:context_precision_without_reference
+  Mean: 0.161, Std: 0.236, CV: 1.468
+  Range: [0.000, 0.500]
+
+Question: RSPEED-1930
+  Metric: custom:answer_correctness
+  Mean: 0.350, Std: 0.473, CV: 1.350
+  Range: [0.000, 1.000]
+
+Question: TEMPORAL-REMOVED-001
+  Metric: ragas:response_relevancy
+  Mean: 0.391, Std: 0.462, CV: 1.181
+  Range: [0.000, 0.900]
+
+Question: TEMPORAL-REMOVED-001
+  Metric: custom:answer_correctness
+  Mean: 0.375, Std: 0.435, CV: 1.160
+  Range: [0.000, 0.800]
+
+Question: TEMPORAL-ADDED-002
+  Metric: ragas:context_recall
+  Mean: 0.333, Std: 0.385, CV: 1.155
+  Range: [0.000, 0.667]
+
+Question: RSPEED-1930
+  Metric: ragas:context_relevance
+  Mean: 0.250, Std: 0.289, CV: 1.155
+  Range: [0.000, 0.500]
+
+Question: TEMPORAL-ADDED-002
+  Metric: custom:answer_correctness
+  Mean: 0.500, Std: 0.577, CV: 1.155
+  Range: [0.000, 1.000]
+
+Question: TEMPORAL-REMOVED-001
+  Metric: ragas:context_recall
+  Mean: 0.200, Std: 0.231, CV: 1.155
+  Range: [0.000, 0.400]
+
+Question: TEMPORAL-IMPLICIT-001
+  Metric: ragas:faithfulness
+  Mean: 0.375, Std: 0.421, CV: 1.122
+  Range: [0.100, 1.000]
+
+
+================================================================================
+Most Stable Questions:
+================================================================================
+
+Question: RSPEED-2294
+  Metric: custom:answer_correctness
+  Mean: 0.300, Std: 0.000, CV: 0.000
+  Consistency Score: 1.000
+
+Question: TEMPORAL-ADDED-003
+  Metric: ragas:context_relevance
+  Mean: 0.500, Std: 0.000, CV: 0.000
+  Consistency Score: 1.000
+
+Question: TEMPORAL-MIGRATION-001
+  Metric: ragas:context_precision_without_reference
+  Mean: 0.323, Std: 0.021, CV: 0.065
+  Consistency Score: 0.935
+
+Question: RSPEED-1812
+  Metric: ragas:faithfulness
+  Mean: 0.958, Std: 0.083, CV: 0.087
+  Consistency Score: 0.913
+
+Question: RSPEED-1812
+  Metric: ragas:context_precision_without_reference
+  Mean: 0.396, Std: 0.042, CV: 0.105
+  Consistency Score: 0.895
+
+Question: TEMPORAL-ADDED-003
+  Metric: ragas:context_precision_without_reference
+  Mean: 0.914, Std: 0.100, CV: 0.109
+  Consistency Score: 0.891
+
+Question: RSPEED-1812
+  Metric: ragas:response_relevancy
+  Mean: 0.823, Std: 0.110, CV: 0.134
+  Consistency Score: 0.866
+
+Question: RSPEED-2294
+  Metric: ragas:response_relevancy
+  Mean: 0.823, Std: 0.110, CV: 0.134
+  Consistency Score: 0.866
+
+Question: TEMPORAL-IMPLICIT-001
+  Metric: ragas:response_relevancy
+  Mean: 0.823, Std: 0.110, CV: 0.134
+  Consistency Score: 0.866
+
+Question: TEMPORAL-MIGRATION-001
+  Metric: ragas:response_relevancy
+  Mean: 0.823, Std: 0.110, CV: 0.134
+  Consistency Score: 0.866
+

@@ -1,6 +1,0 @@
-metric_identifier,custom:answer_correctness,ragas:context_precision_without_reference,ragas:context_relevance,ragas:faithfulness,ragas:response_relevancy
-custom:answer_correctness,1.0,-0.06520481715693442,0.2201718321750228,0.10745800653167746,
-ragas:context_precision_without_reference,-0.06520481715693442,1.0,0.6681531047810609,0.5494769417110051,
-ragas:context_relevance,0.2201718321750228,0.6681531047810609,1.0,0.5733678757401881,
-ragas:faithfulness,0.10745800653167746,0.5494769417110051,0.5733678757401881,1.0,
-ragas:response_relevancy,,,,,

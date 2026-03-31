@@ -200,3 +200,4 @@ analysis_output/
 # other stuff added by EM but not needed
 JIRA_TICKET_CREATION_SPEC.md 
 RSPEED-*
+mcp_retrieval_output/

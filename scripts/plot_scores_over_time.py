@@ -71,12 +71,13 @@ def parse_timestamp_from_dirname(dirname: str) -> datetime | None:
     return None
 
 
-def find_all_runs(base_dir: Path, min_runs: int = 2) -> list[tuple[Path, datetime]]:
+def find_all_runs(base_dir: Path, min_runs: int = 2, min_date: datetime | None = None) -> list[tuple[Path, datetime]]:
     """Find all valid evaluation run directories with timestamps.
 
     Args:
         base_dir: Base directory containing evaluation runs
         min_runs: Minimum number of runs required
+        min_date: Only include runs on or after this date (optional)
 
     Returns:
         List of (run_dir, timestamp) tuples, sorted by timestamp
@@ -94,6 +95,11 @@ def find_all_runs(base_dir: Path, min_runs: int = 2) -> list[tuple[Path, datetim
         timestamp = parse_timestamp_from_dirname(run_dir.name)
         if timestamp is None:
             print(f"   ⚠️ Skipping {run_dir.name} (could not parse timestamp)")
+            continue
+
+        # Filter by minimum date if specified
+        if min_date and timestamp < min_date:
+            print(f"   ⚠️ Skipping {run_dir.name} (before {min_date.strftime('%Y-%m-%d')})")
             continue
 
         valid_runs.append((run_dir, timestamp))
@@ -935,6 +941,12 @@ def main() -> int:
         help="Minimum number of runs required (default: 2)",
     )
     parser.add_argument(
+        "--min-date",
+        type=str,
+        default=None,
+        help="Only include runs on or after this date (format: YYYY-MM-DD, e.g., 2026-03-25)",
+    )
+    parser.add_argument(
         "--max-questions-per-plot",
         type=int,
         default=20,
@@ -951,6 +963,16 @@ def main() -> int:
 
     args = parser.parse_args()
 
+    # Parse min_date if provided
+    min_date = None
+    if args.min_date:
+        try:
+            min_date = datetime.strptime(args.min_date, "%Y-%m-%d")
+            print(f"📅 Filtering runs: only including data from {args.min_date} onwards")
+        except ValueError:
+            print(f"❌ Error: Invalid date format '{args.min_date}'. Use YYYY-MM-DD (e.g., 2026-03-25)")
+            return 1
+
     # Handle "all" option
     if "all" in args.plot_types:
         args.plot_types = ["line", "heatmap", "boxplot", "trend", "faceted"]
@@ -960,7 +982,7 @@ def main() -> int:
 
     # Find all valid runs
     print(f"\n📂 Searching for evaluation runs in: {args.base_dir}")
-    runs = find_all_runs(args.base_dir, args.min_runs)
+    runs = find_all_runs(args.base_dir, args.min_runs, min_date)
 
     if not runs:
         return 1

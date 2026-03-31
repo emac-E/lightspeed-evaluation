@@ -44,6 +44,9 @@ TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 OUTPUT_BASE="${BASE_DIR}/eval_output/full_suite_${TIMESTAMP}"
 ANALYSIS_OUTPUT="${BASE_DIR}/analysis_output/full_suite_${TIMESTAMP}"
 
+# Track runtime
+START_TIME=$(date +%s)
+
 # Create output directories
 mkdir -p "${OUTPUT_BASE}"
 mkdir -p "${ANALYSIS_OUTPUT}"
@@ -117,7 +120,7 @@ for i in "${!TEST_CONFIGS[@]}"; do
     if lightspeed-eval \
         --system-config config/system.yaml \
         --eval-data "${config}" \
-        --output-dir "${output_dir}" 2>&1 | tee -a faithfulness.log; then
+        --output-dir "${output_dir}"; then
 
         echo -e "${GREEN}✓ Success: ${config_name}${NC}"
         SUCCESSFUL_EVALS+=("${config_name}")
@@ -181,8 +184,12 @@ echo ""
 echo -e "${GREEN}Step 4: Generating RAG Quality Report for okp-mcp developers...${NC}"
 echo ""
 
+# Calculate runtime
+CURRENT_TIME=$(date +%s)
+RUNTIME_SECONDS=$((CURRENT_TIME - START_TIME))
+
 # Build command with optional analysis directories
-REPORT_CMD="python scripts/generate_okp_mcp_report.py --output-base \"${OUTPUT_BASE}\""
+REPORT_CMD="python scripts/generate_okp_mcp_report.py --output-base \"${OUTPUT_BASE}\" --runtime-seconds ${RUNTIME_SECONDS}"
 
 if [ "$CORRELATION_ANALYSIS_RAN" = true ]; then
     REPORT_CMD="$REPORT_CMD --correlation-analysis \"${ANALYSIS_OUTPUT}/correlation_analysis\""
