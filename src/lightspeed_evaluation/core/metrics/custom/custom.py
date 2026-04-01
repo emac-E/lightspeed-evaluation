@@ -9,6 +9,9 @@ from lightspeed_evaluation.core.metrics.custom.prompts import (
     ANSWER_CORRECTNESS_PROMPT,
     INTENT_EVALUATION_PROMPT,
 )
+from lightspeed_evaluation.core.metrics.custom.forbidden_claims_eval import (
+    evaluate_forbidden_claims,
+)
 from lightspeed_evaluation.core.metrics.custom.keywords_eval import evaluate_keywords
 from lightspeed_evaluation.core.metrics.custom.tool_eval import evaluate_tool_calls
 from lightspeed_evaluation.core.metrics.custom.url_retrieval_eval import (
@@ -48,6 +51,7 @@ class CustomMetrics:  # pylint: disable=too-few-public-methods
             "intent_eval": self._evaluate_intent,
             "tool_eval": self._evaluate_tool_calls,
             "url_retrieval_eval": evaluate_url_retrieval,
+            "forbidden_claims_eval": evaluate_forbidden_claims,
         }
 
         print(f"✅ Custom Metrics initialized: {self.llm.model_name}")
