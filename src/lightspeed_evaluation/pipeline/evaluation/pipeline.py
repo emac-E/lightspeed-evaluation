@@ -111,13 +111,18 @@ class EvaluationPipeline:
         mode = api_config.mode or "infer"
 
         if mode == "mcp_direct":
-            logger.info("Setting up MCP Direct client: %s", api_config.mcp_url or "http://localhost:8001")
+            logger.info(
+                "Setting up MCP Direct client: %s",
+                api_config.mcp_url or "http://localhost:8001",
+            )
             client = MCPDirectClient(config.api)
             logger.info("MCP Direct client initialized")
         else:
             logger.info("Setting up API client: %s", api_config.api_base)
             client = APIClient(config.api)
-            logger.info("API client initialized for %s endpoint", api_config.endpoint_type)
+            logger.info(
+                "API client initialized for %s endpoint", api_config.endpoint_type
+            )
 
         return client
 

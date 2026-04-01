@@ -76,6 +76,18 @@ metrics_metadata:
       description: "URL retrieval quality - F1 score of expected vs retrieved documentation URLs"
       default: true
 
+    # Custom keywords evaluation (needs expected_keywords field)
+    "custom:keywords_eval":
+      threshold: 0.7
+      description: "Required facts/keywords present in response"
+      default: true
+
+    # Custom forbidden claims evaluation (needs forbidden_claims field)
+    "custom:forbidden_claims_eval":
+      threshold: 1.0
+      description: "Known-incorrect claims avoided in response (regression detection)"
+      default: true
+
     # DISABLED: These metrics need expected_response (ground truth)
     # "ragas:context_recall":
     #   threshold: 0.8

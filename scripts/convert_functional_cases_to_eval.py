@@ -142,13 +142,18 @@ def _ast_to_python(node: ast.expr) -> Any:
 
 
 def convert_to_eval_yaml(
-    test_cases: list[dict[str, Any]], filter_ids: list[str] | None = None
+    test_cases: list[dict[str, Any]],
+    filter_ids: list[str] | None = None,
+    mode: str = "full",
 ) -> list[dict[str, Any]]:
     """Convert functional test cases to evaluation YAML format.
 
     Args:
         test_cases: List of parsed test case dicts
         filter_ids: Optional list of test IDs to include (e.g., ['RSPEED_2482'])
+        mode: Testing mode - 'retrieval_only' or 'full'
+              - retrieval_only: 3 metrics, no response needed (fast)
+              - full: 5 metrics, requires full LLM response (slow, complete)
 
     Returns:
         List of evaluation data dicts in YAML format
@@ -190,23 +195,38 @@ def convert_to_eval_yaml(
             else:
                 expected_keywords.append(fact)
 
-        # Build turn data
-        turn_data = {
-            "turn_id": 1,
-            "query": case.get("question", ""),
-            "expected_urls": expected_urls,
-            "expected_keywords": expected_keywords,
-            "turn_metrics": [
+        # Build metrics list based on mode
+        if mode == "retrieval_only":
+            # Fast mode: Only retrieval metrics (no response needed)
+            turn_metrics = [
+                "custom:url_retrieval_eval",
+                "ragas:context_precision_without_reference",
+                "ragas:context_relevance",
+            ]
+        else:  # mode == "full"
+            # Complete mode: Retrieval + response metrics
+            turn_metrics = [
                 "custom:url_retrieval_eval",
                 "custom:keywords_eval",
                 "ragas:context_precision_without_reference",
                 "ragas:context_relevance",
-            ],
+            ]
+
+        # Build turn data
+        turn_data = {
+            "turn_id": "1",  # Must be string
+            "query": case.get("question", ""),
+            "expected_urls": expected_urls,
+            "turn_metrics": turn_metrics,
         }
 
-        # Add forbidden_claims if present (we'll create this metric next)
+        # Add expected_keywords only in full mode (needs response)
+        if mode == "full":
+            turn_data["expected_keywords"] = [[kw] for kw in expected_keywords]
+
+        # Add forbidden_claims if present and in full mode (needs response)
         forbidden_claims = case.get("forbidden_claims", [])
-        if forbidden_claims:
+        if forbidden_claims and mode == "full":
             turn_data["forbidden_claims"] = forbidden_claims
             turn_data["turn_metrics"].append("custom:forbidden_claims_eval")
 
@@ -241,6 +261,12 @@ def main():
         "--filter",
         help="Comma-separated list of test IDs to include (e.g., 'RSPEED_2482,RSPEED_2481')",
     )
+    parser.add_argument(
+        "--mode",
+        choices=["retrieval_only", "full"],
+        default="full",
+        help="Testing mode: 'retrieval_only' (3 metrics, fast) or 'full' (5 metrics, complete)",
+    )
 
     args = parser.parse_args()
 
@@ -262,6 +288,7 @@ def main():
     print(f"{'='*80}")
     print(f"Input:  {input_path}")
     print(f"Output: {output_path}")
+    print(f"Mode:   {args.mode}")
     print(f"{'='*80}\n")
 
     # Parse functional_cases.py
@@ -274,8 +301,8 @@ def main():
         return 1
 
     # Convert to evaluation format
-    print("\n🔄 Converting to evaluation format...")
-    eval_data = convert_to_eval_yaml(test_cases, filter_ids)
+    print(f"\n🔄 Converting to evaluation format (mode: {args.mode})...")
+    eval_data = convert_to_eval_yaml(test_cases, filter_ids, mode=args.mode)
     print(f"✅ Converted {len(eval_data)} test cases")
 
     # Create output directory
@@ -310,6 +337,7 @@ def main():
 
     # Print summary
     print("📊 Conversion Summary:")
+    print(f"  Mode: {args.mode}")
     print(f"  Test cases: {len(eval_data)}")
     print(f"  Tag: okp-mcp-functional")
     print(f"  Metrics per turn:")
@@ -317,6 +345,13 @@ def main():
         metrics = eval_data[0]["turns"][0]["turn_metrics"]
         for metric in metrics:
             print(f"    • {metric}")
+
+        if args.mode == "retrieval_only":
+            print(f"\n  ⚡ Retrieval-only mode: Fast, no LLM response needed")
+            print(f"     Use with: ./run_mcp_retrieval_suite.sh")
+        else:
+            print(f"\n  🎯 Full mode: Complete testing with LLM responses")
+            print(f"     Use with: ./run_okp_mcp_full_suite.sh")
 
     return 0
 

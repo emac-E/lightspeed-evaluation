@@ -180,7 +180,7 @@ cython_debug/
 .caches/
 
 # Evaluation output folder
-eval_output/
+eval_output*/
 
 # DeepEval telemetry and configuration
 .deepeval/
@@ -201,3 +201,6 @@ analysis_output/
 JIRA_TICKET_CREATION_SPEC.md 
 RSPEED-*
 mcp_retrieval_output/
+docs/
+okp_test_data/
+

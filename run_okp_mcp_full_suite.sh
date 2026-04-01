@@ -1,24 +1,24 @@
 #!/bin/bash
 #
-# MCP Direct Retrieval Suite - Test Retrieval Quality N Times
+# OKP-MCP Full Evaluation Suite - Complete End-to-End Testing
 #
 # This script:
-# 1. Runs MCP direct mode evaluation N times
-# 2. Collects metrics for context quality and URL retrieval
-# 3. Generates heatmap showing questions vs metrics across runs
+# 1. Runs full inference evaluation N times (with LLM responses)
+# 2. Collects metrics for retrieval quality AND answer correctness
+# 3. Generates heatmaps showing questions vs metrics across runs
 #
 # Usage:
-#   ./run_mcp_retrieval_suite.sh                        # Run 5 times (default)
-#   ./run_mcp_retrieval_suite.sh --runs 10              # Run 10 times
-#   ./run_mcp_retrieval_suite.sh --config config/test.yaml  # Custom config
+#   ./run_okp_mcp_full_suite.sh                        # Run 3 times (default)
+#   ./run_okp_mcp_full_suite.sh --runs 5               # Run 5 times
+#   ./run_okp_mcp_full_suite.sh --config config/okp_mcp_test_suites/functional_tests_full.yaml
 #
 
 set -e  # Exit on error
 
 # Default configuration
-NUM_RUNS=5
-EVAL_CONFIG="config/chronically_failing_questions.yaml"
-SYSTEM_CONFIG="config/system_mcp_direct.yaml"
+NUM_RUNS=3
+EVAL_CONFIG="config/okp_mcp_test_suites/functional_tests_full.yaml"
+SYSTEM_CONFIG="config/system.yaml"
 
 # Parse arguments
 while [[ $# -gt 0 ]]; do
@@ -39,13 +39,13 @@ while [[ $# -gt 0 ]]; do
             echo "Usage: $0 [OPTIONS]"
             echo ""
             echo "Options:"
-            echo "  --runs N                 Number of runs (default: 5)"
-            echo "  --config FILE            Evaluation config (default: config/chronically_failing_questions.yaml)"
-            echo "  --system-config FILE     System config (default: config/system_mcp_direct.yaml)"
+            echo "  --runs N                 Number of runs (default: 3)"
+            echo "  --config FILE            Evaluation config (default: config/okp_mcp_test_suites/functional_tests_full.yaml)"
+            echo "  --system-config FILE     System config (default: config/system.yaml)"
             echo "  --help                   Show this help"
             echo ""
             echo "Example:"
-            echo "  $0 --runs 10 --config config/chronically_failing_questions.yaml"
+            echo "  $0 --runs 5 --config config/okp_mcp_test_suites/functional_tests_full.yaml"
             exit 0
             ;;
         *)
@@ -66,14 +66,14 @@ NC='\033[0m' # No Color
 # Configuration
 BASE_DIR="$(pwd)"
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
-OUTPUT_BASE="${BASE_DIR}/mcp_retrieval_output/suite_${TIMESTAMP}"
+OUTPUT_BASE="${BASE_DIR}/okp_mcp_full_output/suite_${TIMESTAMP}"
 CONFIG_NAME=$(basename "${EVAL_CONFIG}" .yaml)
 
 # Create output directories
 mkdir -p "${OUTPUT_BASE}"
 
 echo -e "${BLUE}========================================${NC}"
-echo -e "${BLUE}MCP Direct Retrieval Quality Suite${NC}"
+echo -e "${BLUE}OKP-MCP Full Evaluation Suite${NC}"
 echo -e "${BLUE}========================================${NC}"
 echo ""
 echo -e "Runs: ${NUM_RUNS}"
@@ -107,7 +107,7 @@ echo ""
 SUCCESSFUL_RUNS=0
 FAILED_RUNS=0
 
-echo -e "${GREEN}Running MCP direct evaluations (${NUM_RUNS} runs)...${NC}"
+echo -e "${GREEN}Running full evaluations with LLM responses (${NUM_RUNS} runs)...${NC}"
 echo ""
 
 for run in $(seq 1 ${NUM_RUNS}); do
@@ -116,10 +116,10 @@ for run in $(seq 1 ${NUM_RUNS}); do
 
     echo -e "${YELLOW}[Run ${run}/${NUM_RUNS}] Starting evaluation...${NC}"
 
-    # Clear MCP direct cache between runs to get fresh retrieval results
-    echo -e "${BLUE}  Clearing MCP direct cache...${NC}"
-    rm -rf .caches/mcp_direct_cache/*
-    mkdir -p .caches/mcp_direct_cache
+    # Clear API cache between runs to get fresh responses
+    echo -e "${BLUE}  Clearing API cache...${NC}"
+    rm -rf .caches/api_cache/*
+    mkdir -p .caches/api_cache
 
     # Clear LLM judge cache too (for Ragas metrics)
     rm -rf .caches/llm_cache/*
@@ -185,10 +185,12 @@ echo -e "Total runs: ${NUM_RUNS}"
 echo -e "Successful: ${GREEN}${SUCCESSFUL_RUNS}${NC}"
 echo -e "Failed: ${RED}${FAILED_RUNS}${NC}"
 echo ""
-echo -e "Metrics evaluated (no ground truth needed):"
+echo -e "Metrics evaluated (full suite):"
+echo -e "  • custom:url_retrieval_eval (F1, MRR, ranking)"
+echo -e "  • custom:keywords_eval (required facts)"
+echo -e "  • custom:forbidden_claims_eval (regression detection)"
 echo -e "  • ragas:context_precision_without_reference"
 echo -e "  • ragas:context_relevance"
-echo -e "  • custom:url_retrieval_eval"
 echo ""
 echo -e "${GREEN}Output directory:${NC} ${OUTPUT_BASE}"
 echo ""
@@ -205,14 +207,14 @@ echo ""
 echo -e "  2. View detailed results:"
 echo -e "     ${YELLOW}cat ${OUTPUT_BASE}/run_001/evaluation_*_summary.txt${NC}"
 echo ""
-echo -e "  3. Compare runs:"
-echo -e "     ${YELLOW}python scripts/compare_runs.py ${OUTPUT_BASE}/run_001.csv ${OUTPUT_BASE}/run_002.csv${NC}"
+echo -e "  3. Analyze URL retrieval stability:"
+echo -e "     ${YELLOW}python scripts/analyze_url_retrieval_stability.py \\"
+echo -e "       --input ${OUTPUT_BASE}/run_*/evaluation_*_detailed.csv \\"
+echo -e "       --output ${OUTPUT_BASE}/url_stability${NC}"
 echo ""
-echo -e "  4. Iterate on okp-mcp and re-run:"
-echo -e "     ${YELLOW}cd ~/Work/okp-mcp-lifecycle-deboost${NC}"
-echo -e "     ${YELLOW}# Edit src/okp_mcp/tools.py...${NC}"
-echo -e "     ${YELLOW}cd ~/Work/lscore-deploy/local && podman-compose restart okp-mcp${NC}"
-echo -e "     ${YELLOW}cd ~/Work/lightspeed-core/lightspeed-evaluation${NC}"
-echo -e "     ${YELLOW}./run_mcp_retrieval_suite.sh --runs ${NUM_RUNS}${NC}"
+echo -e "  4. Compare with retrieval-only baseline:"
+echo -e "     ${YELLOW}python scripts/compare_runs.py \\"
+echo -e "       mcp_retrieval_output/suite_*/run_001.csv \\"
+echo -e "       ${OUTPUT_BASE}/run_001.csv${NC}"
 echo ""
 echo -e "${GREEN}Done!${NC}"
