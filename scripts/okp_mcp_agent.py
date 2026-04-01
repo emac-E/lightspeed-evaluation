@@ -90,9 +90,26 @@ class EvaluationResult:
 
         return good_retrieval and poor_keywords
 
+    @property
+    def has_metrics(self) -> bool:
+        """Check if any metrics were successfully parsed."""
+        return any([
+            self.url_f1 is not None,
+            self.mrr is not None,
+            self.context_relevance is not None,
+            self.context_precision is not None,
+            self.keywords_score is not None,
+            self.forbidden_claims_score is not None,
+        ])
+
     def summary(self) -> str:
         """Human-readable summary of metrics."""
         lines = [f"Ticket: {self.ticket_id}"]
+
+        if not self.has_metrics:
+            lines.append("  ⚠️  No metrics found (check if evaluation ran successfully)")
+            return "\n".join(lines)
+
         if self.url_f1 is not None:
             lines.append(f"  URL F1: {self.url_f1:.2f}")
         if self.mrr is not None:
@@ -318,7 +335,15 @@ class OkpMcpAgent:
         return output_dirs[-1]
 
     def parse_results(self, output_dir: Path, ticket_id: str) -> EvaluationResult:
-        """Parse evaluation results for a specific ticket."""
+        """Parse evaluation results for a specific ticket.
+
+        Args:
+            output_dir: Path to evaluation output directory
+            ticket_id: Ticket ID (e.g., "RSPEED-2482" or "RSPEED_2482")
+
+        Returns:
+            EvaluationResult with parsed metrics
+        """
         # Find the detailed CSV
         csv_files = list(output_dir.glob("run_001/evaluation_*_detailed.csv"))
         if not csv_files:
@@ -327,8 +352,18 @@ class OkpMcpAgent:
         csv_path = csv_files[0]
         df = pd.read_csv(csv_path)
 
+        # Normalize ticket ID (CSV uses underscores, users might type hyphens)
+        normalized_ticket_id = ticket_id.replace("-", "_")
+
         # Filter to this ticket
-        ticket_df = df[df["conversation_group_id"] == ticket_id]
+        ticket_df = df[df["conversation_group_id"] == normalized_ticket_id]
+
+        if ticket_df.empty:
+            available_tickets = df["conversation_group_id"].unique()[:10]
+            raise RuntimeError(
+                f"Ticket '{ticket_id}' (normalized to '{normalized_ticket_id}') not found in CSV.\n"
+                f"Available tickets: {', '.join(available_tickets)}"
+            )
 
         result = EvaluationResult(ticket_id=ticket_id)
 
@@ -391,6 +426,13 @@ class OkpMcpAgent:
 
         print("\n" + result.summary())
 
+        # Check if we have metrics to analyze
+        if not result.has_metrics:
+            print("\n❌ DIAGNOSIS: NO METRICS FOUND")
+            print("   → Check if the evaluation completed successfully")
+            print("   → Check if this ticket is in the test suite")
+            return result
+
         # Determine problem type
         if result.is_retrieval_problem:
             print("\n🔍 DIAGNOSIS: RETRIEVAL PROBLEM")
@@ -402,6 +444,7 @@ class OkpMcpAgent:
             print("   → Edit system prompts")
         else:
             print("\n✅ DIAGNOSIS: METRICS LOOK GOOD")
+            print("   → All thresholds passed")
 
         return result
 
