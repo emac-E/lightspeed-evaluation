@@ -9,15 +9,8 @@
     - access.redhat.com/container compatibility matrix
     turn_metrics:
     - custom:url_retrieval_eval
-    - custom:keywords_eval
     - ragas:context_precision_without_reference
     - ragas:context_relevance
-    - custom:forbidden_claims_eval
-    expected_keywords:
-    - - unsupported
-    - - compatibility matrix
-    forbidden_claims:
-    - viable strategy
 - conversation_group_id: RSPEED_2481
   tag: okp-mcp-functional
   turns:
@@ -29,15 +22,8 @@
     - access.redhat.com/spice
     turn_metrics:
     - custom:url_retrieval_eval
-    - custom:keywords_eval
     - ragas:context_precision_without_reference
     - ragas:context_relevance
-    - custom:forbidden_claims_eval
-    expected_keywords:
-    - - deprecated
-    - - vnc
-    forbidden_claims:
-    - fully supported and commonly used
 - conversation_group_id: RSPEED_2480
   tag: okp-mcp-functional
   turns:
@@ -49,16 +35,8 @@
     - access.redhat.com/configuring_and_managing_virtualization
     turn_metrics:
     - custom:url_retrieval_eval
-    - custom:keywords_eval
     - ragas:context_precision_without_reference
     - ragas:context_relevance
-    - custom:forbidden_claims_eval
-    expected_keywords:
-    - - cockpit
-    - - virsh
-    - - deprecated
-    forbidden_claims:
-    - enterprise-grade
 - conversation_group_id: RSPEED_2479
   tag: okp-mcp-functional
   turns:
@@ -70,16 +48,8 @@
     - access.redhat.com/updates/errata
     turn_metrics:
     - custom:url_retrieval_eval
-    - custom:keywords_eval
     - ragas:context_precision_without_reference
     - ragas:context_relevance
-    - custom:forbidden_claims_eval
-    expected_keywords:
-    - - 24 months
-    - - enhanced eus
-    - - 48 months
-    forbidden_claims:
-    - 30 months
 - conversation_group_id: RSPEED_2478
   tag: okp-mcp-functional
   turns:
@@ -91,17 +61,8 @@
     - access.redhat.com/updates/errata
     turn_metrics:
     - custom:url_retrieval_eval
-    - custom:keywords_eval
     - ragas:context_precision_without_reference
     - ragas:context_relevance
-    - custom:forbidden_claims_eval
-    expected_keywords:
-    - - '9.0'
-    - - '9.2'
-    - - '9.4'
-    - - '9.6'
-    forbidden_claims:
-    - 9.0 did not have EUS
 - conversation_group_id: RSPEED_2698
   tag: okp-mcp-functional
   turns:
@@ -112,18 +73,8 @@
     - access.redhat.com/Life Cycle
     turn_metrics:
     - custom:url_retrieval_eval
-    - custom:keywords_eval
     - ragas:context_precision_without_reference
     - ragas:context_relevance
-    - custom:forbidden_claims_eval
-    expected_keywords:
-    - - ten year
-    - - full support
-    - - maintenance support
-    - - extended life
-    forbidden_claims:
-    - unable to retrieve
-    - has not been released
 - conversation_group_id: RSPEED_2697
   tag: okp-mcp-functional
   turns:
@@ -134,15 +85,8 @@
     - access.redhat.com/release-dates
     turn_metrics:
     - custom:url_retrieval_eval
-    - custom:keywords_eval
     - ragas:context_precision_without_reference
     - ragas:context_relevance
-    - custom:forbidden_claims_eval
-    expected_keywords:
-    - - '2025-05-20'
-    - - '10.0'
-    forbidden_claims:
-    - has not been released
 - conversation_group_id: RSPEED_2294
   tag: okp-mcp-functional
   turns:
@@ -154,14 +98,8 @@
     - access.redhat.com/python 3.12
     turn_metrics:
     - custom:url_retrieval_eval
-    - custom:keywords_eval
     - ragas:context_precision_without_reference
     - ragas:context_relevance
-    - custom:forbidden_claims_eval
-    expected_keywords:
-    - - '3.12'
-    forbidden_claims:
-    - has not been officially released
 - conversation_group_id: RSPEED_2201
   tag: okp-mcp-functional
   turns:
@@ -173,15 +111,8 @@
     - access.redhat.com/Secure Boot
     turn_metrics:
     - custom:url_retrieval_eval
-    - custom:keywords_eval
     - ragas:context_precision_without_reference
     - ragas:context_relevance
-    - custom:forbidden_claims_eval
-    expected_keywords:
-    - - marketplace
-    - - custom image
-    forbidden_claims:
-    - do not expose
 - conversation_group_id: RSPEED_2200
   tag: okp-mcp-functional
   turns:
@@ -193,17 +124,8 @@
     - access.redhat.com/hugepage
     turn_metrics:
     - custom:url_retrieval_eval
-    - custom:keywords_eval
     - ragas:context_precision_without_reference
     - ragas:context_relevance
-    - custom:forbidden_claims_eval
-    expected_keywords:
-    - - hugepage
-    - - 1G
-    - - '64'
-    - - grub
-    forbidden_claims:
-    - configures hugepages dynamically
 - conversation_group_id: fuse_regression_eol
   tag: okp-mcp-functional
   turns:
@@ -215,13 +137,8 @@
     - access.redhat.com/camel
     turn_metrics:
     - custom:url_retrieval_eval
-    - custom:keywords_eval
     - ragas:context_precision_without_reference
     - ragas:context_relevance
-    expected_keywords:
-    - - migration
-    - - fuse
-    - - camel
 - conversation_group_id: gluster_regression_eol
   tag: okp-mcp-functional
   turns:
@@ -233,13 +150,8 @@
     - access.redhat.com/ceph storage
     turn_metrics:
     - custom:url_retrieval_eval
-    - custom:keywords_eval
     - ragas:context_precision_without_reference
     - ragas:context_relevance
-    expected_keywords:
-    - - migration
-    - - gluster
-    - - ceph
 - conversation_group_id: rhv_regression_eol
   tag: okp-mcp-functional
   turns:
@@ -251,13 +163,8 @@
     - access.redhat.com/openshift virtualization
     turn_metrics:
     - custom:url_retrieval_eval
-    - custom:keywords_eval
     - ragas:context_precision_without_reference
     - ragas:context_relevance
-    expected_keywords:
-    - - migration
-    - - openshift
-    - - rhv
 - conversation_group_id: RSPEED_1998
   tag: okp-mcp-functional
   turns:
@@ -269,15 +176,8 @@
     - access.redhat.com/SAP
     turn_metrics:
     - custom:url_retrieval_eval
-    - custom:keywords_eval
     - ragas:context_precision_without_reference
     - ragas:context_relevance
-    - custom:forbidden_claims_eval
-    expected_keywords:
-    - - package list
-    - - SAP Application Server
-    forbidden_claims:
-    - not a Red Hat product
 - conversation_group_id: sap_004
   tag: okp-mcp-functional
   turns:
@@ -289,14 +189,8 @@
     - access.redhat.com/sap_netweaver_preconfigure
     turn_metrics:
     - custom:url_retrieval_eval
-    - custom:keywords_eval
     - ragas:context_precision_without_reference
     - ragas:context_relevance
-    expected_keywords:
-    - - sap_general_preconfigure
-    - - sap_netweaver_preconfigure
-    - - sap_hana_preconfigure
-    - - preconfigure
 - conversation_group_id: RSPEED_2136
   tag: okp-mcp-functional
   turns:
@@ -308,16 +202,8 @@
     - access.redhat.com/audit2allow
     turn_metrics:
     - custom:url_retrieval_eval
-    - custom:keywords_eval
     - ragas:context_precision_without_reference
     - ragas:context_relevance
-    - custom:forbidden_claims_eval
-    expected_keywords:
-    - - audit2allow
-    - - ausearch
-    - - semodule
-    forbidden_claims:
-    - contact your Red Hat sales representative
 - conversation_group_id: RSPEED_2123
   tag: okp-mcp-functional
   turns:
@@ -327,15 +213,8 @@
     - access.redhat.com/solutions/45950
     turn_metrics:
     - custom:url_retrieval_eval
-    - custom:keywords_eval
     - ragas:context_precision_without_reference
     - ragas:context_relevance
-    - custom:forbidden_claims_eval
-    expected_keywords:
-    - - msglvl
-    - - ethtool -s
-    forbidden_claims:
-    - ethtool -P
 - conversation_group_id: RSPEED_2745
   tag: okp-mcp-functional
   turns:
@@ -347,14 +226,8 @@
     - access.redhat.com/end of maintenance
     turn_metrics:
     - custom:url_retrieval_eval
-    - custom:keywords_eval
     - ragas:context_precision_without_reference
     - ragas:context_relevance
-    - custom:forbidden_claims_eval
-    expected_keywords:
-    - - June 30, 2024
-    forbidden_claims:
-    - August 31, 2020
 - conversation_group_id: RSPEED_2113
   tag: okp-mcp-functional
   turns:
@@ -367,16 +240,8 @@
     - access.redhat.com/solutions/1526613
     turn_metrics:
     - custom:url_retrieval_eval
-    - custom:keywords_eval
     - ragas:context_precision_without_reference
     - ragas:context_relevance
-    - custom:forbidden_claims_eval
-    expected_keywords:
-    - - 802.3ad
-    - - bond-slave
-    - - lacp_rate
-    forbidden_claims:
-    - mode=active-lacp
 - conversation_group_id: RSPEED_1931
   tag: okp-mcp-functional
   turns:
@@ -388,13 +253,5 @@
     - access.redhat.com/kargs
     turn_metrics:
     - custom:url_retrieval_eval
-    - custom:keywords_eval
     - ragas:context_precision_without_reference
     - ragas:context_relevance
-    - custom:forbidden_claims_eval
-    expected_keywords:
-    - - rpm-ostree kargs
-    - - --append
-    - - --delete
-    forbidden_claims:
-    - grubby --update-kernel

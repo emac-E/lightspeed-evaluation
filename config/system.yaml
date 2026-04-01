@@ -112,6 +112,11 @@ metrics_metadata:
       description: "URL retrieval quality - F1 score of expected vs retrieved documentation URLs"
       default: false
 
+    "custom:forbidden_claims_eval":
+      threshold: 1.0
+      description: "Known-incorrect claims avoided in response (regression detection)"
+      default: false
+
     # Script-based metrics
     "script:action_eval":
       description: "Script-based evaluation for infrastructure/environment validation"

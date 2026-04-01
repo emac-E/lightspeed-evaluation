@@ -58,6 +58,7 @@
         #         - ragas:response_relevancy
         - ragas:context_precision_without_reference
         - ragas:context_relevance
+        - custom:url_retrieval_eval
         #         - ragas:context_recall
         #         - custom:answer_correctness
 
@@ -98,6 +99,7 @@
         #         - ragas:response_relevancy
         - ragas:context_precision_without_reference
         - ragas:context_relevance
+        - custom:url_retrieval_eval
         #         - ragas:context_recall
         #         - custom:answer_correctness
 
@@ -135,6 +137,7 @@
         #         - ragas:response_relevancy
         - ragas:context_precision_without_reference
         - ragas:context_relevance
+        - custom:url_retrieval_eval
         #         - ragas:context_recall
         #         - custom:answer_correctness
 
@@ -172,6 +175,7 @@
         #         - ragas:response_relevancy
         - ragas:context_precision_without_reference
         - ragas:context_relevance
+        - custom:url_retrieval_eval
         #         - ragas:context_recall
         #         - custom:answer_correctness
 
@@ -211,6 +215,7 @@
         #         - ragas:response_relevancy
         - ragas:context_precision_without_reference
         - ragas:context_relevance
+        - custom:url_retrieval_eval
         #         - ragas:context_recall
         #         - custom:answer_correctness
 
@@ -246,6 +251,7 @@
         #         - ragas:response_relevancy
         - ragas:context_precision_without_reference
         - ragas:context_relevance
+        - custom:url_retrieval_eval
         #         - ragas:context_recall
         #         - custom:answer_correctness
 
@@ -284,6 +290,7 @@
         #         - ragas:response_relevancy
         - ragas:context_precision_without_reference
         - ragas:context_relevance
+        - custom:url_retrieval_eval
         #         - ragas:context_recall
         #         - custom:answer_correctness
 
@@ -320,6 +327,7 @@
         #         - ragas:response_relevancy
         - ragas:context_precision_without_reference
         - ragas:context_relevance
+        - custom:url_retrieval_eval
         #         - ragas:context_recall
         #         - custom:answer_correctness
 
@@ -358,6 +366,7 @@
         #         - ragas:response_relevancy
         - ragas:context_precision_without_reference
         - ragas:context_relevance
+        - custom:url_retrieval_eval
         #         - ragas:context_recall
         #         - custom:answer_correctness
 
@@ -396,6 +405,7 @@
         #         - ragas:response_relevancy
         - ragas:context_precision_without_reference
         - ragas:context_relevance
+        - custom:url_retrieval_eval
         #         - ragas:context_recall
         #         - custom:answer_correctness
 

@@ -32,12 +32,14 @@ def normalize_url(url: str) -> str:
 
     # Reconstruct without protocol, trailing slash, fragments, or query params
     # Keep: domain + path
-    normalized = parsed.netloc + parsed.path.rstrip('/')
+    normalized = parsed.netloc + parsed.path.rstrip("/")
 
     return normalized.lower()
 
 
-def extract_urls_from_tool_calls(tool_calls: Optional[list[list[dict[str, Any]]]]) -> list[str]:
+def extract_urls_from_tool_calls(
+    tool_calls: Optional[list[list[dict[str, Any]]]], preserve_order: bool = False
+) -> list[str]:
     """Extract all URLs from tool call results.
 
     Looks for:
@@ -46,14 +48,23 @@ def extract_urls_from_tool_calls(tool_calls: Optional[list[list[dict[str, Any]]]
 
     Args:
         tool_calls: Nested list of tool call dictionaries
+        preserve_order: If True, preserve ranking order and allow duplicates.
+                       If False, return unique URLs (legacy behavior)
 
     Returns:
         List of normalized URLs found in tool calls
+        If preserve_order=True, maintains retrieval order (may have duplicates)
+        If preserve_order=False, returns unique set as list
     """
     if not tool_calls:
         return []
 
-    urls = set()
+    if preserve_order:
+        # Preserve order, track positions
+        urls_ordered = []
+    else:
+        # Legacy behavior: unique set
+        urls = set()
 
     for turn_calls in tool_calls:
         if not turn_calls:
@@ -64,17 +75,92 @@ def extract_urls_from_tool_calls(tool_calls: Optional[list[list[dict[str, Any]]]
                 continue
 
             # Check for contexts in result
-            result = call.get('result')
-            if isinstance(result, dict) and 'contexts' in result:
-                contexts = result['contexts']
+            result = call.get("result")
+            if isinstance(result, dict) and "contexts" in result:
+                contexts = result["contexts"]
                 if isinstance(contexts, list):
                     for ctx in contexts:
-                        if isinstance(ctx, dict) and 'url' in ctx:
-                            url = ctx['url']
+                        if isinstance(ctx, dict) and "url" in ctx:
+                            url = ctx["url"]
                             if url and isinstance(url, str):
-                                urls.add(normalize_url(url))
+                                normalized = normalize_url(url)
+                                if preserve_order:
+                                    urls_ordered.append(normalized)
+                                else:
+                                    urls.add(normalized)
 
-    return list(urls)
+    return urls_ordered if preserve_order else list(urls)
+
+
+def get_url_rankings(
+    retrieved_urls_ordered: list[str], expected_urls: list[str]
+) -> dict[str, Optional[int]]:
+    """Get ranking positions of expected URLs in retrieved results.
+
+    Args:
+        retrieved_urls_ordered: Ordered list of retrieved URLs (preserves ranking)
+        expected_urls: List of expected URLs to look for
+
+    Returns:
+        Dict mapping expected_url -> position (1-indexed) or None if not found
+    """
+    rankings = {}
+
+    # Build position map (first occurrence of each URL)
+    url_positions = {}
+    for i, url in enumerate(retrieved_urls_ordered, 1):
+        normalized = normalize_url(url)
+        if normalized not in url_positions:
+            url_positions[normalized] = i
+
+    # Map expected URLs to their positions
+    for expected_url in expected_urls:
+        normalized = normalize_url(expected_url)
+        rankings[normalized] = url_positions.get(normalized)
+
+    return rankings
+
+
+def calculate_ranking_metrics(rankings: dict[str, Optional[int]]) -> dict[str, float]:
+    """Calculate ranking quality metrics.
+
+    Args:
+        rankings: Dict mapping expected_url -> position (or None if not found)
+
+    Returns:
+        Dict with ranking metrics:
+        - mrr: Mean Reciprocal Rank (1/position, higher is better)
+        - avg_position: Average position of found URLs (lower is better)
+        - found_in_top_3: Percentage found in top 3
+        - found_in_top_5: Percentage found in top 5
+    """
+    positions = [pos for pos in rankings.values() if pos is not None]
+    total = len(rankings)
+
+    if not positions:
+        return {
+            "mrr": 0.0,
+            "avg_position": 0.0,
+            "found_in_top_3": 0.0,
+            "found_in_top_5": 0.0,
+        }
+
+    # Mean Reciprocal Rank
+    mrr = sum(1.0 / pos for pos in positions) / total
+
+    # Average position (for found URLs only)
+    avg_position = sum(positions) / len(positions)
+
+    # Top-K metrics
+    found_in_top_3 = sum(1 for pos in positions if pos <= 3) / total
+    found_in_top_5 = sum(1 for pos in positions if pos <= 5) / total
+
+    return {
+        "mrr": mrr,
+        "avg_position": avg_position,
+        "found_in_top_3": found_in_top_3,
+        "found_in_top_5": found_in_top_5,
+    }
 
 
 def calculate_url_metrics(
@@ -166,24 +252,50 @@ def evaluate_url_retrieval(
         )
         return 0.0, reason
 
-    # Extract URLs from tool calls
-    retrieved_urls = extract_urls_from_tool_calls(turn_data.tool_calls)
+    # Extract URLs from tool calls (preserve order for ranking)
+    retrieved_urls_ordered = extract_urls_from_tool_calls(
+        turn_data.tool_calls, preserve_order=True
+    )
+    retrieved_urls_unique = list(
+        dict.fromkeys(retrieved_urls_ordered)
+    )  # Dedupe while preserving order
 
     # Calculate metrics
     precision, recall, f1, matched, missing, extra = calculate_url_metrics(
-        retrieved_urls, turn_data.expected_urls
+        retrieved_urls_unique, turn_data.expected_urls
     )
+
+    # Calculate ranking metrics for expected URLs
+    rankings = get_url_rankings(retrieved_urls_ordered, turn_data.expected_urls)
+    ranking_metrics = calculate_ranking_metrics(rankings)
 
     # Build detailed reason
     reason_parts = [
         f"URL retrieval: F1={f1:.2f}, Precision={precision:.2f}, Recall={recall:.2f}"
     ]
 
+    # Add ranking summary
+    if any(pos is not None for pos in rankings.values()):
+        reason_parts.append(
+            f"Ranking: MRR={ranking_metrics['mrr']:.3f}, "
+            f"Avg_Pos={ranking_metrics['avg_position']:.1f}, "
+            f"Top3={ranking_metrics['found_in_top_3']:.0%}, "
+            f"Top5={ranking_metrics['found_in_top_5']:.0%}"
+        )
+
     if matched:
-        matched_str = ", ".join(f"'{url}'" for url in matched[:2])
-        if len(matched) > 2:
+        # Show matched URLs with their positions
+        matched_with_pos = []
+        for url in matched[:3]:
+            pos = rankings.get(normalize_url(url))
+            pos_str = f"#{pos}" if pos else "not found"
+            matched_with_pos.append(f"'{url}' ({pos_str})")
+        matched_str = ", ".join(matched_with_pos)
+        if len(matched) > 3:
             matched_str += f" ... ({len(matched)} total)"
-        reason_parts.append(f"Matched {len(matched)}/{len(turn_data.expected_urls)}: {matched_str}")
+        reason_parts.append(
+            f"Matched {len(matched)}/{len(turn_data.expected_urls)}: {matched_str}"
+        )
 
     if missing:
         missing_str = ", ".join(f"'{url}'" for url in missing[:2])

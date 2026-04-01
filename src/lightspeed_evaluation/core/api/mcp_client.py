@@ -158,17 +158,14 @@ class MCPDirectClient:
             "params": {
                 "protocolVersion": "2024-11-05",
                 "capabilities": {},
-                "clientInfo": {
-                    "name": "lightspeed-eval",
-                    "version": "1.0"
-                }
+                "clientInfo": {"name": "lightspeed-eval", "version": "1.0"},
             },
-            "id": 1
+            "id": 1,
         }
 
         headers = {
             "Content-Type": "application/json",
-            "Accept": "application/json, text/event-stream"
+            "Accept": "application/json, text/event-stream",
         }
 
         response = await client.post(self.endpoint, json=init_request, headers=headers)
@@ -208,15 +205,15 @@ class MCPDirectClient:
                 "arguments": {
                     "query": query,
                     "max_results": 10,
-                }
+                },
             },
-            "id": 2
+            "id": 2,
         }
 
         headers = {
             "Content-Type": "application/json",
             "Accept": "application/json, text/event-stream",
-            "mcp-session-id": session_id
+            "mcp-session-id": session_id,
         }
 
         response = await client.post(self.endpoint, json=tool_request, headers=headers)
@@ -225,18 +222,19 @@ class MCPDirectClient:
         # Parse SSE response
         # Format: "event: message\ndata: {json}"
         sse_text = response.text.strip()
-        for line in sse_text.split('\n'):
-            if line.startswith('data: '):
+        for line in sse_text.split("\n"):
+            if line.startswith("data: "):
                 import json
+
                 json_str = line[6:]  # Remove 'data: ' prefix
                 data = json.loads(json_str)
 
                 # Check for error
-                if 'error' in data:
-                    error_msg = data['error'].get('message', str(data['error']))
+                if "error" in data:
+                    error_msg = data["error"].get("message", str(data["error"]))
                     raise APIError(f"MCP tool call error: {error_msg}")
 
-                return data.get('result', {})
+                return data.get("result", {})
 
         raise APIError("No data in MCP SSE response")
 
@@ -254,50 +252,52 @@ class MCPDirectClient:
             - contexts: List of context strings (for Ragas)
             - tool_calls: Nested list structure with URL metadata
         """
-        content = result.get('content', [])
+        content = result.get("content", [])
         if not content:
             logger.warning("No content in search_portal result")
             return [], [[]]
 
         # Get text from first content item
-        text = content[0].get('text', '')
+        text = content[0].get("text", "")
         if not text:
             logger.warning("Empty text in search_portal result")
             return [], [[]]
 
         # Split by separator
-        docs = text.split('\n---\n')
+        docs = text.split("\n---\n")
 
         contexts = []
         context_dicts = []
 
         for doc in docs:
             doc = doc.strip()
-            if not doc or doc.startswith('WARNING:') or doc.startswith('⚠️'):
+            if not doc or doc.startswith("WARNING:") or doc.startswith("⚠️"):
                 # Skip warning headers
                 continue
 
             # Extract title (markdown **title**)
-            title_match = re.search(r'\*\*(.+?)\*\*', doc)
+            title_match = re.search(r"\*\*(.+?)\*\*", doc)
             title = title_match.group(1) if title_match else "Untitled"
 
             # Extract URL
-            url_match = re.search(r'URL: (https://[^\s]+)', doc)
+            url_match = re.search(r"URL: (https://[^\s]+)", doc)
             url = url_match.group(1) if url_match else ""
 
             # Extract content (everything after "Content:" or use full doc)
-            content_match = re.search(r'Content: (.+)', doc, re.DOTALL)
+            content_match = re.search(r"Content: (.+)", doc, re.DOTALL)
             content_text = content_match.group(1).strip() if content_match else doc
 
             # Add to contexts list (for Ragas)
             contexts.append(content_text)
 
             # Add to context dicts (for tool_calls structure)
-            context_dicts.append({
-                "title": title,
-                "url": url,
-                "content": content_text,
-            })
+            context_dicts.append(
+                {
+                    "title": title,
+                    "url": url,
+                    "content": content_text,
+                }
+            )
 
         logger.debug("Parsed %d contexts from search_portal result", len(contexts))
 
