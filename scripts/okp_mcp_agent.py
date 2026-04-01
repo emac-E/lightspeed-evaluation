@@ -117,11 +117,23 @@ class OkpMcpAgent:
         eval_root: Path,
         okp_mcp_root: Path,
         lscore_deploy_root: Path,
+        worktree_root: Optional[Path] = None,
+        interactive: bool = True,
     ):
-        """Initialize agent with paths to key directories."""
+        """Initialize agent with paths to key directories.
+
+        Args:
+            eval_root: Path to lightspeed-evaluation repo
+            okp_mcp_root: Path to okp-mcp repo
+            lscore_deploy_root: Path to lscore-deploy repo
+            worktree_root: Base directory for worktrees (default: ~/Work/okp-mcp-worktrees)
+            interactive: If True, ask for confirmation before making changes
+        """
         self.eval_root = eval_root
         self.okp_mcp_root = okp_mcp_root
         self.lscore_deploy_root = lscore_deploy_root
+        self.worktree_root = worktree_root or (Path.home() / "Work/okp-mcp-worktrees")
+        self.interactive = interactive
 
         # Test suite configs
         self.functional_full = (
@@ -142,6 +154,84 @@ class OkpMcpAgent:
         if result.stderr:
             print(result.stderr, file=sys.stderr)
         return result
+
+    def ask_approval(self, question: str, default: bool = False) -> bool:
+        """Ask user for approval in interactive mode.
+
+        Args:
+            question: Question to ask
+            default: Default answer if non-interactive
+
+        Returns:
+            True if approved, False otherwise
+        """
+        if not self.interactive:
+            return default
+
+        choices = "[Y/n]" if default else "[y/N]"
+        response = input(f"\n{question} {choices}: ").strip().lower()
+
+        if not response:
+            return default
+
+        return response in ("y", "yes")
+
+    def create_worktree(self, ticket_id: str, branch_name: Optional[str] = None) -> Path:
+        """Create a git worktree for isolated development.
+
+        Args:
+            ticket_id: RSPEED ticket ID
+            branch_name: Optional custom branch name
+
+        Returns:
+            Path to the worktree directory
+        """
+        if not branch_name:
+            branch_name = f"fix/{ticket_id.lower()}"
+
+        worktree_dir = self.worktree_root / branch_name.replace("/", "-")
+
+        print(f"\n🌳 Creating worktree for {ticket_id}...")
+        print(f"   Branch: {branch_name}")
+        print(f"   Directory: {worktree_dir}")
+
+        # Create worktree directory if it doesn't exist
+        self.worktree_root.mkdir(parents=True, exist_ok=True)
+
+        # Check if worktree already exists
+        if worktree_dir.exists():
+            if self.ask_approval(f"Worktree {worktree_dir} already exists. Remove and recreate?"):
+                self.run_command(
+                    ["git", "worktree", "remove", str(worktree_dir), "--force"],
+                    cwd=self.okp_mcp_root,
+                    check=False,
+                )
+            else:
+                print("   Using existing worktree")
+                return worktree_dir
+
+        # Create new worktree
+        self.run_command(
+            ["git", "worktree", "add", "-b", branch_name, str(worktree_dir)],
+            cwd=self.okp_mcp_root,
+        )
+
+        print(f"✓ Worktree created at {worktree_dir}")
+        return worktree_dir
+
+    def cleanup_worktree(self, worktree_dir: Path):
+        """Remove a worktree after work is complete.
+
+        Args:
+            worktree_dir: Path to worktree to remove
+        """
+        if self.ask_approval(f"Remove worktree {worktree_dir}?", default=False):
+            print(f"\n🧹 Cleaning up worktree...")
+            self.run_command(
+                ["git", "worktree", "remove", str(worktree_dir), "--force"],
+                cwd=self.okp_mcp_root,
+            )
+            print("✓ Worktree removed")
 
     def restart_okp_mcp(self):
         """Restart okp-mcp service."""
@@ -334,47 +424,73 @@ class OkpMcpAgent:
         return results
 
     def fix_ticket(
-        self, ticket_id: str, max_iterations: int = 10, auto_commit: bool = False
+        self,
+        ticket_id: str,
+        max_iterations: int = 10,
+        use_worktree: bool = False,
+        worktree_name: Optional[str] = None,
+        suggest_only: bool = False,
     ):
-        """Autonomous ticket fixing with iteration."""
+        """Autonomous ticket fixing with iteration.
+
+        Args:
+            ticket_id: RSPEED ticket ID
+            max_iterations: Maximum number of iteration attempts
+            use_worktree: If True, work in an isolated git worktree
+            worktree_name: Optional custom worktree/branch name
+            suggest_only: If True, suggest changes but don't apply them
+        """
         print(f"\n{'='*80}")
         print(f"AUTO-FIX: {ticket_id}")
         print(f"{'='*80}")
 
-        # Step 1: Diagnose
-        initial_result = self.diagnose(ticket_id)
+        # Setup: Create worktree if requested
+        working_dir = self.okp_mcp_root
+        if use_worktree:
+            working_dir = self.create_worktree(ticket_id, worktree_name)
+            print(f"\n📂 Working in isolated worktree: {working_dir}")
 
-        if not (initial_result.is_retrieval_problem or initial_result.is_answer_problem):
-            print("\n✅ Ticket already passing, nothing to fix")
-            return
+        try:
+            # Step 1: Diagnose
+            initial_result = self.diagnose(ticket_id)
 
-        # Step 2: Iterate
-        if initial_result.is_retrieval_problem:
-            print("\n🔄 Starting fast iteration (retrieval mode)...")
-            # TODO: Implement retrieval iteration loop
-            print("   [TODO] Edit boost queries in okp-mcp")
-            print("   [TODO] Restart okp-mcp")
-            print("   [TODO] Run retrieval eval")
-            print("   [TODO] Check if URL F1 > 0.8")
+            if not (initial_result.is_retrieval_problem or initial_result.is_answer_problem):
+                print("\n✅ Ticket already passing, nothing to fix")
+                return
 
-        elif initial_result.is_answer_problem:
-            print("\n🔄 Starting full iteration (answer mode)...")
-            # TODO: Implement answer iteration loop
-            print("   [TODO] Edit system prompt")
-            print("   [TODO] Restart okp-mcp")
-            print("   [TODO] Run full eval")
-            print("   [TODO] Check if keywords present")
+            # Step 2: Iterate (TODO - Phase 2)
+            if initial_result.is_retrieval_problem:
+                print("\n🔄 Fast iteration mode (retrieval)...")
+                print("   [TODO - Phase 2] LLM suggests boost query changes")
+                print("   [TODO - Phase 2] Apply changes after approval")
+                print("   [TODO - Phase 2] Iterate until URL F1 > 0.8")
 
-        # Step 3: Validate
-        print("\n🔍 Running regression checks...")
-        # TODO: Run all suites and compare with baseline
+            elif initial_result.is_answer_problem:
+                print("\n🔄 Full iteration mode (answer)...")
+                print("   [TODO - Phase 2] LLM suggests prompt changes")
+                print("   [TODO - Phase 2] Apply changes after approval")
+                print("   [TODO - Phase 2] Iterate until keywords present")
 
-        # Step 4: Commit
-        if auto_commit:
-            print("\n💾 Creating commit...")
-            # TODO: Create commit with metrics
-        else:
-            print("\n💡 Run with --auto-commit to create commit automatically")
+            # Step 3: Validate (TODO - Phase 2)
+            print("\n🔍 Regression checks...")
+            print("   [TODO - Phase 2] Run all test suites")
+            print("   [TODO - Phase 2] Compare with baseline")
+
+            # Step 4: Review
+            if use_worktree:
+                print(f"\n📝 Review changes in worktree:")
+                print(f"   cd {working_dir}")
+                print(f"   git diff main")
+                print(f"\n   When ready to merge:")
+                print(f"   git checkout main")
+                print(f"   git merge {worktree_name or f'fix/{ticket_id.lower()}'}")
+                print(f"\n   Or to discard:")
+                print(f"   git worktree remove {working_dir}")
+
+        finally:
+            # Cleanup: Ask if worktree should be removed
+            if use_worktree and not suggest_only:
+                self.cleanup_worktree(working_dir)
 
 
 def main():
@@ -394,17 +510,32 @@ def main():
         "--max-iterations",
         type=int,
         default=10,
-        help="Maximum fix iterations",
-    )
-    parser.add_argument(
-        "--auto-commit",
-        action="store_true",
-        help="Automatically create commits",
+        help="Maximum fix iterations (for 'fix' command)",
     )
     parser.add_argument(
         "--use-existing",
         action="store_true",
         help="Use existing evaluation results instead of re-running (faster for testing)",
+    )
+    parser.add_argument(
+        "--worktree",
+        action="store_true",
+        help="Work in an isolated git worktree (safer, recommended for 'fix' command)",
+    )
+    parser.add_argument(
+        "--worktree-name",
+        type=str,
+        help="Custom worktree/branch name (default: fix/<ticket-id>)",
+    )
+    parser.add_argument(
+        "--suggest-only",
+        action="store_true",
+        help="Suggest changes but don't apply them (for 'fix' command)",
+    )
+    parser.add_argument(
+        "--non-interactive",
+        action="store_true",
+        help="Run without asking for approval (use with caution)",
     )
 
     args = parser.parse_args()
@@ -414,6 +545,7 @@ def main():
         eval_root=Path.home() / "Work/lightspeed-core/lightspeed-evaluation",
         okp_mcp_root=Path.home() / "Work/okp-mcp",
         lscore_deploy_root=Path.home() / "Work/lscore-deploy",
+        interactive=not args.non_interactive,
     )
 
     # Execute command
@@ -428,7 +560,9 @@ def main():
         agent.fix_ticket(
             args.ticket_id,
             max_iterations=args.max_iterations,
-            auto_commit=args.auto_commit,
+            use_worktree=args.worktree,
+            worktree_name=args.worktree_name,
+            suggest_only=args.suggest_only,
         )
 
     elif args.command == "validate":
