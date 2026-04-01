@@ -63,6 +63,10 @@ METRIC_REQUIREMENTS = {
         "required_fields": ["tool_calls", "expected_urls"],
         "description": "requires 'tool_calls' and 'expected_urls' fields",
     },
+    "custom:forbidden_claims_eval": {
+        "required_fields": ["response", "forbidden_claims"],
+        "description": "requires 'response' and 'forbidden_claims' fields",
+    },
     "script:action_eval": {
         "required_fields": ["verify_script"],
         "description": "requires 'verify_script' field",
