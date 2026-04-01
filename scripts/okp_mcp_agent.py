@@ -55,6 +55,12 @@ class EvaluationResult:
     keywords_score: Optional[float] = None
     forbidden_claims_score: Optional[float] = None
 
+    # RAG usage tracking
+    tool_calls: Optional[str] = None  # Raw tool_calls from CSV
+    contexts: Optional[str] = None     # Raw contexts from CSV
+    rag_used: bool = False             # Was RAG/search tool called?
+    docs_retrieved: bool = False       # Were any documents retrieved?
+
     @property
     def is_retrieval_problem(self) -> bool:
         """Determine if this is a retrieval problem based on metrics."""
@@ -110,6 +116,16 @@ class EvaluationResult:
             lines.append("  ⚠️  No metrics found (check if evaluation ran successfully)")
             return "\n".join(lines)
 
+        # RAG usage status
+        if self.rag_used:
+            if self.docs_retrieved:
+                lines.append(f"  RAG Status: ✅ Used, {self.num_docs_retrieved()} docs retrieved")
+            else:
+                lines.append("  RAG Status: ⚠️  Used, but NO documents retrieved")
+        else:
+            lines.append("  RAG Status: ❌ NOT used (LLM used general knowledge only)")
+
+        # Metrics
         if self.url_f1 is not None:
             lines.append(f"  URL F1: {self.url_f1:.2f}")
         if self.mrr is not None:
@@ -124,6 +140,18 @@ class EvaluationResult:
             lines.append(f"  Forbidden Claims: {self.forbidden_claims_score:.2f}")
 
         return "\n".join(lines)
+
+    def num_docs_retrieved(self) -> int:
+        """Count how many documents were retrieved."""
+        if not self.docs_retrieved or not self.contexts:
+            return 0
+
+        # Try to count documents in contexts (rough heuristic)
+        contexts_str = str(self.contexts)
+        # Count URLs in the contexts
+        import re
+        urls = re.findall(r'https?://[^\s"]+', contexts_str)
+        return len(urls) if urls else 1  # At least 1 if contexts exist
 
 
 class OkpMcpAgent:
@@ -367,6 +395,28 @@ class OkpMcpAgent:
 
         result = EvaluationResult(ticket_id=ticket_id)
 
+        # Extract tool_calls and contexts (same across all rows for a ticket)
+        if not ticket_df.empty:
+            first_row = ticket_df.iloc[0]
+            result.tool_calls = first_row.get("tool_calls")
+            result.contexts = first_row.get("contexts")
+
+            # Check if RAG was used
+            if pd.notna(result.tool_calls) and result.tool_calls:
+                # Check if search/retrieval tool was called
+                tool_calls_str = str(result.tool_calls).lower()
+                result.rag_used = any(
+                    keyword in tool_calls_str
+                    for keyword in ["search", "portal", "retrieve", "mcp"]
+                )
+
+            # Check if documents were retrieved
+            if pd.notna(result.contexts) and result.contexts:
+                contexts_str = str(result.contexts).strip()
+                result.docs_retrieved = (
+                    contexts_str != "" and contexts_str != "[]" and contexts_str != "null"
+                )
+
         # Extract metrics
         for _, row in ticket_df.iterrows():
             metric = row["metric_identifier"]
@@ -433,18 +483,41 @@ class OkpMcpAgent:
             print("   → Check if this ticket is in the test suite")
             return result
 
-        # Determine problem type
+        # Check RAG usage first
+        if not result.rag_used:
+            print("\n⚠️  DIAGNOSIS: RAG NOT USED")
+            print("   → LLM answered from general knowledge only")
+            print("   → System prompt may need adjustment to force tool usage")
+            print("   → Or RAG tool may not be configured correctly")
+            return result
+
+        if result.rag_used and not result.docs_retrieved:
+            print("\n⚠️  DIAGNOSIS: RAG CALLED BUT NO DOCUMENTS RETRIEVED")
+            print("   → okp-mcp search returned empty results")
+            print("   → Query reformulation may be needed")
+            print("   → Check Solr index has relevant documents")
+            return result
+
+        # Determine problem type (RAG was used and returned docs)
         if result.is_retrieval_problem:
             print("\n🔍 DIAGNOSIS: RETRIEVAL PROBLEM")
+            if result.url_f1 == 0.0:
+                print("   → Wrong documents retrieved (URL F1 = 0.00)")
+                print("   → None of the expected docs were returned")
+            else:
+                print(f"   → Some expected docs missing (URL F1 = {result.url_f1:.2f})")
             print("   → Use fast iteration mode (retrieval-only)")
             print("   → Edit okp-mcp boost queries")
         elif result.is_answer_problem:
             print("\n💬 DIAGNOSIS: ANSWER PROBLEM")
+            print("   → Right documents retrieved BUT keywords missing")
+            print("   → LLM not using the retrieved documents effectively")
             print("   → Use full iteration mode")
-            print("   → Edit system prompts")
+            print("   → Edit system prompts to emphasize using context")
         else:
             print("\n✅ DIAGNOSIS: METRICS LOOK GOOD")
             print("   → All thresholds passed")
+            print("   → Expected documents retrieved and answer is correct")
 
         return result
 
