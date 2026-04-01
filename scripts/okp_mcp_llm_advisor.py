@@ -1,16 +1,17 @@
 #!/usr/bin/env python3
 """LLM-powered advisor for okp-mcp boost query suggestions.
 
-Uses Pydantic AI to analyze metrics and suggest code changes for okp-mcp.
-Model-agnostic: easily switch between Claude, GPT, Gemini, or local models.
+Uses Anthropic SDK with Vertex AI to analyze metrics and suggest code changes.
+Supports tiered model routing to optimize costs.
 """
 
+import os
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
 
+from anthropic import AnthropicVertex
 from pydantic import BaseModel, Field
-from pydantic_ai import Agent
 
 
 class BoostQuerySuggestion(BaseModel):
@@ -27,14 +28,12 @@ class BoostQuerySuggestion(BaseModel):
     )
     code_snippet: Optional[str] = Field(
         default=None,
-        description="Optional Python code snippet showing the exact change"
+        description="Optional Python code snippet showing the exact change",
     )
     expected_improvement: str = Field(
         description="What metrics should improve (e.g., 'URL F1 should increase from 0.33 to >0.7')"
     )
-    confidence: str = Field(
-        description="Confidence level: high, medium, or low"
-    )
+    confidence: str = Field(description="Confidence level: high, medium, or low")
 
 
 class PromptSuggestion(BaseModel):
@@ -43,15 +42,9 @@ class PromptSuggestion(BaseModel):
     reasoning: str = Field(
         description="Why prompt changes are needed based on the metrics"
     )
-    suggested_change: str = Field(
-        description="Specific prompt modification to make"
-    )
-    expected_improvement: str = Field(
-        description="What metrics should improve"
-    )
-    confidence: str = Field(
-        description="Confidence level: high, medium, or low"
-    )
+    suggested_change: str = Field(description="Specific prompt modification to make")
+    expected_improvement: str = Field(description="What metrics should improve")
+    confidence: str = Field(description="Confidence level: high, medium, or low")
 
 
 @dataclass
@@ -111,56 +104,197 @@ class MetricSummary:
 
 
 class OkpMcpLLMAdvisor:
-    """LLM-powered advisor for okp-mcp improvements."""
+    """LLM-powered advisor for okp-mcp improvements with tiered model routing."""
 
     def __init__(
         self,
-        model: str = "vertexai:claude-sonnet-4-0",
+        model: str = "claude-sonnet-4-5@20250929",
         okp_mcp_root: Optional[Path] = None,
         project_id: Optional[str] = None,
-        region: Optional[str] = "us-east5",
+        region: Optional[str] = None,
+        # Tiered model routing
+        use_tiered_models: bool = True,
+        simple_model: Optional[str] = None,
+        complex_model: Optional[str] = None,
     ):
-        """Initialize LLM advisor.
+        """Initialize LLM advisor with Anthropic Vertex AI.
 
         Args:
-            model: Model to use. Examples:
-                - "vertexai:claude-sonnet-4-0" (Claude via Vertex AI - default)
-                - "vertexai:gemini-2.0-flash" (Gemini via Vertex AI)
-                - "claude-sonnet-4-0" (Direct Anthropic)
-                - "openai:gpt-4o" (OpenAI)
-                - "ollama:llama3" (Local model)
+            model: Default model for medium complexity tasks
             okp_mcp_root: Path to okp-mcp repository for code context
-            project_id: GCP project ID for Vertex AI (optional, uses default project)
-            region: GCP region for Vertex AI (default: us-east5)
+            project_id: GCP project ID (uses ANTHROPIC_VERTEX_PROJECT_ID if not set)
+            region: GCP region (uses CLOUD_ML_REGION if not set)
+            use_tiered_models: Enable smart model routing
+            simple_model: Model for simple tasks (default: claude-haiku-4-5@20251001)
+            complex_model: Model for complex tasks (default: same as model)
         """
         self.model = model
         self.okp_mcp_root = okp_mcp_root or (Path.home() / "Work/okp-mcp")
-        self.project_id = project_id
-        self.region = region
+        self.use_tiered_models = use_tiered_models
 
-        # Check for Google Cloud credentials
-        import os
-        if model.startswith("vertexai:"):
-            google_creds = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
-            if not google_creds:
-                print("⚠️  Warning: GOOGLE_APPLICATION_CREDENTIALS not set.")
-                print("   Pydantic AI will attempt to use Application Default Credentials (ADC)")
-                print("   Run 'gcloud auth application-default login' if authentication fails")
+        # Get Vertex AI credentials from environment
+        self.project_id = project_id or os.getenv("ANTHROPIC_VERTEX_PROJECT_ID")
+        self.region = region or os.getenv("CLOUD_ML_REGION", "us-east5")
 
-        # For direct Anthropic access
-        elif model.startswith("claude"):
-            anthropic_key = os.getenv("ANTHROPIC_API_KEY")
-            if not anthropic_key:
-                raise ValueError(
-                    "ANTHROPIC_API_KEY environment variable not set. "
-                    "Use 'vertexai:claude-sonnet-4-0' for Vertex AI access instead."
-                )
+        if not self.project_id:
+            raise ValueError(
+                "project_id not provided and ANTHROPIC_VERTEX_PROJECT_ID not set"
+            )
 
-        # Create boost query suggestion agent
-        self.boost_agent = Agent(
-            model,
-            result_type=BoostQuerySuggestion,
-            system_prompt="""You are an expert in Solr/Lucene search optimization and boost query tuning.
+        # Set up tiered models
+        if use_tiered_models:
+            self.simple_model = simple_model or "claude-haiku-4-5@20251001"
+            self.medium_model = model
+            self.complex_model = complex_model or model
+        else:
+            self.simple_model = model
+            self.medium_model = model
+            self.complex_model = model
+
+        # Handle custom credentials path to avoid conflicts with other GCP services
+        # Check for GOOGLE_CLAUDE_CREDENTIALS first (for Claude/Anthropic Vertex AI)
+        # Falls back to GOOGLE_APPLICATION_CREDENTIALS if not set
+        claude_creds = os.getenv("GOOGLE_CLAUDE_CREDENTIALS")
+        if claude_creds:
+            # Temporarily set GOOGLE_APPLICATION_CREDENTIALS for AnthropicVertex client
+            original_creds = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
+            os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = claude_creds
+            print(
+                f"🔑 Using custom credentials: GOOGLE_CLAUDE_CREDENTIALS={claude_creds}"
+            )
+
+        try:
+            # Create Anthropic Vertex AI client
+            self.client = AnthropicVertex(
+                project_id=self.project_id,
+                region=self.region,
+            )
+        finally:
+            # Restore original GOOGLE_APPLICATION_CREDENTIALS if we changed it
+            if claude_creds:
+                if original_creds:
+                    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = original_creds
+                else:
+                    os.environ.pop("GOOGLE_APPLICATION_CREDENTIALS", None)
+
+        print(f"✅ Initialized with Vertex AI project: {self.project_id}")
+        print(f"   Region: {self.region}")
+        if use_tiered_models:
+            print(f"   Simple model: {self.simple_model}")
+            print(f"   Medium model: {self.medium_model}")
+            print(f"   Complex model: {self.complex_model}")
+
+    def _call_with_structured_output(
+        self, model: str, system_prompt: str, user_prompt: str, output_schema: dict
+    ) -> dict:
+        """Call Claude with structured output using tool use.
+
+        Args:
+            model: Model to use
+            system_prompt: System prompt
+            user_prompt: User prompt
+            output_schema: JSON schema for output
+
+        Returns:
+            Parsed JSON response matching schema
+        """
+        # Use Claude's tool use for structured outputs
+        response = self.client.messages.create(
+            model=model,
+            max_tokens=2048,
+            system=system_prompt,
+            messages=[{"role": "user", "content": user_prompt}],
+            tools=[
+                {
+                    "name": "provide_suggestion",
+                    "description": "Provide the structured suggestion",
+                    "input_schema": output_schema,
+                }
+            ],
+            tool_choice={"type": "tool", "name": "provide_suggestion"},
+        )
+
+        # Extract tool use from response
+        for content in response.content:
+            if content.type == "tool_use" and content.name == "provide_suggestion":
+                return content.input
+
+        raise ValueError(f"No tool use found in response: {response}")
+
+    def classify_problem_complexity(self, metrics: MetricSummary) -> str:
+        """Quickly classify problem complexity using cheap model.
+
+        Args:
+            metrics: Evaluation metrics summary
+
+        Returns:
+            "SIMPLE", "MEDIUM", or "COMPLEX"
+        """
+        if not self.use_tiered_models:
+            return "MEDIUM"
+
+        system_prompt = """You are a quick diagnostic classifier.
+Analyze metrics and categorize the problem as: SIMPLE, MEDIUM, or COMPLEX.
+
+SIMPLE: Clear pattern, obvious fix
+- URL F1 = 0.0 and only 1-2 docs retrieved → clearly wrong doc type
+- RAG not used at all → configuration issue
+
+MEDIUM: Needs analysis but straightforward
+- URL F1 between 0.3-0.7 → some docs correct, some wrong
+- Keywords missing but retrieval good → prompt issue
+
+COMPLEX: Ambiguous or multi-faceted
+- All metrics borderline
+- Conflicting signals
+- Multiple problems at once
+
+Respond with ONLY one word: SIMPLE, MEDIUM, or COMPLEX."""
+
+        user_prompt = f"""Classify this problem:
+
+{metrics.to_prompt_context()}
+
+Is this SIMPLE, MEDIUM, or COMPLEX?"""
+
+        response = self.client.messages.create(
+            model=self.simple_model,
+            max_tokens=10,
+            system=system_prompt,
+            messages=[{"role": "user", "content": user_prompt}],
+        )
+
+        complexity = response.content[0].text.strip().upper()
+
+        # Validate response
+        if complexity not in ["SIMPLE", "MEDIUM", "COMPLEX"]:
+            return "MEDIUM"
+
+        return complexity
+
+    def suggest_boost_query_changes(
+        self, metrics: MetricSummary, auto_escalate: bool = True
+    ) -> BoostQuerySuggestion:
+        """Suggest boost query improvements based on metrics.
+
+        Args:
+            metrics: Evaluation metrics summary
+            auto_escalate: If True and problem is COMPLEX, use more expensive model
+
+        Returns:
+            Structured suggestion for boost query changes
+        """
+        # Classify complexity if tiered models enabled
+        model_to_use = self.medium_model
+        if self.use_tiered_models and auto_escalate:
+            complexity = self.classify_problem_complexity(metrics)
+            print(f"  Problem complexity: {complexity}")
+
+            if complexity == "COMPLEX":
+                print(f"  Escalating to complex model: {self.complex_model}")
+                model_to_use = self.complex_model
+
+        system_prompt = """You are an expert in Solr/Lucene search optimization and boost query tuning.
 
 Your task is to analyze evaluation metrics from an okp-mcp RAG system and suggest specific
 boost query improvements to improve document retrieval.
@@ -185,15 +319,52 @@ Common patterns:
 - Low MRR (< 0.5) → Right docs exist but ranked too low, increase boost
 - Low context relevance → Query doesn't match content, may need query reformulation
 
-Always suggest conservative changes first (2x boost increase, not 10x).
-""",
+Always suggest conservative changes first (2x boost increase, not 10x)."""
+
+        user_prompt = f"""Analyze these evaluation metrics and suggest specific boost query changes:
+
+{metrics.to_prompt_context()}
+
+Problem context:
+- This is okp-mcp, a RAG system for Red Hat documentation
+- Query: "{metrics.query}"
+- Current state: {self._diagnosis_text(metrics)}
+
+Suggest ONE specific boost query change to improve retrieval.
+Be concrete: which field, which value, why."""
+
+        result = self._call_with_structured_output(
+            model=model_to_use,
+            system_prompt=system_prompt,
+            user_prompt=user_prompt,
+            output_schema=BoostQuerySuggestion.model_json_schema(),
         )
 
-        # Create prompt suggestion agent
-        self.prompt_agent = Agent(
-            model,
-            result_type=PromptSuggestion,
-            system_prompt="""You are an expert in LLM prompt engineering for RAG systems.
+        return BoostQuerySuggestion(**result)
+
+    def suggest_prompt_changes(
+        self, metrics: MetricSummary, auto_escalate: bool = True
+    ) -> PromptSuggestion:
+        """Suggest system prompt improvements based on metrics.
+
+        Args:
+            metrics: Evaluation metrics summary
+            auto_escalate: If True and problem is COMPLEX, use more expensive model
+
+        Returns:
+            Structured suggestion for prompt changes
+        """
+        # Classify complexity if tiered models enabled
+        model_to_use = self.medium_model
+        if self.use_tiered_models and auto_escalate:
+            complexity = self.classify_problem_complexity(metrics)
+            print(f"  Problem complexity: {complexity}")
+
+            if complexity == "COMPLEX":
+                print(f"  Escalating to complex model: {self.complex_model}")
+                model_to_use = self.complex_model
+
+        system_prompt = """You are an expert in LLM prompt engineering for RAG systems.
 
 Your task is to analyze evaluation metrics and suggest system prompt improvements
 to help the LLM better utilize retrieved documents.
@@ -209,45 +380,9 @@ When suggesting changes:
 3. Predict WHAT should improve
 4. Provide confidence level
 
-Always suggest minimal changes first (add one instruction, not rewrite entire prompt).
-""",
-        )
+Always suggest minimal changes first (add one instruction, not rewrite entire prompt)."""
 
-    def suggest_boost_query_changes(self, metrics: MetricSummary) -> BoostQuerySuggestion:
-        """Suggest boost query improvements based on metrics.
-
-        Args:
-            metrics: Evaluation metrics summary
-
-        Returns:
-            Structured suggestion for boost query changes
-        """
-        prompt = f"""Analyze these evaluation metrics and suggest specific boost query changes:
-
-{metrics.to_prompt_context()}
-
-Problem context:
-- This is okp-mcp, a RAG system for Red Hat documentation
-- Query: "{metrics.query}"
-- Current state: {self._diagnosis_text(metrics)}
-
-Suggest ONE specific boost query change to improve retrieval.
-Be concrete: which field, which value, why.
-"""
-
-        result = self.boost_agent.run_sync(prompt)
-        return result.data
-
-    def suggest_prompt_changes(self, metrics: MetricSummary) -> PromptSuggestion:
-        """Suggest system prompt improvements based on metrics.
-
-        Args:
-            metrics: Evaluation metrics summary
-
-        Returns:
-            Structured suggestion for prompt changes
-        """
-        prompt = f"""Analyze these evaluation metrics and suggest system prompt improvements:
+        user_prompt = f"""Analyze these evaluation metrics and suggest system prompt improvements:
 
 {metrics.to_prompt_context()}
 
@@ -257,11 +392,16 @@ Problem context:
 - Current state: {self._diagnosis_text(metrics)}
 
 Suggest ONE specific system prompt change to improve answer quality.
-Be concrete: what to add/modify, why.
-"""
+Be concrete: what to add/modify, why."""
 
-        result = self.prompt_agent.run_sync(prompt)
-        return result.data
+        result = self._call_with_structured_output(
+            model=model_to_use,
+            system_prompt=system_prompt,
+            user_prompt=user_prompt,
+            output_schema=PromptSuggestion.model_json_schema(),
+        )
+
+        return PromptSuggestion(**result)
 
     def _diagnosis_text(self, metrics: MetricSummary) -> str:
         """Generate diagnosis text for LLM context."""
@@ -290,21 +430,26 @@ Be concrete: what to add/modify, why.
 if __name__ == "__main__":
     import sys
 
-    # Example usage - requires GOOGLE_APPLICATION_CREDENTIALS
+    # Example usage
     print("=" * 80)
     print("OKP-MCP LLM Advisor - Test Mode")
     print("=" * 80)
-    print("\nUsing Vertex AI with Claude Sonnet 4.0")
-    print("Authentication: GOOGLE_APPLICATION_CREDENTIALS")
+    print("\nUsing Anthropic SDK with Vertex AI")
+    print(
+        "Authentication: ANTHROPIC_VERTEX_PROJECT_ID + Application Default Credentials"
+    )
     print()
 
     try:
-        advisor = OkpMcpLLMAdvisor(model="vertexai:claude-sonnet-4-0")
+        advisor = OkpMcpLLMAdvisor(
+            model="claude-sonnet-4-5@20250929",
+            use_tiered_models=True,
+            simple_model="claude-haiku-4-5@20251001",
+        )
     except Exception as e:
         print(f"❌ Error initializing advisor: {e}")
-        print("\nMake sure GOOGLE_APPLICATION_CREDENTIALS is set:")
-        print("  export GOOGLE_APPLICATION_CREDENTIALS=/path/to/service-account.json")
-        print("\nOr use Application Default Credentials:")
+        print("\nMake sure:")
+        print("  export ANTHROPIC_VERTEX_PROJECT_ID=your-project-id")
         print("  gcloud auth application-default login")
         sys.exit(1)
 
@@ -330,7 +475,7 @@ if __name__ == "__main__":
 
     try:
         suggestion = advisor.suggest_boost_query_changes(metrics)
-        print(f"\n✅ Success!")
+        print("\n✅ Success!")
         print(f"\nReasoning: {suggestion.reasoning}")
         print(f"\nFile: {suggestion.file_path}")
         print(f"\nChange: {suggestion.suggested_change}")
@@ -340,8 +485,7 @@ if __name__ == "__main__":
         print(f"\nConfidence: {suggestion.confidence}")
     except Exception as e:
         print(f"\n❌ Error getting suggestion: {e}")
-        print("\nThis might be a:")
-        print("  - Authentication issue (check GOOGLE_APPLICATION_CREDENTIALS)")
-        print("  - API quota issue")
-        print("  - Model availability issue")
+        import traceback
+
+        traceback.print_exc()
         sys.exit(1)

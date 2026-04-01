@@ -32,6 +32,17 @@ from typing import Dict, List, Optional
 
 import pandas as pd
 
+# LLM advisor for AI-powered suggestions (Phase 2)
+try:
+    from okp_mcp_llm_advisor import OkpMcpLLMAdvisor, MetricSummary
+
+    LLM_ADVISOR_AVAILABLE = True
+except ImportError:
+    LLM_ADVISOR_AVAILABLE = False
+    print(
+        "⚠️  LLM advisor not available (okp_mcp_llm_advisor.py not found or missing dependencies)"
+    )
+
 
 @dataclass
 class MetricThresholds:
@@ -48,18 +59,26 @@ class EvaluationResult:
     """Results from a single evaluation run."""
 
     ticket_id: str
+    query: Optional[str] = None  # User query from CSV
+
+    # Retrieval metrics (available in both retrieval-only and full modes)
     url_f1: Optional[float] = None
     mrr: Optional[float] = None
     context_relevance: Optional[float] = None
     context_precision: Optional[float] = None
+
+    # Answer quality metrics (only in full mode with /v1/infer)
     keywords_score: Optional[float] = None
     forbidden_claims_score: Optional[float] = None
+    faithfulness: Optional[float] = None  # ragas:faithfulness - answer grounded in context
+    answer_correctness: Optional[float] = None  # custom:answer_correctness - vs expected answer
+    response_relevancy: Optional[float] = None  # ragas:response_relevancy - addresses question
 
     # RAG usage tracking
     tool_calls: Optional[str] = None  # Raw tool_calls from CSV
-    contexts: Optional[str] = None     # Raw contexts from CSV
-    rag_used: bool = False             # Was RAG/search tool called?
-    docs_retrieved: bool = False       # Were any documents retrieved?
+    contexts: Optional[str] = None  # Raw contexts from CSV
+    rag_used: bool = False  # Was RAG/search tool called?
+    docs_retrieved: bool = False  # Were any documents retrieved?
 
     @property
     def is_retrieval_problem(self) -> bool:
@@ -67,7 +86,10 @@ class EvaluationResult:
         thresholds = MetricThresholds()
 
         retrieval_issues = []
-        if self.url_f1 is not None and self.url_f1 < thresholds.url_f1_retrieval_problem:
+        if (
+            self.url_f1 is not None
+            and self.url_f1 < thresholds.url_f1_retrieval_problem
+        ):
             retrieval_issues.append(f"URL F1 low ({self.url_f1:.2f})")
         if self.mrr is not None and self.mrr < thresholds.mrr_retrieval_problem:
             retrieval_issues.append(f"MRR low ({self.mrr:.2f})")
@@ -75,7 +97,9 @@ class EvaluationResult:
             self.context_relevance is not None
             and self.context_relevance < thresholds.context_relevance_retrieval_problem
         ):
-            retrieval_issues.append(f"Context relevance low ({self.context_relevance:.2f})")
+            retrieval_issues.append(
+                f"Context relevance low ({self.context_relevance:.2f})"
+            )
 
         return len(retrieval_issues) > 0
 
@@ -99,14 +123,33 @@ class EvaluationResult:
     @property
     def has_metrics(self) -> bool:
         """Check if any metrics were successfully parsed."""
-        return any([
-            self.url_f1 is not None,
-            self.mrr is not None,
-            self.context_relevance is not None,
-            self.context_precision is not None,
-            self.keywords_score is not None,
-            self.forbidden_claims_score is not None,
-        ])
+        return any(
+            [
+                self.url_f1 is not None,
+                self.mrr is not None,
+                self.context_relevance is not None,
+                self.context_precision is not None,
+                self.keywords_score is not None,
+                self.forbidden_claims_score is not None,
+                self.faithfulness is not None,
+                self.answer_correctness is not None,
+                self.response_relevancy is not None,
+            ]
+        )
+
+    @property
+    def is_retrieval_only_mode(self) -> bool:
+        """Detect if this was retrieval-only mode (no answer metrics)."""
+        # Retrieval-only mode has URL F1 but no answer quality metrics
+        has_retrieval = self.url_f1 is not None or self.context_relevance is not None
+        has_answer = any(
+            [
+                self.keywords_score is not None,
+                self.faithfulness is not None,
+                self.answer_correctness is not None,
+            ]
+        )
+        return has_retrieval and not has_answer
 
     def summary(self) -> str:
         """Human-readable summary of metrics."""
@@ -119,13 +162,15 @@ class EvaluationResult:
         # RAG usage status
         if self.rag_used:
             if self.docs_retrieved:
-                lines.append(f"  RAG Status: ✅ Used, {self.num_docs_retrieved()} docs retrieved")
+                lines.append(
+                    f"  RAG Status: ✅ Used, {self.num_docs_retrieved()} docs retrieved"
+                )
             else:
                 lines.append("  RAG Status: ⚠️  Used, but NO documents retrieved")
         else:
             lines.append("  RAG Status: ❌ NOT used (LLM used general knowledge only)")
 
-        # Metrics
+        # Retrieval Metrics
         if self.url_f1 is not None:
             lines.append(f"  URL F1: {self.url_f1:.2f}")
         if self.mrr is not None:
@@ -134,8 +179,16 @@ class EvaluationResult:
             lines.append(f"  Context Relevance: {self.context_relevance:.2f}")
         if self.context_precision is not None:
             lines.append(f"  Context Precision: {self.context_precision:.2f}")
+
+        # Answer Quality Metrics (only in full mode)
         if self.keywords_score is not None:
             lines.append(f"  Keywords: {self.keywords_score:.2f}")
+        if self.faithfulness is not None:
+            lines.append(f"  Faithfulness: {self.faithfulness:.2f}")
+        if self.answer_correctness is not None:
+            lines.append(f"  Answer Correctness: {self.answer_correctness:.2f}")
+        if self.response_relevancy is not None:
+            lines.append(f"  Response Relevancy: {self.response_relevancy:.2f}")
         if self.forbidden_claims_score is not None:
             lines.append(f"  Forbidden Claims: {self.forbidden_claims_score:.2f}")
 
@@ -150,6 +203,7 @@ class EvaluationResult:
         contexts_str = str(self.contexts)
         # Count URLs in the contexts
         import re
+
         urls = re.findall(r'https?://[^\s"]+', contexts_str)
         return len(urls) if urls else 1  # At least 1 if contexts exist
 
@@ -164,6 +218,7 @@ class OkpMcpAgent:
         lscore_deploy_root: Path,
         worktree_root: Optional[Path] = None,
         interactive: bool = True,
+        enable_llm_advisor: bool = True,
     ):
         """Initialize agent with paths to key directories.
 
@@ -173,6 +228,7 @@ class OkpMcpAgent:
             lscore_deploy_root: Path to lscore-deploy repo
             worktree_root: Base directory for worktrees (default: ~/Work/okp-mcp-worktrees)
             interactive: If True, ask for confirmation before making changes
+            enable_llm_advisor: If True, use LLM advisor for AI-powered suggestions (requires Vertex AI)
         """
         self.eval_root = eval_root
         self.okp_mcp_root = okp_mcp_root
@@ -188,12 +244,31 @@ class OkpMcpAgent:
             eval_root / "config/okp_mcp_test_suites/functional_tests_retrieval.yaml"
         )
 
+        # Initialize LLM advisor (Phase 2)
+        self.llm_advisor = None
+        if enable_llm_advisor and LLM_ADVISOR_AVAILABLE:
+            try:
+                self.llm_advisor = OkpMcpLLMAdvisor(
+                    model="claude-sonnet-4-5@20250929",
+                    okp_mcp_root=okp_mcp_root,
+                    use_tiered_models=True,
+                    simple_model="claude-haiku-4-5@20251001",
+                    complex_model="claude-sonnet-4-5@20250929",
+                )
+                print("✅ LLM advisor initialized")
+            except Exception as e:
+                print(f"⚠️  LLM advisor initialization failed: {e}")
+                print("   Continuing without AI-powered suggestions")
+                self.llm_advisor = None
+
     def run_command(
         self, cmd: List[str], cwd: Optional[Path] = None, check: bool = True
     ) -> subprocess.CompletedProcess:
         """Run a shell command and return result."""
         print(f"$ {' '.join(cmd)}")
-        result = subprocess.run(cmd, cwd=cwd, capture_output=True, text=True, check=check)
+        result = subprocess.run(
+            cmd, cwd=cwd, capture_output=True, text=True, check=check
+        )
         if result.stdout:
             print(result.stdout)
         if result.stderr:
@@ -221,7 +296,9 @@ class OkpMcpAgent:
 
         return response in ("y", "yes")
 
-    def create_worktree(self, ticket_id: str, branch_name: Optional[str] = None) -> Path:
+    def create_worktree(
+        self, ticket_id: str, branch_name: Optional[str] = None
+    ) -> Path:
         """Create a git worktree for isolated development.
 
         Args:
@@ -245,7 +322,9 @@ class OkpMcpAgent:
 
         # Check if worktree already exists
         if worktree_dir.exists():
-            if self.ask_approval(f"Worktree {worktree_dir} already exists. Remove and recreate?"):
+            if self.ask_approval(
+                f"Worktree {worktree_dir} already exists. Remove and recreate?"
+            ):
                 self.run_command(
                     ["git", "worktree", "remove", str(worktree_dir), "--force"],
                     cwd=self.okp_mcp_root,
@@ -271,7 +350,7 @@ class OkpMcpAgent:
             worktree_dir: Path to worktree to remove
         """
         if self.ask_approval(f"Remove worktree {worktree_dir}?", default=False):
-            print(f"\n🧹 Cleaning up worktree...")
+            print("\n🧹 Cleaning up worktree...")
             self.run_command(
                 ["git", "worktree", "remove", str(worktree_dir), "--force"],
                 cwd=self.okp_mcp_root,
@@ -362,6 +441,104 @@ class OkpMcpAgent:
 
         return output_dirs[-1]
 
+    def _get_num_docs(self, contexts: Optional[str]) -> int:
+        """Extract number of documents from contexts field."""
+        if not contexts or pd.isna(contexts):
+            return 0
+
+        try:
+            # Try to parse as JSON array
+            import json
+
+            contexts_list = json.loads(contexts)
+            if isinstance(contexts_list, list):
+                return len(contexts_list)
+        except (json.JSONDecodeError, TypeError):
+            pass
+
+        # Fallback: count non-empty string
+        return 1 if str(contexts).strip() and str(contexts).strip() != "[]" else 0
+
+    def _get_llm_boost_suggestion(self, result: EvaluationResult):
+        """Get LLM suggestion for boost query improvements."""
+        if not self.llm_advisor or not result.query:
+            return
+
+        print("\n" + "=" * 80)
+        print("💡 AI-POWERED SUGGESTION (Boost Query)")
+        print("=" * 80)
+
+        try:
+            # Convert EvaluationResult to MetricSummary
+            metrics = MetricSummary(
+                ticket_id=result.ticket_id,
+                query=result.query,
+                url_f1=result.url_f1,
+                mrr=result.mrr,
+                context_relevance=result.context_relevance,
+                context_precision=result.context_precision,
+                keywords_score=result.keywords_score,
+                forbidden_claims_score=result.forbidden_claims_score,
+                rag_used=result.rag_used,
+                docs_retrieved=result.docs_retrieved,
+                num_docs=self._get_num_docs(result.contexts),
+            )
+
+            # Get suggestion
+            suggestion = self.llm_advisor.suggest_boost_query_changes(metrics)
+
+            # Display suggestion
+            print(f"\n📝 Reasoning:\n{suggestion.reasoning}\n")
+            print(f"📄 File: {suggestion.file_path}")
+            print(f"✏️  Change: {suggestion.suggested_change}\n")
+            print(f"📈 Expected Improvement:\n{suggestion.expected_improvement}\n")
+            print(f"🎯 Confidence: {suggestion.confidence}")
+
+            if suggestion.code_snippet:
+                print(f"\n💻 Code Snippet:\n{suggestion.code_snippet}")
+
+        except Exception as e:
+            print(f"\n⚠️  Failed to get LLM suggestion: {e}")
+            print("   Continuing without AI-powered suggestion")
+
+    def _get_llm_prompt_suggestion(self, result: EvaluationResult):
+        """Get LLM suggestion for system prompt improvements."""
+        if not self.llm_advisor or not result.query:
+            return
+
+        print("\n" + "=" * 80)
+        print("💡 AI-POWERED SUGGESTION (System Prompt)")
+        print("=" * 80)
+
+        try:
+            # Convert EvaluationResult to MetricSummary
+            metrics = MetricSummary(
+                ticket_id=result.ticket_id,
+                query=result.query,
+                url_f1=result.url_f1,
+                mrr=result.mrr,
+                context_relevance=result.context_relevance,
+                context_precision=result.context_precision,
+                keywords_score=result.keywords_score,
+                forbidden_claims_score=result.forbidden_claims_score,
+                rag_used=result.rag_used,
+                docs_retrieved=result.docs_retrieved,
+                num_docs=self._get_num_docs(result.contexts),
+            )
+
+            # Get suggestion
+            suggestion = self.llm_advisor.suggest_prompt_changes(metrics)
+
+            # Display suggestion
+            print(f"\n📝 Reasoning:\n{suggestion.reasoning}\n")
+            print(f"✏️  Suggested Change:\n{suggestion.suggested_change}\n")
+            print(f"📈 Expected Improvement:\n{suggestion.expected_improvement}\n")
+            print(f"🎯 Confidence: {suggestion.confidence}")
+
+        except Exception as e:
+            print(f"\n⚠️  Failed to get LLM suggestion: {e}")
+            print("   Continuing without AI-powered suggestion")
+
     def parse_results(self, output_dir: Path, ticket_id: str) -> EvaluationResult:
         """Parse evaluation results for a specific ticket.
 
@@ -395,11 +572,12 @@ class OkpMcpAgent:
 
         result = EvaluationResult(ticket_id=ticket_id)
 
-        # Extract tool_calls and contexts (same across all rows for a ticket)
+        # Extract tool_calls, contexts, and query (same across all rows for a ticket)
         if not ticket_df.empty:
             first_row = ticket_df.iloc[0]
             result.tool_calls = first_row.get("tool_calls")
             result.contexts = first_row.get("contexts")
+            result.query = first_row.get("query", first_row.get("user_input"))
 
             # Check if RAG was used
             if pd.notna(result.tool_calls) and result.tool_calls:
@@ -414,7 +592,9 @@ class OkpMcpAgent:
             if pd.notna(result.contexts) and result.contexts:
                 contexts_str = str(result.contexts).strip()
                 result.docs_retrieved = (
-                    contexts_str != "" and contexts_str != "[]" and contexts_str != "null"
+                    contexts_str != ""
+                    and contexts_str != "[]"
+                    and contexts_str != "null"
                 )
 
         # Extract metrics
@@ -445,6 +625,15 @@ class OkpMcpAgent:
 
             elif metric == "custom:forbidden_claims_eval":
                 result.forbidden_claims_score = score
+
+            elif metric == "ragas:faithfulness":
+                result.faithfulness = score
+
+            elif metric == "custom:answer_correctness":
+                result.answer_correctness = score
+
+            elif metric == "ragas:response_relevancy":
+                result.response_relevancy = score
 
         return result
 
@@ -508,12 +697,20 @@ class OkpMcpAgent:
                 print(f"   → Some expected docs missing (URL F1 = {result.url_f1:.2f})")
             print("   → Use fast iteration mode (retrieval-only)")
             print("   → Edit okp-mcp boost queries")
+
+            # Get LLM suggestion for boost query changes
+            self._get_llm_boost_suggestion(result)
+
         elif result.is_answer_problem:
             print("\n💬 DIAGNOSIS: ANSWER PROBLEM")
             print("   → Right documents retrieved BUT keywords missing")
             print("   → LLM not using the retrieved documents effectively")
             print("   → Use full iteration mode")
             print("   → Edit system prompts to emphasize using context")
+
+            # Get LLM suggestion for prompt changes
+            self._get_llm_prompt_suggestion(result)
+
         else:
             print("\n✅ DIAGNOSIS: METRICS LOOK GOOD")
             print("   → All thresholds passed")
@@ -531,8 +728,8 @@ class OkpMcpAgent:
 
         # Run functional suite
         print("\n1. Functional tests...")
-        output_dir = self.run_full_eval(self.functional_full, runs=3)
-        # TODO: Parse all results, not just one ticket
+        _output_dir = self.run_full_eval(self.functional_full, runs=3)
+        # TODO: Parse all results from _output_dir, not just one ticket
         results["functional"] = []
 
         # TODO: Add other suites (chronically_failing, general_documentation)
@@ -570,7 +767,9 @@ class OkpMcpAgent:
             # Step 1: Diagnose
             initial_result = self.diagnose(ticket_id)
 
-            if not (initial_result.is_retrieval_problem or initial_result.is_answer_problem):
+            if not (
+                initial_result.is_retrieval_problem or initial_result.is_answer_problem
+            ):
                 print("\n✅ Ticket already passing, nothing to fix")
                 return
 
@@ -594,13 +793,13 @@ class OkpMcpAgent:
 
             # Step 4: Review
             if use_worktree:
-                print(f"\n📝 Review changes in worktree:")
+                print("\n📝 Review changes in worktree:")
                 print(f"   cd {working_dir}")
-                print(f"   git diff main")
-                print(f"\n   When ready to merge:")
-                print(f"   git checkout main")
+                print("   git diff main")
+                print("\n   When ready to merge:")
+                print("   git checkout main")
                 print(f"   git merge {worktree_name or f'fix/{ticket_id.lower()}'}")
-                print(f"\n   Or to discard:")
+                print("\n   Or to discard:")
                 print(f"   git worktree remove {working_dir}")
 
         finally:

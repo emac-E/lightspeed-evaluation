@@ -45,6 +45,135 @@ The `okp_mcp_agent.py` script automates the [INCORRECT_ANSWER_LOOP workflow](htt
                                     └─────────────┘
 ```
 
+## Environment Setup
+
+### Required Environment Variables
+
+The OKP-MCP agent uses the **LLM Advisor** (`scripts/okp_mcp_llm_advisor.py`) which requires access to Claude models via Anthropic's Vertex AI:
+
+```bash
+# Required: GCP project with Anthropic Vertex AI access
+export ANTHROPIC_VERTEX_PROJECT_ID="your-gcp-project-id"
+
+# Optional: GCP region (defaults to us-east5)
+export CLOUD_ML_REGION="us-east5"
+```
+
+**Finding your project ID:**
+
+If you're using Claude Code, the project ID is already configured:
+```bash
+# Check your Claude Code project ID
+env | grep ANTHROPIC_VERTEX_PROJECT_ID
+# Example output: ANTHROPIC_VERTEX_PROJECT_ID=your-gcp-project-id
+```
+
+### Authentication Setup
+
+The LLM advisor uses Google Cloud credentials to access Claude models via Vertex AI.
+
+**Option 1: Separate credentials for Claude (Recommended - avoids conflicts)**
+
+If you're already using `GOOGLE_APPLICATION_CREDENTIALS` for other GCP services (like Gemini in the evaluation framework), use a separate variable for Claude:
+
+```bash
+# Set Claude-specific credentials (won't conflict with other GCP services)
+export GOOGLE_CLAUDE_CREDENTIALS="/path/to/claude-service-account.json"
+```
+
+This allows you to:
+- Use one GCP project/credentials for evaluation framework (Gemini)
+- Use a different GCP project/credentials for Claude/Anthropic Vertex AI
+- Avoid authentication conflicts between services
+
+**Option 2: Use Application Default Credentials (ADC)**
+
+If you're not using other GCP services or don't have credential conflicts:
+
+```bash
+# Use your user credentials (recommended for development)
+gcloud auth application-default login
+
+# OR use a service account
+export GOOGLE_APPLICATION_CREDENTIALS="/path/to/service-account-key.json"
+```
+
+**How it works:**
+
+The advisor checks credentials in this order:
+1. `GOOGLE_CLAUDE_CREDENTIALS` (if set, uses this for Claude only)
+2. `GOOGLE_APPLICATION_CREDENTIALS` (standard GCP credentials)
+3. Application Default Credentials (from `gcloud auth application-default login`)
+
+This way, setting `GOOGLE_CLAUDE_CREDENTIALS` won't affect your other GCP services.
+
+### Required IAM Permissions
+
+Your account or service account needs the following IAM permissions on the Vertex AI project:
+
+- **`aiplatform.endpoints.predict`** - Required to call Claude models
+- **Access to Anthropic Model Garden** - Ensure Anthropic models are enabled in your project
+
+**Troubleshooting permissions:**
+
+If you get a `403 PERMISSION_DENIED` error:
+
+```
+Error code: 403 - Permission 'aiplatform.endpoints.predict' denied
+```
+
+This means:
+1. You're authenticated with credentials that don't have Vertex AI access
+2. Your IAM roles need to be updated
+
+**Solution:** Contact your GCP admin to grant you the **Vertex AI User** role (`roles/aiplatform.user`) on the project.
+
+### Verifying Setup
+
+Test that the LLM advisor can access Claude models:
+
+```bash
+# Test the advisor
+uv run python scripts/okp_mcp_llm_advisor.py
+
+# Expected output:
+# ✅ Initialized with Vertex AI project: your-gcp-project-id
+#    Region: us-east5
+#    Simple model: claude-haiku-4-5@20251001
+#    Medium model: claude-sonnet-4-5@20250929
+#    Complex model: claude-sonnet-4-5@20250929
+#
+# Problem complexity: MEDIUM
+# ✅ Success!
+# Reasoning: [detailed analysis]
+```
+
+### Cost Optimization
+
+The LLM advisor uses **tiered model routing** to minimize API costs:
+
+| Task Type | Model Used | Cost per Call | Use Case |
+|-----------|------------|---------------|----------|
+| Simple | `claude-haiku-4-5` | ~$0.0001 | Problem classification |
+| Medium | `claude-sonnet-4-5` | ~$0.01 | Boost query suggestions |
+| Complex | `claude-sonnet-4-5` or higher | ~$0.01+ | Ambiguous/multi-faceted issues |
+
+**Estimated costs per ticket:**
+- Classification: ~$0.0001 (Haiku)
+- Suggestion: ~$0.01 (Sonnet)
+- **Total: ~$0.01 per ticket diagnosis**
+
+For comparison, using Sonnet for everything would cost ~$0.02 per ticket (2x more expensive).
+
+### Environment Variables Reference
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `ANTHROPIC_VERTEX_PROJECT_ID` | ✅ Yes | None | GCP project ID with Anthropic Vertex AI access |
+| `CLOUD_ML_REGION` | ❌ No | `us-east5` | GCP region for Vertex AI API calls |
+| `GOOGLE_CLAUDE_CREDENTIALS` | ❌ No | None | Path to service account key for Claude/Anthropic (recommended - avoids conflicts) |
+| `GOOGLE_APPLICATION_CREDENTIALS` | ❌ No | ADC | Path to service account key (used if `GOOGLE_CLAUDE_CREDENTIALS` not set) |
+
 ## Quick Start
 
 ### Diagnose a Ticket
@@ -114,9 +243,42 @@ The agent currently provides:
 - Extracts per-ticket metrics
 - Handles missing metrics gracefully
 
-### TODO: Phase 2 Implementation
+### Phase 2 Implementation (In Progress)
 
-The following features are planned but not yet implemented:
+✅ **LLM Integration**: AI-powered code analysis (**COMPLETED**)
+
+The LLM advisor is now fully implemented in `scripts/okp_mcp_llm_advisor.py`:
+
+```python
+from scripts.okp_mcp_llm_advisor import OkpMcpLLMAdvisor, MetricSummary
+
+# Initialize advisor with tiered model routing
+advisor = OkpMcpLLMAdvisor(
+    model="claude-sonnet-4-5@20250929",
+    use_tiered_models=True,
+    simple_model="claude-haiku-4-5@20251001",  # Cheap for classification
+    complex_model="claude-sonnet-4-5@20250929",  # Smart for analysis
+)
+
+# Get boost query suggestions
+suggestion = advisor.suggest_boost_query_changes(metrics)
+print(suggestion.reasoning)
+print(suggestion.file_path)
+print(suggestion.suggested_change)
+print(suggestion.code_snippet)
+
+# Get prompt suggestions
+prompt_suggestion = advisor.suggest_prompt_changes(metrics)
+```
+
+**Features:**
+- ✅ Structured output via Claude's tool calling (guaranteed valid JSON)
+- ✅ Tiered model routing (Haiku for classification, Sonnet for analysis)
+- ✅ Auto-escalation to more expensive models for complex cases
+- ✅ Uses Anthropic SDK with Vertex AI (no CVEs, already installed)
+- ✅ Detailed reasoning, file paths, code snippets, and confidence levels
+
+**Next Steps for Phase 2:**
 
 ❌ **Iteration Loop**: Autonomous fixing
 ```python
@@ -140,29 +302,6 @@ def fix_ticket_retrieval_mode(self, ticket_id: str, max_iterations: int):
         print(f"Iteration {iteration + 1}: URL F1 = {result.url_f1:.2f}")
 
     print("⚠️ Max iterations reached")
-```
-
-❌ **LLM Integration**: AI-powered code editing
-```python
-from pydantic_ai import Agent
-
-self.llm_agent = Agent('claude-sonnet-4-6', system_prompt="""
-You are an okp-mcp boost query expert. Given evaluation metrics,
-suggest specific changes to boost queries to improve document retrieval.
-""")
-
-def suggest_boost_query_changes(self, ticket_id: str, metrics: EvaluationResult):
-    """Use LLM to suggest boost query improvements."""
-    prompt = f"""
-    Ticket: {ticket_id}
-    Current metrics:
-    - URL F1: {metrics.url_f1}
-    - MRR: {metrics.mrr}
-    - Context Relevance: {metrics.context_relevance}
-
-    Suggest specific changes to okp-mcp boost queries to improve retrieval.
-    """
-    return self.llm_agent.run_sync(prompt)
 ```
 
 ❌ **Code Editing**: Automated file modification
@@ -349,17 +488,25 @@ This agent complements the human-in-the-loop workflow documented in `OKP_MCP_INT
 
 ## Development Roadmap
 
-### Phase 2.1: LLM Integration (Next)
+### ✅ Phase 2.1: LLM Integration (COMPLETED)
 
 **Goal**: Add AI-powered code analysis and suggestions
 
-**Tasks**:
-1. Add `pydantic-ai` dependency to pyproject.toml
-2. Implement `suggest_boost_query_changes()` method
-3. Implement `suggest_prompt_changes()` method
-4. Add configuration for Claude model selection
+**Completed Tasks**:
+1. ✅ Implemented `OkpMcpLLMAdvisor` class using Anthropic SDK with Vertex AI
+2. ✅ Implemented `suggest_boost_query_changes()` method with structured output
+3. ✅ Implemented `suggest_prompt_changes()` method with structured output
+4. ✅ Added tiered model routing (Haiku for classification, Sonnet for analysis)
+5. ✅ Added auto-escalation to complex models for ambiguous cases
+6. ✅ Comprehensive environment variable documentation
 
-**Estimated effort**: 2-3 hours
+**Implementation Details**:
+- Uses Anthropic SDK v0.64.0 (already installed, no CVEs)
+- Structured outputs via Claude's tool calling (guaranteed valid JSON)
+- Cost optimization: ~$0.01 per ticket (vs $0.02 without tiering)
+- Located in `scripts/okp_mcp_llm_advisor.py`
+
+**Actual effort**: 3 hours
 
 ### Phase 2.2: Code Editing (After 2.1)
 
