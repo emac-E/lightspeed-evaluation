@@ -102,6 +102,223 @@ Implement a **dual-mode, multi-stage autonomous testing workflow** for okp-mcp R
 └──────────────────────────────────────────────────────────┘
 ```
 
+## Iteration Strategy & Safety Mechanisms
+
+### Overview
+
+The agent uses **tiered iteration budgets** with **model escalation** to prevent infinite loops and ensure efficient problem solving.
+
+### Two Separate Iteration Budgets
+
+```python
+# Primary ticket fix
+PRIMARY_FIX_MAX_ITERATIONS = 5      # Max attempts to fix original RSPEED ticket
+REGRESSION_FIX_MAX_ITERATIONS = 3   # Max attempts per individual regression
+
+# Model escalation
+ESCALATION_THRESHOLD = 2            # Failed attempts before escalating to better model
+PLATEAU_THRESHOLD = 2               # Iterations without improvement = plateau
+MIN_IMPROVEMENT_THRESHOLD = 0.05    # Metric must improve by at least 0.05
+```
+
+**Key Principle:** Primary fixes and regression fixes have **separate counters**. Fixing regressions does NOT count against the primary fix budget.
+
+### Model Escalation Path
+
+```
+Iteration 1-2: Sonnet (medium complexity)
+    ↓ (if no improvement after 2 attempts)
+Iteration 3-4: Opus (complex cases)
+    ↓ (if no improvement after 2 attempts)
+Iteration 5:   Escalate to HUMAN
+```
+
+### Complete Feedback Loop (Primary Fix)
+
+```
+Iteration 1: (Model: Sonnet)
+  1. diagnose(ticket_id) → URL F1 = 0.33 (RETRIEVAL PROBLEM)
+  2. get_llm_suggestion(model="sonnet") → "Boost documentKind:solution to 4.0"
+  3. apply_code_change() → Edit src/okp_mcp/portal.py
+  4. restart_okp_mcp() → Restart service
+  5. re_evaluate(ticket_id) → Run evaluation again
+  6. check_improvement() → URL F1 = 0.55 (improved 0.33 → 0.55, but < 0.7)
+  7. attempts_at_current_model = 1, continue...
+
+Iteration 2: (Model: Sonnet)
+  5. re_evaluate() → URL F1 = 0.54 (NOT improved: 0.55 → 0.54)
+  6. check_improvement() → NO IMPROVEMENT
+  7. attempts_at_current_model = 2 → ESCALATE MODEL!
+
+Iteration 3: (Model: Opus - escalated!)
+  2. get_llm_suggestion(model="opus") → "Add product:RHEL filter + boost to 6.0"
+  3. apply_code_change()
+  4. restart_okp_mcp()
+  5. re_evaluate() → URL F1 = 0.85
+  6. check_improvement() → PASSED! (0.85 > 0.7 threshold)
+  ✅ PRIMARY TICKET FIXED in 3 iterations!
+```
+
+### Regression Handling (New Iteration Budget)
+
+After primary fix passes, run CLA tests to detect regressions:
+
+```
+Stage 2: Run CLA_tests.yaml
+  Result: 2 regressions detected
+    - RSPEED-1234: Keywords dropped 0.8 → 0.6
+    - RSPEED-5678: URL F1 dropped 0.9 → 0.65
+
+Fix Regression 1: RSPEED-1234 (COUNTER RESETS TO 0)
+  Max 3 attempts, start with Sonnet again
+
+  Attempt 1: Try fix with Sonnet → Keywords = 0.7 (improved but < 0.8)
+  Attempt 2: Try fix with Sonnet → Keywords = 0.69 (no improvement) → ESCALATE
+  Attempt 3: Try fix with Opus → Keywords = 0.85 (FIXED!)
+  ✅ Regression 1 fixed
+
+Fix Regression 2: RSPEED-5678 (COUNTER RESETS TO 0 AGAIN)
+  Max 3 attempts, start with Sonnet
+
+  Attempt 1-3: All fail to improve URL F1
+  ❌ Could not fix regression after 3 attempts
+  🔄 REVERT primary fix commit
+  🚨 ESCALATE TO HUMAN
+```
+
+### Safety Mechanisms
+
+#### 1. Plateau Detection
+
+```python
+def detected_plateau(metric_history: List[float]) -> bool:
+    """Detect if metrics stopped improving for N consecutive iterations."""
+    if len(metric_history) < PLATEAU_THRESHOLD:
+        return False
+
+    # Check last N iterations
+    last_n = metric_history[-PLATEAU_THRESHOLD:]
+    best_in_last_n = max(last_n)
+
+    # If best metric in last N attempts equals N attempts ago → plateau
+    return best_in_last_n == last_n[0]
+```
+
+**Action:** If plateau detected → escalate to better model or human
+
+#### 2. Model Escalation
+
+```python
+def escalate_model(current_model: str, attempts_at_current: int) -> Optional[str]:
+    """Escalate to better model after failed attempts."""
+    if attempts_at_current < ESCALATION_THRESHOLD:
+        return current_model  # Stay at current level
+
+    # Escalation path: Sonnet → Opus → Human
+    if current_model == "sonnet":
+        return "opus"
+    elif current_model == "opus":
+        return None  # Escalate to human
+
+    return current_model
+```
+
+#### 3. Improvement Check
+
+```python
+def metrics_improved(new: EvaluationResult, old: EvaluationResult) -> bool:
+    """Check if metrics improved (for the specific problem type)."""
+    if old is None:
+        return True  # First iteration
+
+    # For retrieval problems, check retrieval metrics
+    if new.is_retrieval_problem:
+        improvement = max(
+            new.url_f1 - old.url_f1,
+            new.mrr - old.mrr,
+            new.context_relevance - old.context_relevance
+        )
+        return improvement >= MIN_IMPROVEMENT_THRESHOLD
+
+    # For answer problems, check answer metrics
+    elif new.is_answer_problem:
+        improvement = max(
+            (new.keywords_score or 0) - (old.keywords_score or 0),
+            (new.answer_correctness or 0) - (old.answer_correctness or 0),
+            (new.faithfulness or 0) - (old.faithfulness or 0)
+        )
+        return improvement >= MIN_IMPROVEMENT_THRESHOLD
+
+    return False
+```
+
+**Key:** Improvement must be >= 0.05 to count (prevents tiny fluctuations from resetting escalation)
+
+#### 4. Regression Revert Policy
+
+```python
+def handle_regressions(primary_fix_commit: str, regressions: List[str]) -> bool:
+    """Try to fix regressions, revert if can't fix."""
+    for regression_ticket in regressions:
+        fixed = fix_ticket_with_budget(
+            ticket_id=regression_ticket,
+            max_iterations=REGRESSION_FIX_MAX_ITERATIONS,
+            starting_model="sonnet",  # Reset to Sonnet for each regression
+            context="regression"
+        )
+
+        if not fixed:
+            print(f"❌ Could not fix regression {regression_ticket}")
+            print(f"🔄 Reverting primary fix commit {primary_fix_commit}")
+            run_command(["git", "revert", primary_fix_commit], cwd=okp_mcp_root)
+            print("🚨 ESCALATING TO HUMAN - regression cannot be fixed")
+            return False
+
+    return True  # All regressions fixed
+```
+
+**Critical:** If ANY regression cannot be fixed → revert entire primary fix → escalate to human
+
+### Exit Conditions Summary
+
+**Primary Fix Stops When:**
+- ✅ **Success:** All metrics pass thresholds
+- ⏱️ **Max iterations:** 5 attempts exhausted → Escalate to human
+- ⏸️ **Plateau:** No improvement for 2 consecutive iterations → Escalate to human
+- 🔄 **Model exhausted:** Opus failed after 2 attempts → Escalate to human
+
+**Regression Fix Stops When (per regression):**
+- ✅ **Success:** Regression fixed within 3 attempts → Continue to next regression
+- ❌ **Failed:** 3 attempts exhausted → **REVERT primary fix** → Escalate to human
+
+**Why Revert on Regression Failure:**
+- Primary fix improved target ticket BUT broke other functionality
+- Cannot ship a change that causes regressions
+- Better to revert and let human solve the complex tradeoff
+
+### Model Configuration
+
+```python
+TIER_MODELS = {
+    "simple": "claude-haiku-4-5@20251001",      # Classification only (not for fixes)
+    "medium": "claude-sonnet-4-5@20250929",     # Default for all fixes
+    "complex": "claude-opus-4-5@20250929",      # Escalation for hard problems
+}
+```
+
+### Cost Optimization
+
+**Estimated costs per primary fix (5 iteration budget):**
+- Classification (Haiku): ~$0.0001 × 1 = $0.0001
+- Iteration 1-2 (Sonnet): ~$0.01 × 2 = $0.02
+- Iteration 3-5 (Opus): ~$0.03 × 3 = $0.09
+- **Max cost per ticket: ~$0.11** (if all 5 iterations used)
+- **Typical cost: ~$0.02-$0.04** (most tickets fixed in 2-3 iterations)
+
+**Why tiered routing matters:**
+- Starting with Opus: $0.03 × 5 = $0.15 per ticket (36% more expensive)
+- Haiku for everything: Cannot solve complex problems reliably
+
 ## Code Changes Required
 
 ### 1. Update `okp_mcp_llm_advisor.py`
@@ -160,7 +377,7 @@ elif metric == "ragas:response_relevancy":
     result.response_relevancy = score
 ```
 
-#### 2c. Update MetricSummary conversion (TODO)
+#### 2c. Update MetricSummary conversion (DONE ✅)
 
 In `_get_llm_boost_suggestion()` and `_get_llm_prompt_suggestion()`:
 
@@ -173,67 +390,291 @@ metrics = MetricSummary(
 )
 ```
 
-#### 2d. Add multi-stage validation (TODO)
+#### 2d. Add iteration constants (TODO)
 
 ```python
+# Add to top of okp_mcp_agent.py
+PRIMARY_FIX_MAX_ITERATIONS = 5
+REGRESSION_FIX_MAX_ITERATIONS = 3
+ESCALATION_THRESHOLD = 2
+PLATEAU_THRESHOLD = 2
+MIN_IMPROVEMENT_THRESHOLD = 0.05
+
+TIER_MODELS = {
+    "simple": "claude-haiku-4-5@20251001",
+    "medium": "claude-sonnet-4-5@20250929",
+    "complex": "claude-opus-4-5@20250929",
+}
+```
+
+#### 2e. Add code editing method (TODO)
+
+```python
+def apply_code_change(self, suggestion: BoostQuerySuggestion) -> bool:
+    """Apply LLM-suggested code change to okp-mcp files.
+
+    Args:
+        suggestion: Structured suggestion with file path and change
+
+    Returns:
+        True if change applied successfully
+    """
+    file_path = self.okp_mcp_root / suggestion.file_path
+
+    if not file_path.exists():
+        print(f"❌ File not found: {file_path}")
+        return False
+
+    # TODO: Implement actual code editing
+    # Options:
+    #  1. Use AST manipulation for Python files
+    #  2. Use regex for simple replacements
+    #  3. Let Claude Code edit the file (safer, gets approval)
+
+    print(f"📝 Would apply change to: {file_path}")
+    print(f"   Change: {suggestion.suggested_change}")
+
+    if self.interactive:
+        confirm = input("Apply this change? (y/n): ")
+        if confirm.lower() != 'y':
+            return False
+
+    # Apply change here...
+    return True
+```
+
+#### 2f. Add improvement checking (TODO)
+
+```python
+def metrics_improved(self, new: EvaluationResult, old: EvaluationResult) -> bool:
+    """Check if metrics improved significantly."""
+    if old is None:
+        return True
+
+    # For retrieval problems
+    if new.is_retrieval_problem:
+        improvement = max(
+            (new.url_f1 or 0) - (old.url_f1 or 0),
+            (new.mrr or 0) - (old.mrr or 0),
+            (new.context_relevance or 0) - (old.context_relevance or 0)
+        )
+        return improvement >= MIN_IMPROVEMENT_THRESHOLD
+
+    # For answer problems
+    elif new.is_answer_problem:
+        improvement = max(
+            (new.keywords_score or 0) - (old.keywords_score or 0),
+            (new.answer_correctness or 0) - (old.answer_correctness or 0),
+            (new.faithfulness or 0) - (old.faithfulness or 0)
+        )
+        return improvement >= MIN_IMPROVEMENT_THRESHOLD
+
+    return False
+
+def detected_plateau(self, metric_history: List[float]) -> bool:
+    """Detect if metrics plateaued."""
+    if len(metric_history) < PLATEAU_THRESHOLD:
+        return False
+
+    last_n = metric_history[-PLATEAU_THRESHOLD:]
+    return max(last_n) == last_n[0]
+
+def escalate_model(self, current_model: str, attempts: int) -> Optional[str]:
+    """Escalate to better model after failed attempts."""
+    if attempts < ESCALATION_THRESHOLD:
+        return current_model
+
+    if current_model == "medium":
+        return "complex"
+    elif current_model == "complex":
+        return None  # Escalate to human
+
+    return current_model
+```
+
+#### 2g. Add iteration loop (TODO - CRITICAL)
+
+```python
+def fix_ticket_with_iteration(
+    self,
+    ticket_id: str,
+    max_iterations: int = PRIMARY_FIX_MAX_ITERATIONS,
+    starting_model: str = "medium",
+    context: str = "primary"
+) -> bool:
+    """Fix a ticket with automatic iteration and model escalation.
+
+    Args:
+        ticket_id: RSPEED ticket ID
+        max_iterations: Max attempts (5 for primary, 3 for regressions)
+        starting_model: Starting model tier (medium or complex)
+        context: "primary" or "regression" (for logging)
+
+    Returns:
+        True if ticket fixed (all thresholds passed)
+    """
+    print(f"\n{'='*80}")
+    print(f"FIXING {context.upper()}: {ticket_id}")
+    print(f"{'='*80}")
+
+    # Initial diagnosis
+    previous_result = self.diagnose(ticket_id, use_existing=False)
+
+    if not (previous_result.is_retrieval_problem or previous_result.is_answer_problem):
+        print("✅ Already passing, nothing to fix")
+        return True
+
+    # Track metrics for plateau detection
+    metric_history = []
+    current_model = starting_model
+    attempts_at_current_model = 0
+
+    for iteration in range(1, max_iterations + 1):
+        print(f"\n--- Iteration {iteration}/{max_iterations} (Model: {current_model}) ---")
+
+        # Get LLM suggestion
+        if previous_result.is_retrieval_problem:
+            suggestion = self._get_llm_boost_suggestion_object(
+                previous_result,
+                model=TIER_MODELS[current_model]
+            )
+        else:
+            suggestion = self._get_llm_prompt_suggestion_object(
+                previous_result,
+                model=TIER_MODELS[current_model]
+            )
+
+        # Apply code change
+        if not self.apply_code_change(suggestion):
+            print("❌ Change not applied, stopping")
+            return False
+
+        # Restart service
+        self.restart_okp_mcp()
+
+        # Re-evaluate
+        current_result = self.diagnose(ticket_id, use_existing=False)
+
+        # Track primary metric
+        if current_result.is_retrieval_problem:
+            metric_history.append(current_result.url_f1 or 0)
+        else:
+            metric_history.append(current_result.answer_correctness or 0)
+
+        # Check if fixed
+        if current_result.passes_all_thresholds():
+            print(f"✅ FIXED in {iteration} iterations!")
+            return True
+
+        # Check if improved
+        improved = self.metrics_improved(current_result, previous_result)
+
+        if improved:
+            print(f"📈 Metrics improved! Continuing...")
+            attempts_at_current_model = 0  # Reset escalation counter
+        else:
+            print(f"📉 No improvement")
+            attempts_at_current_model += 1
+
+        # Check for plateau
+        if self.detected_plateau(metric_history):
+            print(f"⏸️  Plateau detected (no improvement for {PLATEAU_THRESHOLD} iterations)")
+            attempts_at_current_model = ESCALATION_THRESHOLD  # Force escalation
+
+        # Escalate model if needed
+        new_model = self.escalate_model(current_model, attempts_at_current_model)
+        if new_model is None:
+            print("🚨 All models exhausted, escalating to HUMAN")
+            return False
+        elif new_model != current_model:
+            print(f"🔼 Escalating from {current_model} to {new_model}")
+            current_model = new_model
+            attempts_at_current_model = 0
+
+        previous_result = current_result
+
+    print(f"⏱️  Max iterations ({max_iterations}) reached")
+    return False
+
 def fix_ticket_multi_stage(
     self,
     ticket_id: str,
-    max_retrieval_iterations: int = 10,
     validate_cla_tests: bool = True,
 ):
-    """Multi-stage ticket fixing with validation.
+    """Multi-stage ticket fixing: Primary fix → CLA validation → Regression fixes.
 
-    Stage 1: Fix individual ticket
-      1a. Diagnose (full mode)
-      1b. If retrieval problem: Fast iteration (retrieval-only mode)
-      1c. Validate answer quality (full mode)
-
-    Stage 2: Validate regressions (CLA_tests.yaml)
-
-    Stage 3 (future): Negative tests
+    Stage 1: Fix primary ticket with iteration loop
+    Stage 2: Validate against CLA tests
+    Stage 3: Fix any regressions (with separate iteration budgets)
     """
+    print(f"\n{'='*80}")
+    print(f"MULTI-STAGE FIX: {ticket_id}")
+    print(f"{'='*80}")
 
-    # Stage 1a: Diagnose
-    result = self.diagnose(ticket_id, use_existing=False)
+    # Stage 1: Fix primary ticket
+    primary_fixed = self.fix_ticket_with_iteration(
+        ticket_id=ticket_id,
+        max_iterations=PRIMARY_FIX_MAX_ITERATIONS,
+        context="primary"
+    )
 
-    if result.is_retrieval_problem:
-        # Stage 1b: Fast retrieval iteration
-        for i in range(max_retrieval_iterations):
-            # Get LLM suggestion
-            # Apply changes (manual or automated)
-            # Restart okp-mcp
-            # Run retrieval-only eval (fast ~30 sec)
-            result = self.run_retrieval_eval_and_parse(ticket_id)
-
-            if result.url_f1 > 0.7:
-                break
-
-    # Stage 1c: Full validation
-    result = self.diagnose(ticket_id, use_existing=False)
-
-    if not result.passes_all_thresholds():
-        print("❌ Answer quality issues remain")
+    if not primary_fixed:
+        print("❌ Could not fix primary ticket")
         return False
 
-    # Stage 2: CLA test validation
-    if validate_cla_tests:
-        print("\n" + "=" * 80)
-        print("STAGE 2: Regression Validation (CLA_tests.yaml)")
-        print("=" * 80)
+    # Capture commit for potential revert
+    primary_commit = subprocess.check_output(
+        ["git", "rev-parse", "HEAD"],
+        cwd=self.okp_mcp_root,
+        text=True
+    ).strip()
 
-        baseline = self.get_baseline_results("CLA_tests.yaml")
-        current = self.run_full_eval_and_parse("CLA_tests.yaml")
+    # Stage 2: Validate CLA tests
+    if not validate_cla_tests:
+        print("✅ Primary ticket fixed (CLA validation skipped)")
+        return True
 
-        regressions = self.find_regressions(baseline, current)
+    print(f"\n{'='*80}")
+    print("STAGE 2: CLA Regression Validation")
+    print(f"{'='*80}")
 
-        if regressions:
-            print("⚠️  Regressions detected:")
-            for ticket, delta in regressions.items():
-                print(f"  {ticket}: {delta:.2f}")
+    baseline = self.load_baseline_metrics()  # TODO: implement
+    current = self.run_cla_tests_and_parse()  # TODO: implement
+    regressions = self.find_regressions(baseline, current)  # TODO: implement
+
+    if not regressions:
+        print("✅ No regressions detected!")
+        return True
+
+    # Stage 3: Fix regressions
+    print(f"\n⚠️  {len(regressions)} regressions detected:")
+    for reg_ticket, delta in regressions.items():
+        print(f"  - {reg_ticket}: {delta:.2f}")
+
+    for reg_ticket in regressions.keys():
+        print(f"\n{'='*80}")
+        print(f"Fixing Regression: {reg_ticket}")
+        print(f"{'='*80}")
+
+        fixed = self.fix_ticket_with_iteration(
+            ticket_id=reg_ticket,
+            max_iterations=REGRESSION_FIX_MAX_ITERATIONS,
+            starting_model="medium",  # Reset to Sonnet
+            context="regression"
+        )
+
+        if not fixed:
+            print(f"❌ Could not fix regression {reg_ticket}")
+            print(f"🔄 Reverting primary fix (commit {primary_commit[:8]})")
+            subprocess.run(
+                ["git", "revert", "--no-edit", primary_commit],
+                cwd=self.okp_mcp_root,
+                check=True
+            )
+            print("🚨 ESCALATING TO HUMAN")
             return False
 
-    print("\n✅ All stages passed!")
+    print("\n✅ All regressions fixed!")
     return True
 ```
 
@@ -269,34 +710,46 @@ This file already has `expected_response` fields which are used by `custom:answe
 
 ## Implementation Timeline
 
-### Today (Completed ✅)
+### Day 1: April 1, 2026 (Completed ✅)
 - [x] LLM advisor integrated into agent
 - [x] Tested with retrieval and answer problems
 - [x] Added new metrics to EvaluationResult
 - [x] Added parsing for new metrics
+- [x] Created MULTI_STAGE_TESTING_PLAN.md
+- [x] Created DESIGN_INTENT_AND_INTEGRATION.md
+- [x] Created OKP_MCP_AGENT.md
 
-### Tomorrow (To Do)
-1. **Move to okp-mcp repo**
-   - Create `okp-mcp/tools/autonomous_agent/`
-   - Move scripts
-   - Add requirements.txt
-   - Update docs
+### Day 2: April 2, 2026 (In Progress)
 
-2. **Complete metric integration**
-   - Update MetricSummary in llm_advisor.py
-   - Update metric conversion in agent.py
-   - Test with CLA_tests.yaml
+**Phase 1: Complete Metrics Integration** ✅
+- [x] Update MetricSummary in llm_advisor.py (faithfulness, answer_correctness, response_relevancy)
+- [x] Update to_prompt_context() to display new metrics
+- [x] Update metric conversion in agent's _get_llm_boost_suggestion and _get_llm_prompt_suggestion
+- [x] Updated design docs with iteration strategy
 
-3. **Implement multi-stage workflow**
-   - Add `fix_ticket_multi_stage()` method
-   - Add CLA validation logic
-   - Add regression detection
+**Phase 2: Iteration Loop Implementation** (Current)
+- [ ] Add iteration constants (PRIMARY_FIX_MAX_ITERATIONS, etc.)
+- [ ] Implement apply_code_change() method
+- [ ] Implement metrics_improved() checker
+- [ ] Implement detected_plateau() detector
+- [ ] Implement escalate_model() logic
+- [ ] Implement fix_ticket_with_iteration() (core loop)
+- [ ] Implement fix_ticket_multi_stage() (orchestrator)
+- [ ] Test iteration loop with real ticket
 
-4. **Test and merge**
-   - Test complete workflow with RSPEED-2482
-   - Validate no regressions in CLA tests
-   - Create PR
-   - Merge
+**Phase 3: Move to okp-mcp** (Later today)
+- [ ] Create `okp-mcp/tools/autonomous_agent/`
+- [ ] Move scripts
+- [ ] Add requirements.txt
+- [ ] Update imports and paths
+- [ ] Test in okp-mcp environment
+
+**Phase 4: Test and Merge** (End of day)
+- [ ] Test complete workflow with RSPEED-2482
+- [ ] Validate model escalation works
+- [ ] Validate regression detection works
+- [ ] Create PR
+- [ ] Merge
 
 ## Metrics Correlation Insights
 
