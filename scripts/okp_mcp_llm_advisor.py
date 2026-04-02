@@ -59,6 +59,9 @@ class MetricSummary:
     context_precision: Optional[float]
     keywords_score: Optional[float]
     forbidden_claims_score: Optional[float]
+    faithfulness: Optional[float]
+    answer_correctness: Optional[float]
+    response_relevancy: Optional[float]
     rag_used: bool
     docs_retrieved: bool
     num_docs: int
@@ -93,6 +96,16 @@ class MetricSummary:
         lines.append("")
         lines.append("Answer Metrics:")
 
+        if self.faithfulness is not None:
+            lines.append(f"  - Faithfulness: {self.faithfulness:.2f} (threshold: 0.8)")
+        if self.answer_correctness is not None:
+            lines.append(
+                f"  - Answer Correctness: {self.answer_correctness:.2f} (threshold: 0.75)"
+            )
+        if self.response_relevancy is not None:
+            lines.append(
+                f"  - Response Relevancy: {self.response_relevancy:.2f} (threshold: 0.8)"
+            )
         if self.keywords_score is not None:
             lines.append(f"  - Keywords: {self.keywords_score:.2f} (threshold: 0.7)")
         if self.forbidden_claims_score is not None:
@@ -463,6 +476,9 @@ if __name__ == "__main__":
         context_precision=0.7,
         keywords_score=1.0,
         forbidden_claims_score=1.0,
+        faithfulness=0.6,
+        answer_correctness=0.80,
+        response_relevancy=0.7,
         rag_used=True,
         docs_retrieved=True,
         num_docs=5,
