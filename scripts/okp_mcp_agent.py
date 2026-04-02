@@ -1422,6 +1422,10 @@ class OkpMcpAgent:
         branch_name = f"fix/{ticket_id.lower()}"
         worktree_path = self.create_worktree(ticket_id, branch_name)
 
+        # Initialize variables for finally block
+        primary_fixed = False
+        primary_commit = None
+
         try:
             # Update container mount to worktree
             self.update_compose_mount(worktree_path)
