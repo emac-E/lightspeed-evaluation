@@ -276,6 +276,37 @@ class OkpMcpAgent:
                 print("   Continuing without AI-powered suggestions")
                 self.llm_advisor = None
 
+    def check_environment(self) -> bool:
+        """Check that required environment variables are set.
+
+        Returns:
+            True if all required variables are set, False otherwise
+        """
+        required_vars = [
+            "GOOGLE_APPLICATION_CREDENTIALS",  # For Gemini evaluation LLM
+            "ANTHROPIC_VERTEX_PROJECT_ID",     # For Claude advisor (if enabled)
+        ]
+
+        missing_vars = []
+        for var in required_vars:
+            if not os.getenv(var):
+                # ANTHROPIC_VERTEX_PROJECT_ID only required if LLM advisor enabled
+                if var == "ANTHROPIC_VERTEX_PROJECT_ID" and not self.llm_advisor:
+                    continue
+                missing_vars.append(var)
+
+        if missing_vars:
+            print("\n❌ Missing required environment variables:")
+            for var in missing_vars:
+                print(f"   - {var}")
+            print("\nPlease set these variables before running the agent:")
+            print("   export GOOGLE_APPLICATION_CREDENTIALS=/path/to/key.json")
+            if "ANTHROPIC_VERTEX_PROJECT_ID" in missing_vars:
+                print("   export ANTHROPIC_VERTEX_PROJECT_ID=your-project-id")
+            return False
+
+        return True
+
     def run_command(
         self, cmd: List[str], cwd: Optional[Path] = None, check: bool = True
     ) -> subprocess.CompletedProcess:
@@ -1413,6 +1444,11 @@ class OkpMcpAgent:
         print(f"\n{'='*80}")
         print(f"MULTI-STAGE FIX: {ticket_id}")
         print(f"{'='*80}")
+
+        # Pre-flight: Check environment variables
+        if not self.check_environment():
+            print("\n❌ Environment check failed. Cannot proceed.")
+            return False
 
         # Stage 0: Setup worktree environment
         print("\n📍 STAGE 0: Setup Worktree Environment")
