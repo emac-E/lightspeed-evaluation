@@ -372,14 +372,129 @@ class OkpMcpAgent:
             )
             print("✓ Worktree removed")
 
-    def restart_okp_mcp(self):
-        """Restart okp-mcp service."""
+    def update_compose_mount(self, worktree_path: Path):
+        """Update podman-compose.yml to mount worktree instead of main.
+
+        Args:
+            worktree_path: Path to worktree directory (e.g., ~/Work/okp-mcp-fix-RSPEED-2482)
+        """
+        compose_file = self.lscore_deploy_root / "local" / "podman-compose.yml"
+        print(f"\n📝 Updating {compose_file.name} to use worktree...")
+
+        # Read current content
+        content = compose_file.read_text()
+
+        # Calculate relative path from lscore-deploy/local to worktree
+        # lscore-deploy/local -> ../../okp-mcp-fix-RSPEED-2482/src
+        relative_path = f"../../{worktree_path.name}/src"
+
+        # Replace the active mount line
+        # Current: - ../../okp-mcp/src:/dev/src:z
+        # New:     - ../../okp-mcp-fix-RSPEED-2482/src:/dev/src:z
+        original_line = "- ../../okp-mcp/src:/dev/src:z"
+        new_line = f"- {relative_path}:/dev/src:z"
+
+        if original_line not in content:
+            print("⚠️  Warning: Expected mount line not found in compose file")
+            print(f"   Looking for: {original_line}")
+            # Still try to comment out any active mount and add new one
+            # This is a fallback if the format changed
+
+        # Comment out the main mount and add worktree mount
+        modified_content = content.replace(
+            original_line,
+            f"#{original_line}  # Temporarily disabled for worktree\n      {new_line}"
+        )
+
+        # Backup original
+        backup_file = compose_file.with_suffix(".yml.backup")
+        compose_file.write_text(content)  # This creates backup in same operation
+        backup_file.write_text(content)
+
+        # Write modified
+        compose_file.write_text(modified_content)
+        print(f"✅ Updated mount to: {new_line}")
+        print(f"   Backup saved: {backup_file}")
+
+    def revert_compose_mount(self):
+        """Revert podman-compose.yml back to main mount."""
+        compose_file = self.lscore_deploy_root / "local" / "podman-compose.yml"
+        backup_file = compose_file.with_suffix(".yml.backup")
+
+        print(f"\n🔄 Reverting {compose_file.name} to main mount...")
+
+        if backup_file.exists():
+            # Restore from backup
+            backup_content = backup_file.read_text()
+            compose_file.write_text(backup_content)
+            backup_file.unlink()  # Remove backup
+            print("✅ Restored from backup")
+        else:
+            print("⚠️  No backup found, skipping revert")
+
+    def verify_container_healthy(self, max_wait_seconds: int = 30) -> bool:
+        """Wait for okp-mcp container to be healthy.
+
+        Args:
+            max_wait_seconds: Maximum time to wait for healthy status
+
+        Returns:
+            True if container is healthy, False if timeout
+        """
+        print("\n🏥 Waiting for okp-mcp container to be healthy...")
+
+        import time
+
+        start_time = time.time()
+        while time.time() - start_time < max_wait_seconds:
+            try:
+                result = subprocess.run(
+                    ["podman", "inspect", "okp-mcp", "--format", "{{.State.Health.Status}}"],
+                    capture_output=True,
+                    text=True,
+                    check=False,
+                )
+
+                if result.returncode == 0:
+                    health_status = result.stdout.strip()
+                    if health_status == "healthy":
+                        print("✅ Container is healthy!")
+                        return True
+                    else:
+                        print(f"   Status: {health_status}, waiting...")
+
+                time.sleep(2)
+
+            except Exception as e:
+                print(f"   Error checking health: {e}")
+                time.sleep(2)
+
+        print("❌ Container did not become healthy within timeout")
+        return False
+
+    def restart_okp_mcp(self, verify_healthy: bool = True):
+        """Restart okp-mcp service and optionally wait for healthy status.
+
+        Args:
+            verify_healthy: If True, wait for container to be healthy before returning
+        """
         print("\n🔄 Restarting okp-mcp...")
         self.run_command(
             ["podman-compose", "restart", "okp-mcp"],
             cwd=self.lscore_deploy_root / "local",
         )
         print("✓ okp-mcp restarted")
+
+        if verify_healthy:
+            if not self.verify_container_healthy():
+                print("⚠️  Warning: Container may not be ready, but continuing...")
+                if self.interactive:
+                    input("Press Enter to continue anyway, or Ctrl+C to abort...")
+        else:
+            # Even if not verifying, give it a moment to start
+            import time
+            print("   Waiting 5 seconds for service to start...")
+            time.sleep(5)
 
     def run_full_eval(self, config: Path, runs: int = 1) -> Path:
         """Run full evaluation suite and return output directory."""
@@ -1277,12 +1392,14 @@ class OkpMcpAgent:
         ticket_id: str,
         validate_cla_tests: bool = True,
     ) -> bool:
-        """Multi-stage ticket fixing: Primary fix → CLA validation → Regression fixes.
+        """Multi-stage ticket fixing with worktree isolation.
 
-        This orchestrates the complete workflow:
-        - Stage 1: Fix primary ticket with iteration loop
-        - Stage 2: Validate against CLA tests
-        - Stage 3: Fix any regressions (with separate iteration budgets)
+        Complete workflow:
+        0. Setup: Create worktree → Update container mount → Restart
+        1. Fix primary ticket with iteration loop (in worktree)
+        2. Validate against CLA tests
+        3. Fix any regressions (with separate iteration budgets)
+        4. Cleanup: Merge worktree → Revert mount → Restart → Delete worktree
 
         If any regression cannot be fixed, reverts the primary fix and escalates to human.
 
@@ -1297,92 +1414,148 @@ class OkpMcpAgent:
         print(f"MULTI-STAGE FIX: {ticket_id}")
         print(f"{'='*80}")
 
-        # Stage 1: Fix primary ticket
-        print("\n📍 STAGE 1: Fix Primary Ticket")
-        primary_fixed = self.fix_ticket_with_iteration(
-            ticket_id=ticket_id,
-            max_iterations=PRIMARY_FIX_MAX_ITERATIONS,
-            starting_model="medium",
-            context="primary",
-        )
+        # Stage 0: Setup worktree environment
+        print("\n📍 STAGE 0: Setup Worktree Environment")
+        print("=" * 80)
 
-        if not primary_fixed:
-            print("❌ Could not fix primary ticket")
-            return False
+        # Create worktree
+        branch_name = f"fix/{ticket_id.lower()}"
+        worktree_path = self.create_worktree(ticket_id, branch_name)
 
-        # Capture commit for potential revert
         try:
-            primary_commit = subprocess.check_output(
-                ["git", "rev-parse", "HEAD"], cwd=self.okp_mcp_root, text=True
-            ).strip()
-            print(f"\n✅ Primary ticket fixed (commit: {primary_commit[:8]})")
-        except subprocess.CalledProcessError:
-            print(
-                "⚠️  Could not get git commit (changes may not be committed yet)"
-            )
-            primary_commit = None
+            # Update container mount to worktree
+            self.update_compose_mount(worktree_path)
 
-        # Stage 2: Validate CLA tests
-        if not validate_cla_tests:
-            print("✅ Primary ticket fixed (CLA validation skipped)")
-            return True
+            # Restart container and verify it's healthy
+            self.restart_okp_mcp(verify_healthy=True)
 
-        print(f"\n{'='*80}")
-        print("📍 STAGE 2: CLA Regression Validation")
-        print(f"{'='*80}")
+            # Stage 1: Fix primary ticket
+            print("\n📍 STAGE 1: Fix Primary Ticket")
+            print("=" * 80)
+            print(f"Working directory: {worktree_path}")
+            print(f"Branch: {branch_name}")
 
-        # TODO: Implement CLA test validation
-        print("⚠️  CLA validation not yet implemented")
-        print("   For now, manually run:")
-        print("   ./run_okp_mcp_full_suite.sh --config config/CLA_tests.yaml")
-        print("   And check for regressions")
-
-        # Placeholder for regression detection
-        # regressions = self.detect_regressions()
-        regressions = {}  # Empty for now
-
-        if not regressions:
-            print("✅ No regressions detected!")
-            return True
-
-        # Stage 3: Fix regressions (if any)
-        print(f"\n⚠️  {len(regressions)} regressions detected")
-
-        for reg_ticket in regressions.keys():
-            print(f"\n{'='*80}")
-            print(f"📍 STAGE 3: Fixing Regression {reg_ticket}")
-            print(f"{'='*80}")
-
-            fixed = self.fix_ticket_with_iteration(
-                ticket_id=reg_ticket,
-                max_iterations=REGRESSION_FIX_MAX_ITERATIONS,
-                starting_model="medium",  # Reset to Sonnet for each regression
-                context="regression",
+            primary_fixed = self.fix_ticket_with_iteration(
+                ticket_id=ticket_id,
+                max_iterations=PRIMARY_FIX_MAX_ITERATIONS,
+                starting_model="medium",
+                context="primary",
             )
 
-            if not fixed:
-                print(f"❌ Could not fix regression {reg_ticket}")
-
-                if primary_commit:
-                    print(f"🔄 Reverting primary fix (commit {primary_commit[:8]})")
-                    try:
-                        subprocess.run(
-                            ["git", "revert", "--no-edit", primary_commit],
-                            cwd=self.okp_mcp_root,
-                            check=True,
-                        )
-                        print("✅ Primary fix reverted")
-                    except subprocess.CalledProcessError as e:
-                        print(f"❌ Revert failed: {e}")
-
-                print("🚨 ESCALATING TO HUMAN")
-                print(
-                    "   Primary fix caused regressions that could not be automatically fixed"
-                )
+            if not primary_fixed:
+                print("❌ Could not fix primary ticket")
                 return False
 
-        print("\n✅ All regressions fixed!")
-        return True
+            # Capture commit for potential revert
+            try:
+                primary_commit = subprocess.check_output(
+                    ["git", "rev-parse", "HEAD"], cwd=worktree_path, text=True
+                ).strip()
+                print(f"\n✅ Primary ticket fixed (commit: {primary_commit[:8]})")
+            except subprocess.CalledProcessError:
+                print(
+                    "⚠️  Could not get git commit (changes may not be committed yet)"
+                )
+                primary_commit = None
+
+            # Stage 2: Validate CLA tests
+            if not validate_cla_tests:
+                print("✅ Primary ticket fixed (CLA validation skipped)")
+                return True
+
+            print(f"\n{'='*80}")
+            print("📍 STAGE 2: CLA Regression Validation")
+            print(f"{'='*80}")
+
+            # TODO: Implement CLA test validation
+            print("⚠️  CLA validation not yet implemented")
+            print("   For now, manually run:")
+            print("   ./run_okp_mcp_full_suite.sh --config config/CLA_tests.yaml")
+            print("   And check for regressions")
+
+            # Placeholder for regression detection
+            # regressions = self.detect_regressions()
+            regressions = {}  # Empty for now
+
+            if not regressions:
+                print("✅ No regressions detected!")
+                return True
+
+            # Stage 3: Fix regressions (if any)
+            print(f"\n⚠️  {len(regressions)} regressions detected")
+
+            for reg_ticket in regressions.keys():
+                print(f"\n{'='*80}")
+                print(f"📍 STAGE 3: Fixing Regression {reg_ticket}")
+                print(f"{'='*80}")
+
+                fixed = self.fix_ticket_with_iteration(
+                    ticket_id=reg_ticket,
+                    max_iterations=REGRESSION_FIX_MAX_ITERATIONS,
+                    starting_model="medium",  # Reset to Sonnet for each regression
+                    context="regression",
+                )
+
+                if not fixed:
+                    print(f"❌ Could not fix regression {reg_ticket}")
+
+                    if primary_commit:
+                        print(f"🔄 Reverting primary fix (commit {primary_commit[:8]})")
+                        try:
+                            subprocess.run(
+                                ["git", "revert", "--no-edit", primary_commit],
+                                cwd=worktree_path,
+                                check=True,
+                            )
+                            print("✅ Primary fix reverted")
+                        except subprocess.CalledProcessError as e:
+                            print(f"❌ Revert failed: {e}")
+
+                    print("🚨 ESCALATING TO HUMAN")
+                    print(
+                        "   Primary fix caused regressions that could not be automatically fixed"
+                    )
+                    return False
+
+            print("\n✅ All regressions fixed!")
+            return True
+
+        finally:
+            # Stage 4: Cleanup worktree environment
+            print(f"\n{'='*80}")
+            print("📍 STAGE 4: Cleanup Worktree Environment")
+            print("=" * 80)
+
+            # Merge worktree to main if primary fix was successful
+            if primary_fixed:
+                print("\n📦 Merging worktree changes to main...")
+                try:
+                    # Switch to main
+                    subprocess.run(
+                        ["git", "checkout", "main"],
+                        cwd=self.okp_mcp_root,
+                        check=True,
+                    )
+                    # Merge the fix branch
+                    subprocess.run(
+                        ["git", "merge", "--no-edit", branch_name],
+                        cwd=self.okp_mcp_root,
+                        check=True,
+                    )
+                    print(f"✅ Merged {branch_name} to main")
+                except subprocess.CalledProcessError as e:
+                    print(f"❌ Merge failed: {e}")
+                    print("   Manual merge required")
+
+            # Revert compose mount back to main
+            self.revert_compose_mount()
+
+            # Restart container with main mount and verify healthy
+            print("\n🔄 Restarting container with main mount...")
+            self.restart_okp_mcp(verify_healthy=True)
+
+            # Clean up worktree
+            self.cleanup_worktree(worktree_path)
 
 
 def main():
