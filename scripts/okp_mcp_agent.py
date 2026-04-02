@@ -832,6 +832,40 @@ class OkpMcpAgent:
     # Iteration Loop Methods (Phase 2)
     # =========================================================================
 
+    # TODO (Future): Autonomous AST-based code editing
+    # def apply_code_change_autonomous(self, suggestion, iteration_log: dict) -> bool:
+    #     """Autonomous code editing with AST manipulation and full logging.
+    #
+    #     Features for autonomous mode:
+    #     - AST-based surgical edits (no manual intervention)
+    #     - Full audit trail logging:
+    #       * Agent reasoning at each stage
+    #       * Code changes (before/after AST)
+    #       * Intermediate metrics after each change
+    #       * Final metrics after all iterations
+    #     - Auto-commit with detailed commit messages
+    #     - JSON log file for review/debugging
+    #
+    #     iteration_log structure:
+    #     {
+    #         "ticket_id": "RSPEED-2482",
+    #         "iterations": [
+    #             {
+    #                 "iteration": 1,
+    #                 "model": "sonnet",
+    #                 "reasoning": "...",
+    #                 "change": "...",
+    #                 "ast_diff": {...},
+    #                 "metrics_before": {...},
+    #                 "metrics_after": {...},
+    #                 "improved": true
+    #             }
+    #         ],
+    #         "final_result": "success|failed|escalated"
+    #     }
+    #     """
+    #     pass
+
     def _get_llm_suggestion_object(
         self, result: EvaluationResult, model: Optional[str] = None
     ):
@@ -880,14 +914,23 @@ class OkpMcpAgent:
             if model:
                 self.llm_advisor.medium_model = original_model
 
-    def apply_code_change(self, suggestion) -> bool:
-        """Apply LLM-suggested code change to okp-mcp files.
+    def apply_code_change(self, suggestion, iteration_context: Optional[str] = None) -> bool:
+        """Apply LLM-suggested code change with git diff approval flow.
+
+        Flow:
+        1. Display LLM reasoning and suggestion
+        2. Apply change to file
+        3. Show git diff
+        4. Get human approval
+        5. If approved → commit and return True
+        6. If rejected → revert and return False
 
         Args:
             suggestion: BoostQuerySuggestion or PromptSuggestion
+            iteration_context: Optional context (e.g., "Iteration 1/5")
 
         Returns:
-            True if change applied successfully
+            True if change applied and approved
         """
         if suggestion is None:
             print("❌ No suggestion to apply")
@@ -896,36 +939,128 @@ class OkpMcpAgent:
         # For boost query suggestions, we have a file path
         if hasattr(suggestion, "file_path"):
             file_path = self.okp_mcp_root / suggestion.file_path
-            print(f"\n📝 Applying change to: {file_path}")
         else:
             # Prompt suggestions don't have file_path
             print("\n📝 Applying system prompt change")
             print("   ⚠️  Prompt editing not yet implemented")
             return False
 
-        print(f"   Change: {suggestion.suggested_change}")
+        if not file_path.exists():
+            print(f"❌ File not found: {file_path}")
+            return False
 
+        # Display agent reasoning
+        print("\n" + "=" * 80)
+        print("🤖 AGENT REASONING")
+        print("=" * 80)
+        if iteration_context:
+            print(f"Context: {iteration_context}")
+        print(f"\nFile: {file_path.relative_to(self.okp_mcp_root)}")
+        print(f"\n{suggestion.reasoning}")
+        print(f"\nSuggested Change:\n  {suggestion.suggested_change}")
+        print(f"\nExpected Improvement:\n  {suggestion.expected_improvement}")
+        print(f"\nConfidence: {suggestion.confidence}")
+
+        if hasattr(suggestion, "code_snippet") and suggestion.code_snippet:
+            print(f"\nCode Snippet:\n{suggestion.code_snippet}")
+
+        # Ask if user wants to proceed with edit
         if self.interactive:
-            confirm = input("\nApply this change? (y/n): ")
+            print("\n" + "=" * 80)
+            confirm = input("Proceed with applying this change? (y/n): ")
             if confirm.lower() != "y":
                 print("❌ Change not applied")
                 return False
 
-        # TODO: Implement actual code editing
-        # For now, just print what would be done
-        print("⚠️  Code editing not yet implemented")
-        print("   Please apply the change manually:")
-        print(f"   1. Edit {file_path if hasattr(suggestion, 'file_path') else 'system prompt'}")
-        print(f"   2. Apply: {suggestion.suggested_change}")
-        if hasattr(suggestion, "code_snippet") and suggestion.code_snippet:
-            print(f"\n   Code snippet:\n{suggestion.code_snippet}")
+        # Apply the change (simple string replacement for now)
+        print(f"\n📝 Editing {file_path.name}...")
 
-        # For now, ask user to confirm they made the change
-        if self.interactive:
-            confirm = input("\nHave you applied the change manually? (y/n): ")
-            return confirm.lower() == "y"
+        try:
+            # Read current content
+            original_content = file_path.read_text()
 
-        return False
+            # For boost query changes, attempt simple replacement
+            # TODO: Make this smarter with AST manipulation
+            # For now, let user edit manually and verify via git diff
+
+            print("\n⚠️  Please apply the change manually in another terminal:")
+            print(f"   vim {file_path}")
+            print(f"\n   Change to apply: {suggestion.suggested_change}")
+            if hasattr(suggestion, "code_snippet") and suggestion.code_snippet:
+                print(f"\n   Code snippet:\n{suggestion.code_snippet}")
+
+            if self.interactive:
+                input("\nPress Enter when you've made the edit...")
+
+            # Check if file was actually changed
+            new_content = file_path.read_text()
+            if new_content == original_content:
+                print("⚠️  No changes detected in file")
+                confirm = input("Continue anyway? (y/n): ")
+                if confirm.lower() != "y":
+                    return False
+
+            # Show git diff
+            print("\n" + "=" * 80)
+            print("📊 GIT DIFF")
+            print("=" * 80)
+
+            diff_result = subprocess.run(
+                ["git", "diff", file_path.name],
+                cwd=file_path.parent,
+                capture_output=True,
+                text=True,
+            )
+
+            if diff_result.stdout:
+                print(diff_result.stdout)
+            else:
+                print("No diff to show (file may not be tracked or no changes made)")
+
+            # Get approval
+            if self.interactive:
+                print("\n" + "=" * 80)
+                print("Does this diff look correct?")
+                print("  y - Approve and commit")
+                print("  n - Revert changes")
+                approval = input("Choice (y/n): ")
+
+                if approval.lower() != "y":
+                    print("❌ Reverting changes...")
+                    file_path.write_text(original_content)
+                    print("✅ Changes reverted")
+                    return False
+
+            # Commit the change
+            print("\n💾 Committing change...")
+            subprocess.run(
+                ["git", "add", file_path.name],
+                cwd=file_path.parent,
+                check=True,
+            )
+
+            commit_msg = f"agent: {suggestion.suggested_change}\n\nReasoning: {suggestion.reasoning}\nConfidence: {suggestion.confidence}"
+            if iteration_context:
+                commit_msg = f"{iteration_context}\n\n{commit_msg}"
+
+            subprocess.run(
+                ["git", "commit", "-m", commit_msg],
+                cwd=file_path.parent,
+                check=True,
+            )
+
+            print("✅ Change committed")
+            return True
+
+        except Exception as e:
+            print(f"❌ Error applying change: {e}")
+            # Restore original content on error
+            try:
+                file_path.write_text(original_content)
+                print("✅ Original content restored")
+            except Exception:
+                pass
+            return False
 
     def metrics_improved(
         self, new: EvaluationResult, old: Optional[EvaluationResult]
@@ -1073,7 +1208,8 @@ class OkpMcpAgent:
             print(f"   Confidence: {suggestion.confidence}")
 
             # Apply code change
-            if not self.apply_code_change(suggestion):
+            iteration_context = f"{context.capitalize()} Fix - Iteration {iteration}/{max_iterations} - Model: {current_model_tier}"
+            if not self.apply_code_change(suggestion, iteration_context=iteration_context):
                 print("❌ Change not applied, stopping")
                 return False
 
