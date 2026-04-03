@@ -25,6 +25,55 @@ A comprehensive framework for evaluating GenAI applications.
 - **Caching**: LLM, embedding, and API response caching for faster re-runs
 - **Skip on Failure**: Optionally skip remaining evaluations in a conversation when a turn evaluation fails (configurable globally or per conversation). When there is an error in API call/Setup script execution metrics are marked as ERROR always.
 
+## 🤖 OKP-MCP Autonomous Agent (This Fork)
+
+**NEW:** This fork includes an autonomous agent for fixing okp-mcp RAG retrieval issues!
+
+### Answer-First Workflow for Customer Bugs
+
+**The realistic way to handle customer bugs:** You have a question and the correct answer from an SME, but don't know which documents should be retrieved.
+
+```bash
+# 1. Create test with just question + expected answer (no URLs needed!)
+cat > config/okp_mcp_test_suites/customer_bugs.yaml <<EOF
+- conversation_group_id: CUSTOMER_BUG_123
+  turns:
+  - query: "Is SPICE available to help with RHEL VMs?"
+    expected_response: |
+      SPICE is deprecated in RHEL 8.3 and removed in RHEL 9.
+      Use VNC instead for VM console access.
+    turn_metrics:
+    - custom:answer_correctness
+    - ragas:faithfulness
+EOF
+
+# 2. Diagnose (checks if answer is correct)
+uv run scripts/okp_mcp_agent.py diagnose CUSTOMER-BUG-123
+
+# 3. Auto-fix with document discovery + optimization
+uv run scripts/okp_mcp_agent.py bootstrap CUSTOMER-BUG-123 --yolo --max-iterations 20
+```
+
+**What it does:**
+1. ✅ Checks if system gives correct answer
+2. ✅ If wrong, finds which docs contain the answer
+3. ✅ Optimizes Solr config to retrieve those docs
+4. ✅ Saves discovered URLs as regression test
+
+**Batch processing multiple bugs:**
+```bash
+# Process 10 customer bugs overnight
+uv run scripts/okp_mcp_agent.py fix --ticket-file bugs.txt --yolo --max-iterations 20
+
+# Check results in the morning
+cat .diagnostics/batch_summary_*.txt
+```
+
+**📚 Full Documentation:**
+- [Answer-First Workflow Guide](docs/ANSWER_FIRST_WORKFLOW.md) - Complete workflow with examples
+- [Optimization Opportunities](docs/OPTIMIZATION_OPPORTUNITIES.md) - Performance tuning and advanced workflows
+- [Example Tickets](example_tickets.txt) - 20 functional test cases
+
 ## 🚀 Quick Start
 
 ### Installation

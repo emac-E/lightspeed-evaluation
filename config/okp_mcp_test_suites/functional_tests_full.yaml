@@ -4,15 +4,23 @@
   - turn_id: '1'
     query: Can I run a RHEL 6 container on RHEL 9?
     expected_urls:
-    - access.redhat.com/solutions/2726611
-    - access.redhat.com/rhel-container-compatibility
-    - access.redhat.com/container compatibility matrix
+    - access.redhat.com/support/policy/rhel-container-compatibility
+    - access.redhat.com/articles/4494341
+    expected_response: |
+      RHEL 6 containers on RHEL 9 hosts are UNSUPPORTED per the official
+      Red Hat Container Compatibility Matrix. Key facts:
+      - The matrix explicitly lists RHEL 6 image on RHEL 9 host as "Unsupported"
+      - RHEL 6 on RHEL 8 host IS supported (recommend this if RHEL 6 containers are needed)
+      - RHEL 6 Extended Life Support (ELS) ended June 30, 2024
+      - Recommend migrating to a supported base image (RHEL 7/8/9)
+      WRONG if it says: RHEL 6 containers on RHEL 9 are "viable" or "generally work"
     turn_metrics:
     - custom:url_retrieval_eval
     - custom:keywords_eval
     - ragas:context_precision_without_reference
     - ragas:context_relevance
     - custom:forbidden_claims_eval
+    - custom:answer_correctness
     expected_keywords:
     - - unsupported
     - - compatibility matrix
@@ -27,12 +35,21 @@
     - access.redhat.com/solutions/6955095
     - access.redhat.com/solutions/6999469
     - access.redhat.com/spice
+    expected_response: |
+      SPICE was REMOVED from the QEMU/KVM stack in RHEL 9 (deprecated in RHEL 8.3).
+      Key facts:
+      - SPICE is NOT available for RHEL 9 VMs at all
+      - VNC is the supported display protocol for VM console access on RHEL 9
+      - virt-manager is also deprecated in RHEL 9; Cockpit is the replacement
+      - Removal reasons: H.264 licensing, no vGPU support, ecosystem standardized on VNC
+      WRONG if it says: SPICE is "fully supported" or "commonly used" on RHEL 9
     turn_metrics:
     - custom:url_retrieval_eval
     - custom:keywords_eval
     - ragas:context_precision_without_reference
     - ragas:context_relevance
     - custom:forbidden_claims_eval
+    - custom:answer_correctness
     expected_keywords:
     - - deprecated
     - - vnc
@@ -47,12 +64,23 @@
     - access.redhat.com/solutions/6906941
     - access.redhat.com/cockpit-machines
     - access.redhat.com/configuring_and_managing_virtualization
+    expected_response: |
+      Cockpit (RHEL web console) with cockpit-machines is the recommended GUI for
+      RHEL 9 VM management. Key facts:
+      - Cockpit should be the PRIMARY GUI recommendation, not virt-manager
+      - virt-manager is DEPRECATED in RHEL 9 (not recommended for new deployments)
+      - virsh is the recommended CLI tool
+      - Red Hat Virtualization (RHV) should NOT be recommended — Maintenance Support
+        ended Aug 31, 2024; now in Extended Life Phase (EOL Aug 2026)
+      - OpenShift Virtualization is the recommended enterprise-scale replacement for RHV
+      WRONG if it says: virt-manager is the primary recommendation, or recommends RHV
     turn_metrics:
     - custom:url_retrieval_eval
     - custom:keywords_eval
     - ragas:context_precision_without_reference
     - ragas:context_relevance
     - custom:forbidden_claims_eval
+    - custom:answer_correctness
     expected_keywords:
     - - cockpit
     - - virsh
@@ -68,12 +96,21 @@
     - access.redhat.com/rhel9-eus-faq
     - access.redhat.com/rhel-eus
     - access.redhat.com/updates/errata
+    expected_response: |
+      EUS provides 24 months of support from the GA date of the minor release.
+      Key facts:
+      - 24 months from GA, NOT 24 months added on top of standard support
+      - The EUS window overlaps with (includes) standard support — it is not additive
+      - Enhanced EUS is available for 48 months from GA (separate offering, RHEL 9/10)
+      - The total is NOT "30 months" (6 standard + 24 EUS) — that math is wrong
+      WRONG if it says: EUS adds 24 months after standard support ends, or total is 30 months
     turn_metrics:
     - custom:url_retrieval_eval
     - custom:keywords_eval
     - ragas:context_precision_without_reference
     - ragas:context_relevance
     - custom:forbidden_claims_eval
+    - custom:answer_correctness
     expected_keywords:
     - - 24 months
     - - enhanced eus
@@ -89,12 +126,23 @@
     - access.redhat.com/rhel9-eus-faq
     - access.redhat.com/rhel-eus
     - access.redhat.com/updates/errata
+    expected_response: |
+      EUS follows even-numbered minor releases only. Key facts:
+      - 9.0: EUS ended May 31, 2024; Enhanced EUS ends May 31, 2026
+      - 9.2: EUS ends May 31, 2025; Enhanced EUS ends May 31, 2027
+      - 9.4: EUS ends April 30, 2026; Enhanced EUS ends April 30, 2028
+      - 9.6: EUS ends May 31, 2027; Enhanced EUS ends May 31, 2029
+      - 9.8: planned
+      - Odd-numbered releases (9.1, 9.3, 9.5, 9.7) do NOT get EUS
+      - 9.0 DID have EUS (contrary to common misconception)
+      WRONG if it says: 9.1 or 9.3 have EUS, or 9.0 has no EUS
     turn_metrics:
     - custom:url_retrieval_eval
     - custom:keywords_eval
     - ragas:context_precision_without_reference
     - ragas:context_relevance
     - custom:forbidden_claims_eval
+    - custom:answer_correctness
     expected_keywords:
     - - '9.0'
     - - '9.2'
@@ -152,12 +200,20 @@
     - access.redhat.com/dynamic_programming_languages
     - access.redhat.com/Application Stream
     - access.redhat.com/python 3.12
+    expected_response: |
+      RHEL 10 HAS been officially released. The answer must acknowledge this.
+      Key facts:
+      - RHEL 10 is released; RHEL 10.1 is the latest minor release
+      - Python 3.12 is the default system Python in RHEL 10
+      - Should reference RHEL 10 release notes or AppStream documentation
+      WRONG if it says: "RHEL 10 has not been officially released yet"
     turn_metrics:
     - custom:url_retrieval_eval
     - custom:keywords_eval
     - ragas:context_precision_without_reference
     - ragas:context_relevance
     - custom:forbidden_claims_eval
+    - custom:answer_correctness
     expected_keywords:
     - - '3.12'
     forbidden_claims:
@@ -171,12 +227,20 @@
     - access.redhat.com/deploying_rhel_9_on_amazon_web_services
     - access.redhat.com/deploying_and_managing_rhel_on_amazon_web_services
     - access.redhat.com/Secure Boot
+    expected_response: |
+      AWS DOES support Secure Boot for RHEL on Nitro instances. Key facts:
+      - Secure Boot works on AWS Nitro instance types
+      - Two methods: (1) Marketplace AMIs, (2) custom RHEL AMIs
+      - RHEL 9 and 10 docs cover this: configuring-rhel-on-aws-with-secure-boot
+      WRONG if it says: AWS "does not expose UEFI Secure Boot" to guest OS,
+      or claims Secure Boot is unavailable on AWS for RHEL
     turn_metrics:
     - custom:url_retrieval_eval
     - custom:keywords_eval
     - ragas:context_precision_without_reference
     - ragas:context_relevance
     - custom:forbidden_claims_eval
+    - custom:answer_correctness
     expected_keywords:
     - - marketplace
     - - custom image
@@ -191,12 +255,19 @@
     - access.redhat.com/solutions/3936101
     - access.redhat.com/solutions/2791291
     - access.redhat.com/hugepage
+    expected_response: |
+      Must use grubby with ALL THREE kernel parameters. Key facts:
+      - Correct command: grubby --update-kernel=ALL --args="default_hugepagesz=1G hugepagesz=1G hugepages=64"
+      - default_hugepagesz=1G is REQUIRED (sets 1G as the default huge page size)
+      - Then reboot and verify with: grep HugePages /proc/meminfo
+      WRONG if it omits: default_hugepagesz=1G from the grubby command
     turn_metrics:
     - custom:url_retrieval_eval
     - custom:keywords_eval
     - ragas:context_precision_without_reference
     - ragas:context_relevance
     - custom:forbidden_claims_eval
+    - custom:answer_correctness
     expected_keywords:
     - - hugepage
     - - 1G
@@ -306,12 +377,23 @@
     - access.redhat.com/solutions/58792
     - access.redhat.com/solutions/5494701
     - access.redhat.com/audit2allow
+    expected_response: |
+      Full step-by-step process using audit2allow. Key facts:
+      - Step 1: Identify AVC denials with ausearch -m avc | audit2why
+      - Step 2: Generate policy module with audit2allow -M mypol
+      - Step 3: Review the generated module
+      - Step 4: Load with semodule -i mypol.pp
+      - Step 5: Verify AVC denials are resolved
+      - Step 6: Refine if additional denials occur
+      WRONG if it says: creating custom SELinux policy is "not supported by Red Hat"
+      or discourages the user from following documented RHEL procedures
     turn_metrics:
     - custom:url_retrieval_eval
     - custom:keywords_eval
     - ragas:context_precision_without_reference
     - ragas:context_relevance
     - custom:forbidden_claims_eval
+    - custom:answer_correctness
     expected_keywords:
     - - audit2allow
     - - ausearch
@@ -325,12 +407,21 @@
     query: How to enable bnxt_en NIC driver debugging?
     expected_urls:
     - access.redhat.com/solutions/45950
+    expected_response: |
+      Should use ethtool msglvl or dynamic debug (dyndbg) for NIC driver debugging.
+      Key facts:
+      - ethtool -s <interface> msglvl <value> sets driver message level
+      - dyndbg can also enable per-module kernel debug messages
+      - Reference: KCS article https://access.redhat.com/solutions/45950
+      - ethtool -P shows permanent MAC address (WRONG for debugging)
+      WRONG if it uses: ethtool -P for debugging (that flag is for MAC address)
     turn_metrics:
     - custom:url_retrieval_eval
     - custom:keywords_eval
     - ragas:context_precision_without_reference
     - ragas:context_relevance
     - custom:forbidden_claims_eval
+    - custom:answer_correctness
     expected_keywords:
     - - msglvl
     - - ethtool -s
@@ -365,12 +456,23 @@
     - access.redhat.com/solutions/7134402
     - access.redhat.com/solutions/5069791
     - access.redhat.com/solutions/1526613
+    expected_response: |
+      Must use correct bonding mode and proper slave configuration. Key facts:
+      - Bond mode must be 802.3ad (or mode=4) for LACP — NOT "active-lacp"
+      - Bond slaves must be added as separate connections (type bond-slave
+        or type ethernet with master set to the bond)
+      - Correct example:
+        nmcli con add type bond ifname bond0 con-name bond0 bond.options "mode=802.3ad"
+        nmcli con add type bond-slave ifname eth0 master bond0
+      - Bond options are comma-separated, NOT space-separated
+      WRONG if it uses: mode=active-lacp, or omits bond-slave connections
     turn_metrics:
     - custom:url_retrieval_eval
     - custom:keywords_eval
     - ragas:context_precision_without_reference
     - ragas:context_relevance
     - custom:forbidden_claims_eval
+    - custom:answer_correctness
     expected_keywords:
     - - 802.3ad
     - - bond-slave
@@ -386,12 +488,20 @@
     - access.redhat.com/solutions/7069583
     - access.redhat.com/using_image_mode_for_rhel
     - access.redhat.com/kargs
+    expected_response: |
+      Must use rpm-ostree kargs, NOT grubby. Key facts:
+      - Correct: rpm-ostree kargs --append=<parameter>
+      - rpm-ostree kargs --replace, --delete also available
+      - Changes take effect after reboot (new deployment is staged)
+      - grubby should NOT be used on rpm-ostree/ostree systems
+      WRONG if it recommends: grubby for modifying kernel arguments
     turn_metrics:
     - custom:url_retrieval_eval
     - custom:keywords_eval
     - ragas:context_precision_without_reference
     - ragas:context_relevance
     - custom:forbidden_claims_eval
+    - custom:answer_correctness
     expected_keywords:
     - - rpm-ostree kargs
     - - --append

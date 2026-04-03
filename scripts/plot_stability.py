@@ -62,7 +62,7 @@ def create_pivot_tables(df: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
         Tuple of (mean_pivot, std_pivot) DataFrames
     """
     # Create question identifier (conversation_group_id/turn_id)
-    df["question_id"] = df["conversation_group_id"] + "/" + df["turn_id"]
+    df["question_id"] = df["conversation_group_id"] + "/" + df["turn_id"].astype(str)
 
     # Group by question and metric, calculate mean and std across runs
     grouped = (

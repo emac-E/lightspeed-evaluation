@@ -74,19 +74,18 @@ metrics_metadata:
     "custom:url_retrieval_eval":
       threshold: 0.7
       description: "URL retrieval quality - F1 score of expected vs retrieved documentation URLs"
-      default: true
+      default: false  # Only run when specified in turn_metrics
 
-    # Custom keywords evaluation (needs expected_keywords field)
-    "custom:keywords_eval":
-      threshold: 0.7
-      description: "Required facts/keywords present in response"
-      default: true
+    # DISABLED: These need LLM response text
+    # "custom:keywords_eval":
+    #   threshold: 0.7
+    #   description: "Required facts/keywords present in response"
+    #   default: false
 
-    # Custom forbidden claims evaluation (needs forbidden_claims field)
-    "custom:forbidden_claims_eval":
-      threshold: 1.0
-      description: "Known-incorrect claims avoided in response (regression detection)"
-      default: true
+    # "custom:forbidden_claims_eval":
+    #   threshold: 1.0
+    #   description: "Known-incorrect claims avoided in response (regression detection)"
+    #   default: false
 
     # DISABLED: These metrics need expected_response (ground truth)
     # "ragas:context_recall":
@@ -127,3 +126,22 @@ output:
     - csv
     - json
     - txt
+
+# Logging Configuration
+logging:
+  # Source code logging level
+  source_level: INFO          # DEBUG, INFO, WARNING, ERROR, CRITICAL
+
+  # Package logging level (imported libraries)
+  package_level: ERROR
+
+  # Log format and display options
+  log_format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  show_timestamps: true
+
+  # Specific package log levels (override package_level for specific libraries)
+  package_overrides:
+    httpx: ERROR
+    httpcore: ERROR
+    google: ERROR
+    PIL: ERROR

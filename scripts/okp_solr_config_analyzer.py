@@ -79,8 +79,15 @@ class SolrConfigAnalyzer:
         if mm_match:
             config["mm"] = mm_match.group(1)
 
-        # BM25 highlighting parameters
+        # Highlighting parameters
+        # BM25 scoring for snippet selection
         for param in ["hl.score.k1", "hl.score.b", "hl.score.pivot"]:
+            match = re.search(rf'"{param}":\s*"([^"]+)"', params_text)
+            if match:
+                config[param] = match.group(1)
+
+        # Highlighting configuration
+        for param in ["hl.snippets", "hl.fragsize"]:
             match = re.search(rf'"{param}":\s*"([^"]+)"', params_text)
             if match:
                 config[param] = match.group(1)

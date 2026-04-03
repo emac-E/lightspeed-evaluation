@@ -821,14 +821,65 @@ def fix_ticket(ticket_id):
 
 ---
 
+## Answer-First Workflow ⭐⭐⭐ (IMPLEMENTED)
+
+**Status:** ✅ Implemented and documented
+**Effort:** Medium | **Impact:** High | **Complexity:** Medium
+
+The most realistic workflow for customer bugs where you don't have ground truth URLs.
+
+### What It Is
+
+Instead of requiring known "correct" documents, this workflow:
+1. Starts with just **question + expected answer** (from SME)
+2. Evaluates answer quality first
+3. Uses LLM to check if retrieved docs contain the answer
+4. If not → **discovers** which docs actually have the answer
+5. Optimizes retrieval to get those docs
+6. Saves discovered URLs as regression test
+
+### Impact
+
+**Before (Traditional):**
+- ❌ Need to know correct URLs upfront
+- ❌ Can't handle new customer bugs
+- ❌ Manual document discovery
+
+**After (Answer-First):**
+- ✅ Works with just question + answer
+- ✅ Automatic document discovery
+- ✅ Creates regression test automatically
+- ✅ Perfect for customer bug workflow
+
+### Usage
+
+```yaml
+# Just need question and answer - NO URLs!
+- conversation_group_id: CUSTOMER_BUG_123
+  turns:
+  - query: "Is SPICE available?"
+    expected_response: "SPICE is deprecated in RHEL 8.3..."
+    # expected_urls: null  # Will be discovered!
+```
+
+```bash
+# Auto-discover docs and fix
+uv run scripts/okp_mcp_agent.py bootstrap CUSTOMER-BUG-123 --yolo
+```
+
+**Full Documentation:** [ANSWER_FIRST_WORKFLOW.md](ANSWER_FIRST_WORKFLOW.md)
+
+---
+
 ## Conclusion
 
 **Immediate Priorities:**
 1. ✅ Batch processing (Done!)
 2. ✅ Progress reports (Done!)
-3. Parallel LLM judges (Easy win)
-4. LLM response caching (Easy win)
-5. Multi-ticket parallel processing (Big win)
+3. ✅ Answer-first workflow (Done!)
+4. Parallel LLM judges (Easy win)
+5. LLM response caching (Easy win)
+6. Multi-ticket parallel processing (Big win)
 
 **Long-term Vision:**
 - Distributed multi-agent system
@@ -838,3 +889,5 @@ def fix_ticket(ticket_id):
 
 **Key Insight:**
 Most bottlenecks are in sequential operations that could be parallelized. The architecture already supports isolation (worktrees), we just need to execute them concurrently.
+
+The **Answer-First Workflow** removes a major barrier: you no longer need to know which documents are "correct" upfront. This makes the agent useful for real customer bugs, not just regression testing.

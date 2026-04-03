@@ -260,7 +260,7 @@ environment:
 # Logging Configuration
 logging:
   # Source code logging level
-  source_level: DEBUG          # DEBUG, INFO, WARNING, ERROR, CRITICAL
+  source_level: INFO          # DEBUG, INFO, WARNING, ERROR, CRITICAL
 
   # Package logging level (imported libraries)
   package_level: ERROR

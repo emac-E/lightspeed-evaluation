@@ -18,7 +18,7 @@ set -e  # Exit on error
 # Default configuration
 NUM_RUNS=3
 EVAL_CONFIG="config/okp_mcp_test_suites/functional_tests_full.yaml"
-SYSTEM_CONFIG="config/system.yaml"
+SYSTEM_CONFIG="config/system_okp_mcp_agent.yaml"
 
 # Parse arguments
 while [[ $# -gt 0 ]]; do

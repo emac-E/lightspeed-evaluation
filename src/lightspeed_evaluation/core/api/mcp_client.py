@@ -271,8 +271,7 @@ class MCPDirectClient:
 
         for doc in docs:
             doc = doc.strip()
-            if not doc or doc.startswith("WARNING:") or doc.startswith("⚠️"):
-                # Skip warning headers
+            if not doc:
                 continue
 
             # Extract title (markdown **title**)
@@ -282,6 +281,10 @@ class MCPDirectClient:
             # Extract URL
             url_match = re.search(r"URL: (https://[^\s]+)", doc)
             url = url_match.group(1) if url_match else ""
+
+            # Skip sections without URLs (warning headers only)
+            if not url:
+                continue
 
             # Extract content (everything after "Content:" or use full doc)
             content_match = re.search(r"Content: (.+)", doc, re.DOTALL)
