@@ -812,6 +812,116 @@ class OkpMcpAgent:
 
         return diag_file
 
+    def save_iteration_summary_table(
+        self, ticket_id: str, iteration_history: List[Dict]
+    ) -> Path:
+        """Save human-readable iteration summary table.
+
+        Args:
+            ticket_id: Ticket being fixed
+            iteration_history: List of iteration records with metrics and changes
+
+        Returns:
+            Path to saved summary file
+        """
+        diag_dir = self.eval_root / ".diagnostics" / ticket_id.replace("-", "_")
+        diag_dir.mkdir(parents=True, exist_ok=True)
+
+        summary_file = diag_dir / "iteration_summary.txt"
+
+        lines = [
+            f"ITERATION SUMMARY - {ticket_id}",
+            "=" * 100,
+            "",
+            f"{'Iter':<6} {'Change':<45} {'Metric Δ':<10} {'Overlap':<9} {'Result':<8} {'Notes'}",
+            "-" * 100,
+        ]
+
+        for record in iteration_history:
+            iter_num = record.get('iteration', '?')
+
+            # Change description
+            change = record.get('change', 'N/A')
+            if len(change) > 42:
+                change = change[:39] + "..."
+
+            # Metric delta
+            if 'metric_before' in record and 'metric_after' in record:
+                delta = record['metric_after'] - record['metric_before']
+                metric_str = f"{delta:+.3f}"
+            else:
+                metric_str = "N/A"
+
+            # URL overlap
+            if 'metrics' in record and record['metrics'].get('url_overlap_with_previous') is not None:
+                overlap = record['metrics']['url_overlap_with_previous']
+                overlap_str = f"{overlap:.2f}"
+            else:
+                overlap_str = "N/A"
+
+            # Result
+            improved = record.get('improved', False)
+            result_str = "✓ Yes" if improved else "✗ No"
+
+            # Notes (interesting info)
+            notes = []
+            if 'solr_query_inspection' in record and record['solr_query_inspection']:
+                sqr = record['solr_query_inspection']
+                if sqr.get('injected_terms'):
+                    notes.append(f"Query+{len(sqr['injected_terms'])}")
+
+            if 'retrieved_documents' in record and 'expected_documents' in record:
+                retrieved_urls = {doc['url'] for doc in record['retrieved_documents']}
+                expected_urls = {doc['url'] for doc in record['expected_documents']}
+                matched = len(retrieved_urls & expected_urls)
+                total = len(expected_urls)
+                notes.append(f"{matched}/{total} expected")
+
+            notes_str = ", ".join(notes) if notes else ""
+
+            lines.append(f"{iter_num:<6} {change:<45} {metric_str:<10} {overlap_str:<9} {result_str:<8} {notes_str}")
+
+            # Add detailed metrics if available
+            if 'metrics' in record:
+                m = record['metrics']
+                details = []
+                if m.get('url_f1') is not None:
+                    details.append(f"URL_F1={m['url_f1']:.2f}")
+                if m.get('mrr') is not None:
+                    details.append(f"MRR={m['mrr']:.2f}")
+                if m.get('context_relevance') is not None:
+                    details.append(f"CtxRel={m['context_relevance']:.2f}")
+                if m.get('context_precision') is not None:
+                    details.append(f"CtxPrec={m['context_precision']:.2f}")
+
+                if details:
+                    lines.append(f"       Metrics: {', '.join(details)}")
+
+            # Add query augmentation details if present
+            if 'solr_query_inspection' in record and record['solr_query_inspection']:
+                sqr = record['solr_query_inspection']
+                if sqr.get('injected_terms'):
+                    lines.append(f"       ⚠️  Solr query: '{sqr.get('original', '')}' → '{sqr.get('actual', '')}'")
+                    lines.append(f"           Injected: {', '.join(sqr['injected_terms'][:5])}{' ...' if len(sqr['injected_terms']) > 5 else ''}")
+
+            lines.append("")
+
+        lines.extend([
+            "=" * 100,
+            "",
+            "LEGEND:",
+            "  Metric Δ: Change in primary metric (URL F1 for retrieval, Answer Correctness for answer problems)",
+            "  Overlap: Jaccard similarity of retrieved URLs between iterations (1.0 = same docs, 0.0 = completely different)",
+            "  Result: ✓ = metrics improved (kept), ✗ = no improvement (reverted)",
+            "",
+        ])
+
+        with open(summary_file, 'w') as f:
+            f.write('\n'.join(lines))
+
+        print(f"\n💾 Saved iteration summary: {summary_file}")
+        return summary_file
+
     def load_iteration_history(self, ticket_id: str) -> List[Dict]:
         """Load all iteration diagnostics for a ticket.
 
@@ -2985,6 +3095,9 @@ class OkpMcpAgent:
             previous_result.is_retrieval_problem or previous_result.is_answer_problem
         ):
             print("✅ Already passing, nothing to fix")
+            # Save summary even if no iterations ran (for completeness)
+            if iteration_history:
+                self.save_iteration_summary_table(ticket_id, iteration_history)
             return True
 
         # Determine iteration mode based on problem type
@@ -3162,6 +3275,10 @@ class OkpMcpAgent:
                             self._pending_commit_msg = None
                             self._pending_commit_file = None
 
+                        # Save iteration summary before exiting
+                        if iteration_history:
+                            self.save_iteration_summary_table(ticket_id, iteration_history)
+
                         return True
                     else:
                         print("\n⚠️  Retrieval is fixed but answer quality issues remain")
@@ -3201,6 +3318,10 @@ class OkpMcpAgent:
                         print("✅ Change committed")
                         self._pending_commit_msg = None
                         self._pending_commit_file = None
+
+                    # Save iteration summary before exiting
+                    if iteration_history:
+                        self.save_iteration_summary_table(ticket_id, iteration_history)
 
                     return True
 
@@ -3278,6 +3399,9 @@ class OkpMcpAgent:
                 print(
                     "   Please review the ticket manually and apply fixes in okp-mcp"
                 )
+                # Save iteration summary before escalating to human
+                if iteration_history:
+                    self.save_iteration_summary_table(ticket_id, iteration_history)
                 return False
             elif new_model_tier != current_model_tier:
                 # Don't escalate to Opus if it has already failed
@@ -3323,6 +3447,11 @@ class OkpMcpAgent:
             previous_result = current_result
 
         print(f"⏱️  Max iterations ({max_iterations}) reached without fixing ticket")
+
+        # Save iteration summary before exiting
+        if iteration_history:
+            self.save_iteration_summary_table(ticket_id, iteration_history)
+
         return False
 
     def fix_ticket_multi_stage(

@@ -186,9 +186,9 @@ class MetricSummary:
 
         if self.contexts:
             lines.append("")
-            lines.append("Retrieved Contexts (truncated):")
-            # Truncate contexts to first 300 chars to avoid bloat
-            contexts = str(self.contexts)[:300] + "..." if len(str(self.contexts)) > 300 else str(self.contexts)
+            lines.append("Retrieved Contexts (compact):")
+            # Truncate contexts to 200 chars to save tokens
+            contexts = str(self.contexts)[:200] + "..." if len(str(self.contexts)) > 200 else str(self.contexts)
             lines.append(f"  {contexts}")
 
         # Add Solr configuration - use snapshot if available (faster, more focused)
@@ -225,90 +225,93 @@ class MetricSummary:
         if self.ranking_analysis:
             lines.append("")
             lines.append("=" * 40)
-            lines.append("RANKING ANALYSIS:")
+            lines.append("RANKING ANALYSIS (compact):")
             lines.append("=" * 40)
-            lines.append(f"Query: {self.ranking_analysis.get('query', '')}")
-            lines.append(f"Expected docs: {self.ranking_analysis.get('expected_count', 0)}")
-            lines.append(f"Retrieved: {self.ranking_analysis.get('retrieved_count', 0)}")
+            lines.append(f"Expected: {self.ranking_analysis.get('expected_count', 0)}, Retrieved: {self.ranking_analysis.get('retrieved_count', 0)}")
 
+            # Show only top 3 missing docs to save tokens
             if self.ranking_analysis.get("missing_docs"):
                 lines.append("")
-                lines.append("Missing Expected Docs:")
-                for doc in self.ranking_analysis["missing_docs"]:
-                    lines.append(f"  - {doc['url']}")
-                    lines.append(f"    Rank: {doc['rank']}, Score: {doc.get('score', 'N/A')}")
+                lines.append("Top 3 Missing Expected Docs:")
+                for doc in self.ranking_analysis["missing_docs"][:3]:
+                    lines.append(f"  - {doc['url']} (rank: {doc['rank']}, score: {doc.get('score', 'N/A')})")
 
+            # Suggestions are valuable, keep all
             if self.ranking_analysis.get("suggestions"):
                 lines.append("")
-                lines.append("Automated Suggestions:")
+                lines.append("Suggestions:")
                 for suggestion in self.ranking_analysis["suggestions"]:
                     lines.append(f"  - {suggestion}")
 
         if self.solr_explain:
             lines.append("")
             lines.append("=" * 40)
-            lines.append("SOLR EXPLAIN OUTPUT (Top 3 docs):")
+            lines.append("SOLR EXPLAIN (Top 2 docs, compact):")
             lines.append("=" * 40)
-            # Show explain for top docs
-            docs = self.solr_explain.get("docs", [])[:3]
+            # Show explain for top 2 docs only, truncate to 200 chars
+            docs = self.solr_explain.get("docs", [])[:2]
             explain_data = self.solr_explain.get("explain", {})
             for i, doc in enumerate(docs, 1):
                 doc_id = doc.get("id", "")
                 lines.append(f"\n{i}. {doc.get('title', '')} (score: {doc.get('score', 0):.2f})")
                 lines.append(f"   URL: {doc.get('url', '')}")
-                # Truncate explain to first 300 chars
+                # Truncate explain to 200 chars to save tokens
                 explain_text = explain_data.get(doc_id, "")
-                if len(explain_text) > 300:
-                    explain_text = explain_text[:300] + "..."
+                if len(explain_text) > 200:
+                    explain_text = explain_text[:200] + "..."
                 if explain_text:
                     lines.append(f"   Explain: {explain_text}")
 
         # Add iteration history for learning from previous attempts
+        # Use compact format to save tokens (~50 tokens/iteration vs 200+)
         if self.iteration_history:
             lines.append("")
             lines.append("=" * 40)
-            lines.append("PREVIOUS ITERATION ATTEMPTS:")
+            lines.append("PREVIOUS ATTEMPTS (compact):")
             lines.append("=" * 40)
+
+            # Table header
+            lines.append("Iter | Change | Metric Δ | Overlap | Result")
+            lines.append("-" * 60)
+
             for record in self.iteration_history:
-                lines.append(f"\nIteration {record.get('iteration', '?')}:")
+                iter_num = record.get('iteration', '?')
 
-                # These fields may not exist if loaded from disk without being processed yet
-                if 'change' in record:
-                    lines.append(f"  Change Made: {record['change']}")
+                # Truncate change description to ~30 chars
+                change = record.get('change', 'N/A')
+                if len(change) > 30:
+                    change = change[:27] + "..."
+
+                # Metric delta
                 if 'metric_before' in record and 'metric_after' in record:
-                    lines.append(f"  Metric Before: {record['metric_before']:.2f}")
-                    lines.append(f"  Metric After: {record['metric_after']:.2f}")
-                if 'improved' in record:
-                    lines.append(f"  Improved: {'✅ Yes' if record['improved'] else '❌ No'}")
-                if 'result_summary' in record:
-                    lines.append(f"  Result: {record['result_summary']}")
+                    delta = record['metric_after'] - record['metric_before']
+                    metric_str = f"{delta:+.2f}"
+                else:
+                    metric_str = "N/A"
 
-                # Add URL overlap diagnostic if available
+                # URL overlap (compact indicator)
                 if 'metrics' in record and record['metrics'].get('url_overlap_with_previous') is not None:
                     overlap = record['metrics']['url_overlap_with_previous']
-                    lines.append(f"  URL Overlap with Previous: {overlap:.2f} ({'same docs' if overlap > 0.8 else 'mostly same' if overlap > 0.5 else 'different docs' if overlap < 0.3 else 'some overlap'})")
+                    overlap_str = f"{overlap:.2f}"
+                else:
+                    overlap_str = "N/A"
 
-                # Add Solr query inspection if available
+                # Result (compact)
+                improved = record.get('improved', False)
+                result = "✓" if improved else "✗"
+
+                lines.append(f"{iter_num:4} | {change:30} | {metric_str:8} | {overlap_str:7} | {result}")
+
+                # Only add details for interesting cases (to save tokens)
+                # Show query augmentation if detected
                 if 'solr_query_inspection' in record and record['solr_query_inspection']:
                     sqr = record['solr_query_inspection']
                     if sqr.get('injected_terms'):
-                        lines.append("  Solr Query Augmentation Detected:")
-                        lines.append(f"    Original: {sqr['original']}")
-                        lines.append(f"    Actual: {sqr['actual']}")
-                        lines.append(f"    Injected terms: {', '.join(sqr['injected_terms'])}")
-
-                # Add retrieved vs expected docs summary if available
-                if 'retrieved_documents' in record and 'expected_documents' in record:
-                    retrieved_urls = {doc['url'] for doc in record['retrieved_documents']}
-                    expected_urls = {doc['url'] for doc in record['expected_documents']}
-                    matched = len(retrieved_urls & expected_urls)
-                    lines.append(f"  Retrieved {len(retrieved_urls)} docs, {matched}/{len(expected_urls)} expected docs found")
+                        lines.append(f"     ⚠️  Query augmented: +{len(sqr['injected_terms'])} terms")
 
             lines.append("")
-            lines.append("⚠️  IMPORTANT: Code has been reset to original state.")
-            lines.append("    Learn from the above attempts but start with clean code.")
-            lines.append("    Don't just increase the same boost - try a different approach if previous didn't work.")
-            lines.append("    If URL overlap is low but metrics don't improve, the change may be making things WORSE.")
+            lines.append("⚠️  Code reset to original. Learn from patterns above.")
+            lines.append("   Don't repeat failed approaches. Low overlap + no improvement = made it worse.")
 
         return "\n".join(lines)
 
