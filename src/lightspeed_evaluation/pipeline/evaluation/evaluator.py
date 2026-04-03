@@ -147,7 +147,7 @@ class MetricsEvaluator:
                     request, f"Unsupported framework: {framework}", execution_time
                 )
 
-            # Check required data for metric (after API call); skip with ERROR if missing
+            # Check required data for metric (after API call); skip if missing
             if (
                 request.turn_data is not None
                 and request.metric_identifier in METRIC_REQUIREMENTS
@@ -160,7 +160,7 @@ class MetricsEvaluator:
                     logger.warning(
                         "Skipping metric due to missing required data: %s", msg
                     )
-                    return self._create_error_result(request, msg, execution_time)
+                    return self._create_skipped_result(request, msg, execution_time)
 
             # Create evaluation scope
             evaluation_scope = EvaluationScope(
@@ -661,6 +661,24 @@ class MetricsEvaluator:
         self, request: EvaluationRequest, reason: str, execution_time: float
     ) -> EvaluationResult:
         """Create an ERROR result for failed evaluation."""
+        return self._create_result_with_status(request, "ERROR", reason, execution_time)
+
+    def _create_skipped_result(
+        self, request: EvaluationRequest, reason: str, execution_time: float
+    ) -> EvaluationResult:
+        """Create a SKIPPED result for metrics with missing required data."""
+        return self._create_result_with_status(
+            request, "SKIPPED", reason, execution_time
+        )
+
+    def _create_result_with_status(
+        self,
+        request: EvaluationRequest,
+        status: str,
+        reason: str,
+        execution_time: float,
+    ) -> EvaluationResult:
+        """Create an EvaluationResult with the given status."""
         turn_data = request.turn_data
         return EvaluationResult(
             conversation_group_id=request.conv_data.conversation_group_id,
@@ -668,7 +686,7 @@ class MetricsEvaluator:
             turn_id=request.turn_id,
             metric_identifier=request.metric_identifier,
             metric_metadata=self._extract_metadata_for_csv(request),
-            result="ERROR",
+            result=status,
             score=None,
             threshold=None,
             reason=reason,
@@ -677,7 +695,6 @@ class MetricsEvaluator:
             execution_time=execution_time,
             api_input_tokens=turn_data.api_input_tokens if turn_data else 0,
             api_output_tokens=turn_data.api_output_tokens if turn_data else 0,
-            # Streaming performance metrics
             time_to_first_token=turn_data.time_to_first_token if turn_data else None,
             streaming_duration=turn_data.streaming_duration if turn_data else None,
             tokens_per_second=turn_data.tokens_per_second if turn_data else None,

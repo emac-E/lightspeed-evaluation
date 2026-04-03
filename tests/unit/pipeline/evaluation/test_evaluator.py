@@ -229,7 +229,7 @@ class TestMetricsEvaluator:
         result = evaluator.evaluate_metric(request)
 
         assert result is not None
-        assert result.result == "ERROR"
+        assert result.result == "SKIPPED"
         assert result.score is None
         assert "contexts" in result.reason
         assert "missing or empty" in result.reason
