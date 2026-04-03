@@ -1,0 +1,7 @@
+# Example ticket list for batch processing
+# Lines starting with # are comments
+# One ticket ID per line
+
+RSPEED-2482
+RSPEED-2481
+RSPEED-2480

@@ -4165,6 +4165,8 @@ class OkpMcpAgent:
 
 def main():
     """CLI entry point."""
+    from datetime import datetime
+
     parser = argparse.ArgumentParser(description="okp-mcp autonomous agent")
     parser.add_argument(
         "command",
@@ -4173,8 +4175,13 @@ def main():
     )
     parser.add_argument(
         "ticket_id",
-        nargs="?",
-        help="RSPEED ticket ID (e.g., RSPEED-2482)",
+        nargs="*",
+        help="RSPEED ticket ID(s) (e.g., RSPEED-2482 RSPEED-2481) - can specify multiple",
+    )
+    parser.add_argument(
+        "--ticket-file",
+        type=str,
+        help="File containing ticket IDs (one per line) - useful for batch processing",
     )
     parser.add_argument(
         "--max-iterations",
@@ -4236,6 +4243,18 @@ def main():
         print("Perfect for overnight runs - just let it cook!")
         print("=" * 80 + "\n")
 
+    # Parse ticket IDs from command line or file
+    ticket_ids = []
+    if args.ticket_file:
+        ticket_file_path = Path(args.ticket_file)
+        if not ticket_file_path.exists():
+            parser.error(f"Ticket file not found: {args.ticket_file}")
+        with open(ticket_file_path) as f:
+            ticket_ids = [line.strip() for line in f if line.strip() and not line.strip().startswith('#')]
+        print(f"📋 Loaded {len(ticket_ids)} tickets from {args.ticket_file}")
+    elif args.ticket_id:
+        ticket_ids = args.ticket_id
+
     # Initialize agent
     agent = OkpMcpAgent(
         eval_root=Path.home() / "Work/lightspeed-core/lightspeed-evaluation",
@@ -4246,29 +4265,122 @@ def main():
 
     # Execute command
     if args.command == "diagnose":
-        if not args.ticket_id:
+        if not ticket_ids:
             parser.error("ticket_id required for diagnose command")
-        agent.diagnose(args.ticket_id, use_existing=args.use_existing, runs=args.runs)
+        for ticket_id in ticket_ids:
+            agent.diagnose(ticket_id, use_existing=args.use_existing, runs=args.runs)
 
     elif args.command == "fix":
-        if not args.ticket_id:
+        if not ticket_ids:
             parser.error("ticket_id required for fix command")
-        # Use new multi-stage fix with iteration loop
-        agent.fix_ticket_multi_stage(
-            args.ticket_id,
-            validate_cla_tests=True,  # Always validate for now
-            use_existing=args.use_existing,
-        )
+
+        # Batch processing for multiple tickets
+        if len(ticket_ids) > 1:
+            print(f"\n{'='*80}")
+            print(f"🎯 BATCH MODE: Processing {len(ticket_ids)} tickets")
+            print(f"{'='*80}")
+
+            results = {}
+            start_time = datetime.now()
+
+            for i, ticket_id in enumerate(ticket_ids, 1):
+                print(f"\n{'='*80}")
+                print(f"📋 TICKET {i}/{len(ticket_ids)}: {ticket_id}")
+                print(f"{'='*80}\n")
+
+                try:
+                    success = agent.fix_ticket_multi_stage(
+                        ticket_id,
+                        validate_cla_tests=True,
+                        use_existing=args.use_existing,
+                    )
+                    results[ticket_id] = "✅ Fixed" if success else "❌ Failed"
+                except KeyboardInterrupt:
+                    print("\n\n⚠️  Interrupted by user (Ctrl+C)")
+                    results[ticket_id] = "⚠️ Interrupted"
+                    break
+                except Exception as e:
+                    print(f"\n❌ Error processing {ticket_id}: {e}")
+                    import traceback
+                    traceback.print_exc()
+                    results[ticket_id] = f"❌ Error: {str(e)[:50]}"
+
+            # Generate batch summary report
+            end_time = datetime.now()
+            duration = end_time - start_time
+
+            summary_file = agent.eval_root / ".diagnostics" / f"batch_summary_{start_time.strftime('%Y%m%d_%H%M%S')}.txt"
+            summary_file.parent.mkdir(parents=True, exist_ok=True)
+
+            lines = [
+                "=" * 80,
+                "BATCH RUN SUMMARY",
+                "=" * 80,
+                "",
+                f"Start Time:  {start_time.strftime('%Y-%m-%d %H:%M:%S')}",
+                f"End Time:    {end_time.strftime('%Y-%m-%d %H:%M:%S')}",
+                f"Duration:    {int(duration.total_seconds() / 60)}m {int(duration.total_seconds() % 60)}s",
+                f"Total:       {len(ticket_ids)} tickets",
+                f"Fixed:       {sum(1 for r in results.values() if '✅' in r)}",
+                f"Failed:      {sum(1 for r in results.values() if '❌' in r)}",
+                f"Interrupted: {sum(1 for r in results.values() if '⚠️' in r)}",
+                "",
+                "=" * 80,
+                "RESULTS BY TICKET",
+                "=" * 80,
+                "",
+            ]
+
+            for ticket_id, result in results.items():
+                lines.append(f"  {ticket_id:<20} {result}")
+
+            lines.extend([
+                "",
+                "=" * 80,
+                "INDIVIDUAL REPORTS",
+                "=" * 80,
+                "",
+                "See detailed iteration reports at:",
+            ])
+
+            for ticket_id in results.keys():
+                report_path = agent.eval_root / ".diagnostics" / ticket_id.replace("-", "_") / "iteration_summary.txt"
+                if report_path.exists():
+                    lines.append(f"  {ticket_id}: {report_path}")
+
+            lines.append("")
+
+            with open(summary_file, 'w') as f:
+                f.write('\n'.join(lines))
+
+            print(f"\n{'='*80}")
+            print("📊 BATCH RUN COMPLETE")
+            print(f"{'='*80}")
+            print(f"\nTotal: {len(ticket_ids)} tickets")
+            print(f"✅ Fixed: {sum(1 for r in results.values() if '✅' in r)}")
+            print(f"❌ Failed: {sum(1 for r in results.values() if '❌' in r)}")
+            print(f"⚠️  Interrupted: {sum(1 for r in results.values() if '⚠️' in r)}")
+            print(f"\n💾 Batch summary: {summary_file}")
+            print(f"{'='*80}\n")
+        else:
+            # Single ticket mode
+            agent.fix_ticket_multi_stage(
+                ticket_ids[0],
+                validate_cla_tests=True,
+                use_existing=args.use_existing,
+            )
 
     elif args.command == "bootstrap":
-        if not args.ticket_id:
+        if not ticket_ids:
             parser.error("ticket_id required for bootstrap command")
-        # Bootstrap config with document discovery, then fix
-        agent.bootstrap_and_fix_ticket(
-            args.ticket_id,
-            max_iterations=args.max_iterations,
-            auto_select_docs=False,  # Always prompt user to confirm docs
-        )
+
+        # Process all tickets (bootstrap supports multiple)
+        for ticket_id in ticket_ids:
+            agent.bootstrap_and_fix_ticket(
+                ticket_id,
+                max_iterations=args.max_iterations,
+                auto_select_docs=False,
+            )
 
     elif args.command == "validate":
         agent.validate_all_suites()
