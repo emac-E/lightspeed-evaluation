@@ -37,6 +37,11 @@ import pandas as pd
 import yaml
 from dotenv import load_dotenv
 
+# Add repo root to sys.path so imports work from any working directory
+REPO_ROOT = Path(__file__).parent.parent
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
 # LLM advisor for AI-powered suggestions (Phase 2)
 try:
     from scripts.okp_mcp_llm_advisor import OkpMcpLLMAdvisor, MetricSummary
@@ -64,7 +69,11 @@ try:
     SOLR_ANALYZER_AVAILABLE = True
 except ImportError as e:
     SOLR_ANALYZER_AVAILABLE = False
-    print(f"⚠️  Solr Analyzer not available: {e}")
+    print(f"⚠️  Solr Analyzer not available (import failed): {e}")
+    print(f"   Make sure okp_solr_config_analyzer.py exists in scripts/")
+except Exception as e:
+    SOLR_ANALYZER_AVAILABLE = False
+    print(f"⚠️  Solr Analyzer import error: {e}")
 
 
 # Iteration Strategy Constants
@@ -377,10 +386,16 @@ class OkpMcpAgent:
         if SOLR_ANALYZER_AVAILABLE:
             try:
                 self.solr_analyzer = SolrConfigAnalyzer(okp_mcp_root)
-                print("✅ Solr analyzer initialized (config parsing + explain output)")
+                print(f"✅ Solr analyzer initialized (Solr URL: http://localhost:8983/solr/portal)")
             except Exception as e:
-                print(f"⚠️  Solr analyzer initialization failed: {e}")
+                print(f"❌ Solr analyzer initialization FAILED: {e}")
+                print(f"   This will prevent document discovery and fast loops from working")
+                import traceback
+                traceback.print_exc()
                 self.solr_analyzer = None
+        else:
+            print("❌ Solr analyzer NOT AVAILABLE (import failed at module level)")
+            print("   Document discovery and fast loops will not work")
 
         # Track pending commits (only commit if test passes)
         self._pending_commit_msg = None
@@ -784,13 +799,31 @@ class OkpMcpAgent:
             "ticket_id": ticket_id,
             "iteration": iteration,
             "timestamp": datetime.now().isoformat(),
+
+            # Question and Answer (for debugging LLM judge scoring)
+            "question": result.query,
+            "actual_response": result.response,  # What the LLM actually said
+            "expected_response": result.expected_response,  # What it should say
+            "expected_keywords": result.expected_keywords,  # Keywords that should be present
+
+            # Metrics (to see if LLM judge scored correctly)
             "metrics": {
+                # Retrieval metrics
                 "url_f1": result.url_f1,
                 "mrr": result.mrr,
                 "context_relevance": result.context_relevance,
                 "context_precision": result.context_precision,
                 "url_overlap_with_previous": result.url_overlap_with_previous,
+
+                # Answer quality metrics (LLM-judged)
+                "keywords_score": result.keywords_score,
+                "answer_correctness": result.answer_correctness,
+                "faithfulness": result.faithfulness,
+                "response_relevancy": result.response_relevancy,
+                "forbidden_claims_score": result.forbidden_claims_score,
             },
+
+            # Retrieved context (what docs were sent to LLM)
             "retrieved_documents": [
                 {
                     "url": url,
@@ -801,7 +834,11 @@ class OkpMcpAgent:
             "expected_documents": [
                 {"url": url} for url in result.expected_urls
             ],
-            "query": result.query,
+
+            # Raw contexts sent to LLM (truncated to first 500 chars for readability)
+            "contexts_sample": str(result.contexts)[:500] + "..." if result.contexts and len(str(result.contexts)) > 500 else str(result.contexts),
+
+            # Solr query inspection
             "solr_query_inspection": solr_query_info,
         }
 
@@ -968,6 +1005,7 @@ class OkpMcpAgent:
         snapshot = {
             "timestamp": datetime.now().isoformat(),
             "solr_params": {
+                # Document ranking params
                 "mm": config.get("mm", "unknown"),
                 "qf": config.get("qf", "unknown"),
                 "pf": config.get("pf", "unknown"),
@@ -979,12 +1017,22 @@ class OkpMcpAgent:
                 "boost_multiplier": config.get("boost_multiplier", 2.0),
                 "demote_multiplier": config.get("demote_multiplier", 0.05),
             },
+            "highlighting_params": {
+                # Snippet selection scoring (BM25 for highlighting)
+                "hl.score.k1": config.get("hl.score.k1", "unknown"),
+                "hl.score.b": config.get("hl.score.b", "unknown"),
+                "hl.score.pivot": config.get("hl.score.pivot", "unknown"),
+                # Snippet configuration
+                "hl.snippets": config.get("hl.snippets", "unknown"),
+                "hl.fragsize": config.get("hl.fragsize", "unknown"),
+            },
             "boost_keywords_count": len(config.get("boost_keywords", [])),
             "boost_keywords_sample": config.get("boost_keywords", [])[:30],  # First 30
             "demote_keywords_count": len(config.get("demote_keywords", [])),
             "demote_keywords_sample": config.get("demote_keywords", [])[:10],  # First 10
             "file_locations": {
                 "solr_params": "src/okp_mcp/solr.py (lines ~140-160)",
+                "highlighting_params": "src/okp_mcp/solr.py (lines ~110-130)",
                 "boost_keywords": "src/okp_mcp/solr.py (lines ~45-250)",
                 "demote_keywords": "src/okp_mcp/solr.py (lines ~250-260)",
             }
@@ -1212,6 +1260,13 @@ class OkpMcpAgent:
         """
         if not self.solr_analyzer:
             print("❌ Solr analyzer not available")
+            print("   This is required for document discovery (searching Solr)")
+            print(f"   SOLR_ANALYZER_AVAILABLE: {SOLR_ANALYZER_AVAILABLE}")
+            if SOLR_ANALYZER_AVAILABLE:
+                print("   Import succeeded but initialization failed during agent startup")
+                print("   Check the startup logs for initialization errors")
+            else:
+                print("   Import failed - check that scripts/okp_solr_config_analyzer.py exists")
             return []
 
         print(f"\n🔍 DOCUMENT DISCOVERY for {ticket_id}")
@@ -1872,6 +1927,60 @@ class OkpMcpAgent:
             print("  (none)")
         print()
 
+    def query_solr_direct(
+        self, query: str, expected_urls: List[str], num_docs: int = 20
+    ) -> Dict:
+        """Query Solr directly and compute fast URL-based metrics (no LLM).
+
+        This bypasses /v1/infer for fast iteration loops.
+
+        Args:
+            query: User query
+            expected_urls: Expected document URLs
+            num_docs: Number of docs to retrieve
+
+        Returns:
+            Dict with retrieved_urls and fast metrics (url_f1, mrr, precision_at_5, recall_at_5)
+        """
+        if not self.solr_analyzer:
+            return {"error": "Solr analyzer not available"}
+
+        try:
+            # Query Solr directly (bypasses MCP/LLM)
+            solr_response = self.solr_analyzer.get_explain_output(
+                query, num_docs=num_docs
+            )
+
+            if "error" in solr_response:
+                return solr_response
+
+            # Extract retrieved URLs
+            retrieved_urls = [doc.get("url", "") for doc in solr_response.get("docs", [])]
+
+            # Compute fast URL-based metrics (no LLM required)
+            url_f1 = self.calculate_url_f1(expected_urls, retrieved_urls)
+            mrr = self.calculate_mrr(expected_urls, retrieved_urls)
+
+            # Precision@5: % of top 5 that are expected
+            top5 = set(retrieved_urls[:5])
+            expected_set = set(expected_urls)
+            precision_at_5 = len(top5 & expected_set) / 5 if top5 else 0.0
+
+            # Recall@5: % of expected docs in top 5
+            recall_at_5 = len(top5 & expected_set) / len(expected_set) if expected_set else 0.0
+
+            return {
+                "retrieved_urls": retrieved_urls,
+                "url_f1": url_f1,
+                "mrr": mrr,
+                "precision_at_5": precision_at_5,
+                "recall_at_5": recall_at_5,
+                "num_retrieved": len(retrieved_urls),
+            }
+
+        except Exception as e:
+            return {"error": str(e)}
+
     def inspect_solr_query(self, original_query: str) -> Optional[Dict]:
         """Inspect what okp-mcp actually sent to Solr.
 
@@ -2132,6 +2241,174 @@ class OkpMcpAgent:
 
         return results
 
+    def fast_retrieval_loop(
+        self,
+        ticket_id: str,
+        query: str,
+        expected_urls: List[str],
+        max_iterations: int = 15,
+        validate_every: int = 5,
+        starting_model: str = "medium",
+    ) -> bool:
+        """Fast retrieval optimization loop using direct Solr queries (no LLM judges).
+
+        MUCH FASTER than full evaluation: ~5 sec/iteration vs ~30 sec/iteration
+        - Queries Solr directly (bypasses /v1/infer)
+        - Uses only URL-based metrics (F1, MRR, Precision@k, Recall@k)
+        - No LLM judges for context quality (context_relevance, context_precision)
+        - Validates with full evaluation every N iterations
+
+        Args:
+            ticket_id: Ticket ID
+            query: User query
+            expected_urls: Expected document URLs
+            max_iterations: Max fast iterations
+            validate_every: Run full evaluation every N iterations
+            starting_model: LLM model tier for suggestions
+
+        Returns:
+            True if retrieval improved, False otherwise
+        """
+        print("\n" + "=" * 80)
+        print(f"🚀 FAST RETRIEVAL LOOP - {ticket_id}")
+        print("=" * 80)
+        print(f"Mode: Direct Solr queries (no LLM judges)")
+        print(f"Max iterations: {max_iterations}")
+        print(f"Full validation every: {validate_every} iterations")
+        print("=" * 80)
+
+        # Get baseline fast metrics
+        print("\n📊 Getting baseline metrics...")
+        baseline = self.query_solr_direct(query, expected_urls)
+        if "error" in baseline:
+            print(f"❌ Baseline query failed: {baseline['error']}")
+            return False
+
+        print(f"Baseline URL F1: {baseline['url_f1']:.2f}")
+        print(f"Baseline MRR: {baseline['mrr']:.2f}")
+        print(f"Baseline Precision@5: {baseline['precision_at_5']:.2f}")
+        print(f"Baseline Recall@5: {baseline['recall_at_5']:.2f}")
+
+        best_f1 = baseline['url_f1']
+        current_model_tier = starting_model
+        iteration_history = []
+
+        for iteration in range(1, max_iterations + 1):
+            print(f"\n--- Fast Iteration {iteration}/{max_iterations} ---")
+
+            # Get suggestion from LLM
+            # Create minimal result object for LLM advisor
+            from dataclasses import dataclass
+            @dataclass
+            class MinimalResult:
+                ticket_id: str
+                query: str
+                url_f1: float
+                mrr: float
+                expected_urls: List[str]
+                retrieved_urls: List[str]
+                is_retrieval_problem: bool = True
+
+            minimal_result = MinimalResult(
+                ticket_id=ticket_id,
+                query=query,
+                url_f1=baseline['url_f1'],
+                mrr=baseline['mrr'],
+                expected_urls=expected_urls,
+                retrieved_urls=baseline['retrieved_urls'],
+            )
+
+            # Load config snapshot
+            solr_snapshot = self.load_solr_config_snapshot(ticket_id)
+            if not solr_snapshot:
+                solr_snapshot = self.extract_solr_config_snapshot(ticket_id)
+
+            suggestion = self._get_llm_suggestion_object(
+                minimal_result,
+                model=TIER_MODELS[current_model_tier],
+                iteration_history=iteration_history,
+                solr_snapshot=solr_snapshot
+            )
+
+            if not suggestion:
+                print("❌ Failed to get suggestion")
+                continue
+
+            print(f"💡 Suggestion: {suggestion.suggested_change}")
+
+            # Apply change
+            if not self.apply_code_change(suggestion, iteration_context=f"Fast Loop {iteration}"):
+                print("❌ Change not applied")
+                continue
+
+            # Restart okp-mcp
+            self.restart_okp_mcp()
+
+            # Update snapshot
+            solr_snapshot = self.extract_solr_config_snapshot(ticket_id)
+
+            # FAST: Query Solr directly (no /v1/infer, no LLM judges)
+            current = self.query_solr_direct(query, expected_urls)
+
+            if "error" in current:
+                print(f"❌ Query failed: {current['error']}")
+                # Revert
+                subprocess.run(["git", "restore", "src/okp_mcp/solr.py"], cwd=self.okp_mcp_root)
+                continue
+
+            print(f"URL F1: {current['url_f1']:.2f} ({current['url_f1'] - baseline['url_f1']:+.2f})")
+            print(f"MRR: {current['mrr']:.2f} ({current['mrr'] - baseline['mrr']:+.2f})")
+            print(f"Precision@5: {current['precision_at_5']:.2f}")
+            print(f"Recall@5: {current['recall_at_5']:.2f}")
+
+            # Check if improved
+            improved = current['url_f1'] >= baseline['url_f1'] + SMALL_IMPROVEMENT_THRESHOLD
+
+            if improved:
+                print(f"✅ Improved! Committing...")
+                subprocess.run(["git", "add", "src/okp_mcp/solr.py"], cwd=self.okp_mcp_root, check=True)
+                subprocess.run(
+                    ["git", "commit", "-m", f"fast_loop: {suggestion.suggested_change}"],
+                    cwd=self.okp_mcp_root,
+                    check=True
+                )
+                baseline = current
+                if current['url_f1'] > best_f1:
+                    best_f1 = current['url_f1']
+            else:
+                print(f"📉 No improvement - reverting")
+                subprocess.run(["git", "restore", "src/okp_mcp/solr.py"], cwd=self.okp_mcp_root)
+
+            # Validation checkpoint every N iterations
+            if iteration % validate_every == 0:
+                print(f"\n🔍 VALIDATION CHECKPOINT (iteration {iteration})")
+                full_result = self.diagnose_retrieval_only(ticket_id, iteration=iteration)
+
+                if full_result.context_relevance and full_result.context_relevance < 0.5:
+                    print("⚠️  Context quality degraded - stopping fast loop")
+                    print(f"   Context relevance: {full_result.context_relevance:.2f}")
+                    return False
+
+                print(f"✅ Context quality OK (relevance: {full_result.context_relevance:.2f})")
+
+            iteration_history.append({
+                "iteration": iteration,
+                "change": suggestion.suggested_change,
+                "url_f1": current['url_f1'],
+                "improved": improved,
+            })
+
+        # Final validation
+        print("\n🏁 Fast loop complete - running final full validation...")
+        final_result = self.diagnose_retrieval_only(ticket_id, iteration=max_iterations)
+
+        print(f"\nFinal metrics:")
+        print(f"  URL F1: {final_result.url_f1:.2f} (started: {baseline['url_f1']:.2f})")
+        print(f"  Context Relevance: {final_result.context_relevance:.2f}")
+        print(f"  Context Precision: {final_result.context_precision:.2f}")
+
+        return final_result.url_f1 >= 0.7
+
     def bootstrap_and_fix_ticket(
         self,
         ticket_id: str,
@@ -2139,7 +2416,9 @@ class OkpMcpAgent:
         auto_select_docs: bool = False,
         starting_model: str = "medium",
         context: str = "bootstrap",
-        use_existing: bool = False
+        use_existing: bool = False,
+        use_fast_loop: bool = True,  # Enable fast loop by default
+        fast_loop_iterations: int = 15,
     ) -> bool:
         """Bootstrap test config with document discovery, then fix ticket.
 
@@ -2153,16 +2432,22 @@ class OkpMcpAgent:
            - If no docs found: exit with knowledge gap error
         3. Config Enrichment
            - Update YAML with discovered expected_urls
-        4. Retrieval Optimization
-           - Iterate to improve ranking of correct docs
+        4a. FAST Retrieval Optimization (if use_fast_loop=True)
+           - Direct Solr queries (no LLM judges) for rapid iteration
+           - 15 iterations in ~75 seconds vs 5 iterations in ~150 seconds
+        4b. Full Retrieval Optimization
+           - LLM-judged metrics for final polish
+           - Fewer iterations needed after fast loop
 
         Args:
             ticket_id: Ticket ID to fix
-            max_iterations: Max iterations for retrieval optimization
+            max_iterations: Max iterations for full optimization (after fast loop)
             auto_select_docs: Auto-select top docs without user prompt
             starting_model: Starting model tier for LLM advisor (low/medium/high)
             context: Context label for commit messages
             use_existing: Use existing eval results for baseline test (faster)
+            use_fast_loop: Use fast direct-Solr loop before full evaluation iterations
+            fast_loop_iterations: Max iterations for fast loop
 
         Returns:
             True if ticket was fixed
@@ -2273,6 +2558,29 @@ class OkpMcpAgent:
         print("=" * 80)
         print("Now iterating to improve retrieval of discovered documents\n")
 
+        # STAGE 4a: Fast loop (optional but recommended)
+        if use_fast_loop:
+            print("🚀 Running FAST LOOP first (direct Solr queries, no LLM judges)")
+            print(f"   This will do {fast_loop_iterations} iterations in ~{fast_loop_iterations * 5} seconds")
+            print(f"   vs regular loop: ~{max_iterations * 30} seconds for {max_iterations} iterations\n")
+
+            fast_improved = self.fast_retrieval_loop(
+                ticket_id=ticket_id,
+                query=query,
+                expected_urls=discovered_urls,
+                max_iterations=fast_loop_iterations,
+                validate_every=5,
+                starting_model=starting_model,
+            )
+
+            if fast_improved:
+                print("\n✅ Fast loop improved retrieval significantly!")
+                print("   Skipping full loop - retrieval is already good\n")
+                return True
+            else:
+                print("\n📊 Fast loop made progress - running full loop for final polish\n")
+
+        # STAGE 4b: Full loop with LLM judges (for final polish or if fast loop disabled)
         return self.fix_ticket_with_iteration(
             ticket_id=ticket_id,
             max_iterations=max_iterations,
@@ -2566,6 +2874,9 @@ class OkpMcpAgent:
             if confirm.lower() != "y":
                 print("❌ Change not applied")
                 return False
+        else:
+            print("\n🚀 YOLO mode: Auto-approving change...")
+            print(f"   Change: {suggestion.suggested_change[:100]}{'...' if len(suggestion.suggested_change) > 100 else ''}")
 
         # Claude's Edit tool doesn't actually write files!
         # We need to apply the change ourselves based on code_snippet
@@ -2610,14 +2921,14 @@ class OkpMcpAgent:
             # Detect which pattern to use
             applied = False
 
-            if any(param in suggestion.code_snippet for param in ['"qf":', '"pf":', '"pf2":', '"pf3":', '"mm":', '"ps":', '"ps2":', '"ps3":', '"hl.score']):
-                # Changing query field weights, phrase boost weights, or BM25 parameters
-                # Examples: title^5 -> title^7, "mm": "2<-1 5<75%" -> "mm": "2<-1 5<60%", "hl.score.k1": "1.2"
+            if any(param in suggestion.code_snippet for param in ['"qf":', '"pf":', '"pf2":', '"pf3":', '"mm":', '"ps":', '"ps2":', '"ps3":', '"hl.score', '"hl.snippets', '"hl.fragsize']):
+                # Changing query field weights, phrase boost weights, BM25 parameters, or highlighting parameters
+                # Examples: title^5 -> title^7, "mm": "2<-1 5<75%" -> "mm": "2<-1 5<60%", "hl.score.k1": "1.2", "hl.snippets": "8"
                 import re
 
                 # Extract the parameter name and new value from code_snippet
-                # Support both regular params (qf, pf, mm) and dotted params (hl.score.k1)
-                param_match = re.search(r'"(qf|pf|pf2|pf3|mm|ps|ps2|ps3|hl\.score\.k1|hl\.score\.b|hl\.score\.pivot)":\s*"([^"]*)"', suggestion.code_snippet)
+                # Support both regular params (qf, pf, mm) and dotted params (hl.score.k1, hl.snippets)
+                param_match = re.search(r'"(qf|pf|pf2|pf3|mm|ps|ps2|ps3|hl\.score\.k1|hl\.score\.b|hl\.score\.pivot|hl\.snippets|hl\.fragsize)":\s*"([^"]*)"', suggestion.code_snippet)
                 if param_match:
                     param_name = param_match.group(1)
                     new_value = param_match.group(2)
@@ -2628,6 +2939,20 @@ class OkpMcpAgent:
                     # Find and replace the parameter in the file
                     pattern = rf'"{param_name}":\s*"[^"]*"'
                     replacement = f'"{param_name}": "{new_value}"'
+
+                    # DEBUG: Show what we're looking for
+                    print(f"   DEBUG: Searching for pattern: {pattern}")
+                    match = re.search(pattern, content)
+                    if match:
+                        print(f"   DEBUG: Found existing value: {match.group()}")
+                    else:
+                        print(f"   DEBUG: Pattern not found in file!")
+                        # Show nearby content for debugging
+                        lines = content.split('\n')
+                        for i, line in enumerate(lines, 1):
+                            if param_name in line:
+                                print(f"   DEBUG: Found {param_name} at line {i}: {line.strip()}")
+
                     content, count = re.subn(pattern, replacement, content, count=1)
 
                     if count > 0:
@@ -2635,6 +2960,8 @@ class OkpMcpAgent:
                         applied = True
                     else:
                         print(f"❌ Could not find {param_name} parameter to change")
+                        print(f"   Pattern: {pattern}")
+                        print(f"   File may not contain this parameter in expected format")
                         return False
                 else:
                     print("❌ Could not parse parameter change from code_snippet")
@@ -2771,10 +3098,21 @@ class OkpMcpAgent:
                 return False
 
             # Check if content actually changed
+            print(f"   DEBUG: Checking if content changed...")
+            print(f"   DEBUG: Original length: {len(original_content)} chars")
+            print(f"   DEBUG: New length: {len(content)} chars")
             if content == original_content:
                 print("❌ No changes were made to the file!")
                 print("   Code pattern not recognized or replacement failed")
+                print("   DEBUG: Content is identical despite replacement attempt")
+                # Show first difference if any
+                for i, (old_char, new_char) in enumerate(zip(original_content, content)):
+                    if old_char != new_char:
+                        print(f"   DEBUG: First diff at char {i}: {repr(old_char)} -> {repr(new_char)}")
+                        break
                 return False
+            else:
+                print(f"✅ Content changed ({len(content) - len(original_content):+d} chars)")
 
             # Write the modified content
             file_path.write_text(content)
@@ -2789,6 +3127,8 @@ class OkpMcpAgent:
         # Now check git status
         try:
             rel_path = file_path.relative_to(self.okp_mcp_root)
+            print(f"   DEBUG: Checking git status for {rel_path}")
+            print(f"   DEBUG: Git working directory: {self.okp_mcp_root}")
             status_result = subprocess.run(
                 ["git", "status", "--porcelain", str(rel_path)],
                 cwd=self.okp_mcp_root,
@@ -2796,10 +3136,15 @@ class OkpMcpAgent:
                 text=True,
             )
 
+            print(f"   DEBUG: Git status output: {repr(status_result.stdout)}")
             if not status_result.stdout.strip():
                 print("❌ Changes were written but git shows no diff!")
                 print("   This shouldn't happen - file may not be tracked")
+                print(f"   DEBUG: File exists: {file_path.exists()}")
+                print(f"   DEBUG: File is in git repo: {(self.okp_mcp_root / '.git').exists()}")
                 return False
+            else:
+                print(f"✅ Git detected changes: {status_result.stdout.strip()}")
 
             # Show git diff
             print("\n" + "=" * 80)
@@ -2835,6 +3180,8 @@ class OkpMcpAgent:
                     )
                     print("✅ Changes reverted")
                     return False
+            else:
+                print("\n🚀 YOLO mode: Auto-approving diff - will test and auto-commit if test passes")
 
             # Store commit message for later (after test passes)
             self._pending_commit_msg = f"agent: {suggestion.suggested_change}\n\nReasoning: {suggestion.reasoning}\nConfidence: {suggestion.confidence}"
@@ -2875,23 +3222,25 @@ class OkpMcpAgent:
         if old is None:
             return 0.0
 
-        # For retrieval problems, check retrieval metrics
-        if new.is_retrieval_problem:
+        # IMPORTANT: Prioritize answer metrics when available (ultimate goal)
+        # Check answer correctness first - it's what actually matters
+        if new.answer_correctness is not None and old.answer_correctness is not None:
+            # Full evaluation mode - check answer quality first
+            answer_improvements = [
+                (new.keywords_score or 0) - (old.keywords_score or 0),
+                (new.answer_correctness or 0) - (old.answer_correctness or 0),
+                (new.faithfulness or 0) - (old.faithfulness or 0),
+                (new.response_relevancy or 0) - (old.response_relevancy or 0),
+            ]
+            return max(answer_improvements)
+
+        # Retrieval-only mode - check retrieval metrics
+        elif new.is_retrieval_problem:
             improvements = [
                 (new.url_f1 or 0) - (old.url_f1 or 0),
                 (new.mrr or 0) - (old.mrr or 0),
                 (new.context_relevance or 0) - (old.context_relevance or 0),
                 (new.context_precision or 0) - (old.context_precision or 0),
-            ]
-            return max(improvements)
-
-        # For answer problems, check answer metrics
-        elif new.is_answer_problem:
-            improvements = [
-                (new.keywords_score or 0) - (old.keywords_score or 0),
-                (new.answer_correctness or 0) - (old.answer_correctness or 0),
-                (new.faithfulness or 0) - (old.faithfulness or 0),
-                (new.response_relevancy or 0) - (old.response_relevancy or 0),
             ]
             return max(improvements)
 
@@ -2957,25 +3306,53 @@ class OkpMcpAgent:
             elif overlap > 0.8:
                 print(f"\nℹ️  URL Overlap: {overlap:.2f} (documents mostly unchanged)")
 
-        # For retrieval problems, check retrieval metrics
-        if new.is_retrieval_problem:
+        # IMPORTANT: Prioritize answer metrics when available (ultimate goal)
+        # If we have answer_correctness data, check that first regardless of retrieval status
+        if new.answer_correctness is not None and old.answer_correctness is not None:
+            # Full evaluation mode - answer quality is what matters
+            improvements = [
+                (new.keywords_score or 0) - (old.keywords_score or 0),
+                (new.answer_correctness or 0) - (old.answer_correctness or 0),
+                (new.faithfulness or 0) - (old.faithfulness or 0),
+                (new.response_relevancy or 0) - (old.response_relevancy or 0),
+            ]
+            max_improvement = max(improvements)
+            # Accept even small improvements (will accumulate over iterations)
+            return max_improvement >= SMALL_IMPROVEMENT_THRESHOLD
+
+        # Retrieval-only mode - check retrieval metrics
+        elif new.is_retrieval_problem:
             url_f1_improvement = (new.url_f1 or 0) - (old.url_f1 or 0)
             mrr_improvement = (new.mrr or 0) - (old.mrr or 0)
             context_relevance_improvement = (new.context_relevance or 0) - (old.context_relevance or 0)
             context_precision_improvement = (new.context_precision or 0) - (old.context_precision or 0)
 
-            # CRITICAL: URL F1 is ground truth (based on expected_urls)
-            # Context metrics are LLM judgments and can be misleading
-            # If URL F1 is still 0.00, don't accept based on context metrics alone
+            # CRITICAL: Answer correctness is the ULTIMATE goal
+            # URL F1 is just a proxy - expected URLs might not be the only way to answer
+            # If answer_correctness data is available, prioritize it over URL matching
             if (new.expected_urls and
                 new.url_f1 is not None and old.url_f1 is not None and
                 new.url_f1 == 0.0 and old.url_f1 == 0.0):
-                # Both iterations have URL F1 = 0.00 (all wrong docs)
-                # Don't accept improvement based only on context metrics
-                # Context metrics can increase even when retrieving wrong docs
-                print("\n⚠️  URL F1 still 0.00 - not counting context metric improvements")
-                print("   (Context metrics can be misleading when all docs are wrong)")
-                return False
+                # Both iterations have URL F1 = 0.00 (not retrieving expected docs)
+
+                # EXCEPTION: If answer is actually correct, different docs are fine!
+                if new.answer_correctness is not None and new.answer_correctness >= 0.7:
+                    print("\n✅ URL F1 = 0.00 BUT answer is correct (different docs work!)")
+                    print(f"   Answer correctness: {new.answer_correctness:.2f}")
+                    print("   → Alternative retrieval path is valid")
+                    # Fall through to normal improvement checks
+                elif new.answer_correctness is not None:
+                    # We have answer data and it's not good
+                    print(f"\n⚠️  URL F1 = 0.00 AND answer correctness low ({new.answer_correctness:.2f})")
+                    print("   → Different docs but wrong answer - rejecting")
+                    return False
+                else:
+                    # No answer data available (retrieval-only mode)
+                    # In this case, context metrics alone are unreliable
+                    print("\n⚠️  URL F1 = 0.00 in retrieval-only mode")
+                    print("   (Context metrics can be misleading without answer validation)")
+                    print("   → Run full evaluation to check if answer is correct with different docs")
+                    return False
 
             improvements = [
                 url_f1_improvement,
@@ -2995,18 +3372,7 @@ class OkpMcpAgent:
             # Accept even small improvements (will accumulate over iterations)
             return max_improvement >= SMALL_IMPROVEMENT_THRESHOLD
 
-        # For answer problems, check answer metrics
-        elif new.is_answer_problem:
-            improvements = [
-                (new.keywords_score or 0) - (old.keywords_score or 0),
-                (new.answer_correctness or 0) - (old.answer_correctness or 0),
-                (new.faithfulness or 0) - (old.faithfulness or 0),
-                (new.response_relevancy or 0) - (old.response_relevancy or 0),
-            ]
-            max_improvement = max(improvements)
-            # Accept even small improvements (will accumulate over iterations)
-            return max_improvement >= SMALL_IMPROVEMENT_THRESHOLD
-
+        # Fallback: no clear problem type or metrics available
         return False
 
     def detected_plateau(self, metric_history: List[float]) -> bool:
@@ -3225,10 +3591,15 @@ class OkpMcpAgent:
                 print(f"  Forbidden Claims: {current_result.forbidden_claims_score:.2f}" if current_result.forbidden_claims_score is not None else "  Forbidden Claims: N/A")
 
             # Track primary metric for plateau detection
-            if current_result.is_retrieval_problem:
-                primary_metric = current_result.url_f1 or 0
+            # IMPORTANT: Prioritize answer_correctness when available (it's the real goal)
+            # Only fall back to URL F1 in retrieval-only mode
+            if current_result.answer_correctness is not None:
+                primary_metric = current_result.answer_correctness
+            elif current_result.url_f1 is not None:
+                primary_metric = current_result.url_f1
             else:
-                primary_metric = current_result.answer_correctness or 0
+                # Fallback to context metrics if neither available
+                primary_metric = current_result.context_relevance or 0
             metric_history.append(primary_metric)
 
             print(f"\n  Primary metric: {primary_metric:.2f}")
@@ -3712,8 +4083,10 @@ def main():
     )
     parser.add_argument(
         "--non-interactive",
+        "--yolo",
         action="store_true",
-        help="Run without asking for approval (use with caution)",
+        dest="non_interactive",
+        help="YOLO mode: Run autonomously without asking for approval (use with caution - good for overnight runs)",
     )
     parser.add_argument(
         "--runs",
@@ -3731,6 +4104,16 @@ def main():
         print(f"✅ Loaded environment from {env_path}")
     else:
         print(f"ℹ️  No .env file found at {env_path}, using existing environment")
+
+    # YOLO mode banner
+    if args.non_interactive:
+        print("\n" + "=" * 80)
+        print("🚀 YOLO MODE ACTIVATED 🚀")
+        print("=" * 80)
+        print("Running autonomously - no approval prompts")
+        print("All changes will be auto-approved and tested")
+        print("Perfect for overnight runs - just let it cook!")
+        print("=" * 80 + "\n")
 
     # Initialize agent
     agent = OkpMcpAgent(
