@@ -196,11 +196,16 @@ wip*/
 # analysis output
 analysis_output/
 
+# OKP MCP agent temporary files
+.temp_configs/
+.diagnostics/
+okp_mcp_full_output/
+test_agent_llm.py
 
 # other stuff added by EM but not needed
-JIRA_TICKET_CREATION_SPEC.md 
+JIRA_TICKET_CREATION_SPEC.md
 RSPEED-*
 mcp_retrieval_output/
-docs/
 okp_test_data/
+docs_draft/
 

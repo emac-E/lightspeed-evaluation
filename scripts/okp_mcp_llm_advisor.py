@@ -1,39 +1,50 @@
 #!/usr/bin/env python3
 """LLM-powered advisor for okp-mcp boost query suggestions.
 
-Uses Anthropic SDK with Vertex AI to analyze metrics and suggest code changes.
+Uses Claude Agent SDK to analyze metrics and suggest code changes.
 Supports tiered model routing to optimize costs.
 """
 
-import os
+import asyncio
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
 
-from anthropic import AnthropicVertex
+from claude_agent_sdk import query, ClaudeAgentOptions, AssistantMessage
 from pydantic import BaseModel, Field
 
 
-class BoostQuerySuggestion(BaseModel):
-    """Structured suggestion for boost query changes."""
+class SolrConfigSuggestion(BaseModel):
+    """Structured suggestion for Solr configuration changes.
+
+    Can suggest changes to:
+    - Field weights (qf)
+    - Phrase boosts (pf, pf2, pf3)
+    - Phrase slop (ps, ps2, ps3)
+    - Minimum match (mm)
+    - Boost/demote multipliers
+    - Boost/demote keyword lists
+    """
 
     reasoning: str = Field(
-        description="Why these changes are needed based on the metrics"
+        description="Why these changes are needed based on the metrics and Solr explain output"
     )
     file_path: str = Field(
-        description="Relative path to file to edit (e.g., 'src/okp_mcp/portal.py')"
+        description="Relative path to file to edit (typically 'src/okp_mcp/solr.py')"
     )
     suggested_change: str = Field(
-        description="Specific code change to make (e.g., 'Increase documentKind:solution boost from 2.0 to 4.0')"
+        description="Specific config change to make (e.g., 'Increase title phrase boost from pf: title^8 to title^12' or 'Add \"compatibility matrix\" to _EXTRACTION_BOOST_KEYWORDS')"
     )
-    code_snippet: Optional[str] = Field(
-        default=None,
-        description="Optional Python code snippet showing the exact change",
+    code_snippet: str = Field(
+        description="REQUIRED: Python code snippet showing the exact line after the change. Must include the full line with correct syntax. Example: '\"mm\": \"2<-1 5<60%\",' or 'multiplier *= 3.0  # boost'"
     )
     expected_improvement: str = Field(
-        description="What metrics should improve (e.g., 'URL F1 should increase from 0.33 to >0.7')"
+        description="What metrics should improve (e.g., 'URL F1 should increase from 0.33 to >0.7, expected docs should rank in top 3')"
     )
     confidence: str = Field(description="Confidence level: high, medium, or low")
+
+# Backward compatibility alias
+BoostQuerySuggestion = SolrConfigSuggestion
 
 
 class PromptSuggestion(BaseModel):
@@ -65,6 +76,24 @@ class MetricSummary:
     rag_used: bool
     docs_retrieved: bool
     num_docs: int
+
+    # Ground truth / expected values
+    response: Optional[str] = None  # Actual LLM answer
+    expected_response: Optional[str] = None  # What answer should say
+    expected_keywords: Optional[list] = None  # Which keywords should be present
+    expected_urls: Optional[list] = None  # Which URLs should be retrieved
+    forbidden_claims: Optional[list] = None  # What should NOT be in answer
+    retrieved_urls: Optional[list] = None  # Which URLs were actually retrieved
+    contexts: Optional[str] = None  # Retrieved document contexts
+
+    # Iteration history for learning from previous attempts
+    iteration_history: Optional[list] = None  # List of previous iteration attempts
+
+    # Solr explain output and configuration analysis
+    solr_explain: Optional[dict] = None  # Solr explain output showing why docs ranked the way they did
+    solr_config_summary: Optional[str] = None  # Current Solr config summary (full text)
+    solr_config_snapshot: Optional[dict] = None  # Structured Solr config (faster, replaces file reads)
+    ranking_analysis: Optional[dict] = None  # Analysis of why expected docs didn't rank well
 
     def to_prompt_context(self) -> str:
         """Convert metrics to human-readable context for LLM."""
@@ -113,6 +142,174 @@ class MetricSummary:
                 f"  - Forbidden Claims: {self.forbidden_claims_score:.2f} (threshold: 1.0)"
             )
 
+        # Add ground truth / expected values for better context
+        if self.expected_urls:
+            lines.append("")
+            lines.append("Expected URLs (should be retrieved):")
+            for url in self.expected_urls:
+                lines.append(f"  - {url}")
+
+        if self.retrieved_urls:
+            lines.append("")
+            lines.append("Retrieved URLs (actual):")
+            for url in self.retrieved_urls:
+                lines.append(f"  - {url}")
+
+        if self.expected_keywords:
+            lines.append("")
+            lines.append("Expected Keywords (should be in answer):")
+            for keyword_set in self.expected_keywords:
+                if isinstance(keyword_set, list):
+                    lines.append(f"  - {' OR '.join(keyword_set)}")
+                else:
+                    lines.append(f"  - {keyword_set}")
+
+        if self.forbidden_claims:
+            lines.append("")
+            lines.append("Forbidden Claims (must NOT be in answer):")
+            for claim in self.forbidden_claims:
+                lines.append(f"  - {claim}")
+
+        if self.expected_response and isinstance(self.expected_response, str):
+            lines.append("")
+            lines.append("Expected Answer Guidance:")
+            # Truncate if too long
+            expected = self.expected_response[:500] + "..." if len(self.expected_response) > 500 else self.expected_response
+            lines.append(f"  {expected}")
+
+        if self.response and isinstance(self.response, str):
+            lines.append("")
+            lines.append("Actual LLM Response:")
+            # Truncate if too long
+            response = self.response[:500] + "..." if len(self.response) > 500 else self.response
+            lines.append(f"  {response}")
+
+        if self.contexts:
+            lines.append("")
+            lines.append("Retrieved Contexts (truncated):")
+            # Truncate contexts to first 300 chars to avoid bloat
+            contexts = str(self.contexts)[:300] + "..." if len(str(self.contexts)) > 300 else str(self.contexts)
+            lines.append(f"  {contexts}")
+
+        # Add Solr configuration - use snapshot if available (faster, more focused)
+        if self.solr_config_snapshot:
+            lines.append("")
+            lines.append("=" * 40)
+            lines.append("SOLR CONFIGURATION (CURRENT):")
+            lines.append("=" * 40)
+            snap = self.solr_config_snapshot
+            lines.append("\nTunable Parameters:")
+            lines.append(f"  mm (minimum match): {snap['solr_params'].get('mm')}")
+            lines.append(f"  qf (query fields): {snap['solr_params'].get('qf')}")
+            lines.append(f"  pf (phrase fields): {snap['solr_params'].get('pf')}")
+            lines.append(f"  pf2 (bigram boost): {snap['solr_params'].get('pf2')}")
+            lines.append(f"  pf3 (trigram boost): {snap['solr_params'].get('pf3')}")
+            lines.append(f"  boost_multiplier: {snap['solr_params'].get('boost_multiplier')}x")
+            lines.append(f"  demote_multiplier: {snap['solr_params'].get('demote_multiplier')}x")
+            lines.append(f"\nBoost Keywords: {snap['boost_keywords_count']} total")
+            lines.append(f"  Sample (first 30): {', '.join(snap['boost_keywords_sample'])}")
+            lines.append(f"\nDemote Keywords: {snap['demote_keywords_count']} total")
+            if snap['demote_keywords_sample']:
+                lines.append(f"  Sample: {', '.join(snap['demote_keywords_sample'])}")
+            lines.append("\nFile Locations:")
+            for key, loc in snap['file_locations'].items():
+                lines.append(f"  {key}: {loc}")
+        elif self.solr_config_summary:
+            # Fallback to full config summary if snapshot not available
+            lines.append("")
+            lines.append("=" * 40)
+            lines.append("SOLR CONFIGURATION (CURRENT):")
+            lines.append("=" * 40)
+            lines.append(self.solr_config_summary)
+
+        if self.ranking_analysis:
+            lines.append("")
+            lines.append("=" * 40)
+            lines.append("RANKING ANALYSIS:")
+            lines.append("=" * 40)
+            lines.append(f"Query: {self.ranking_analysis.get('query', '')}")
+            lines.append(f"Expected docs: {self.ranking_analysis.get('expected_count', 0)}")
+            lines.append(f"Retrieved: {self.ranking_analysis.get('retrieved_count', 0)}")
+
+            if self.ranking_analysis.get("missing_docs"):
+                lines.append("")
+                lines.append("Missing Expected Docs:")
+                for doc in self.ranking_analysis["missing_docs"]:
+                    lines.append(f"  - {doc['url']}")
+                    lines.append(f"    Rank: {doc['rank']}, Score: {doc.get('score', 'N/A')}")
+
+            if self.ranking_analysis.get("suggestions"):
+                lines.append("")
+                lines.append("Automated Suggestions:")
+                for suggestion in self.ranking_analysis["suggestions"]:
+                    lines.append(f"  - {suggestion}")
+
+        if self.solr_explain:
+            lines.append("")
+            lines.append("=" * 40)
+            lines.append("SOLR EXPLAIN OUTPUT (Top 3 docs):")
+            lines.append("=" * 40)
+            # Show explain for top docs
+            docs = self.solr_explain.get("docs", [])[:3]
+            explain_data = self.solr_explain.get("explain", {})
+            for i, doc in enumerate(docs, 1):
+                doc_id = doc.get("id", "")
+                lines.append(f"\n{i}. {doc.get('title', '')} (score: {doc.get('score', 0):.2f})")
+                lines.append(f"   URL: {doc.get('url', '')}")
+                # Truncate explain to first 300 chars
+                explain_text = explain_data.get(doc_id, "")
+                if len(explain_text) > 300:
+                    explain_text = explain_text[:300] + "..."
+                if explain_text:
+                    lines.append(f"   Explain: {explain_text}")
+
+        # Add iteration history for learning from previous attempts
+        if self.iteration_history:
+            lines.append("")
+            lines.append("=" * 40)
+            lines.append("PREVIOUS ITERATION ATTEMPTS:")
+            lines.append("=" * 40)
+            for record in self.iteration_history:
+                lines.append(f"\nIteration {record.get('iteration', '?')}:")
+
+                # These fields may not exist if loaded from disk without being processed yet
+                if 'change' in record:
+                    lines.append(f"  Change Made: {record['change']}")
+                if 'metric_before' in record and 'metric_after' in record:
+                    lines.append(f"  Metric Before: {record['metric_before']:.2f}")
+                    lines.append(f"  Metric After: {record['metric_after']:.2f}")
+                if 'improved' in record:
+                    lines.append(f"  Improved: {'✅ Yes' if record['improved'] else '❌ No'}")
+                if 'result_summary' in record:
+                    lines.append(f"  Result: {record['result_summary']}")
+
+                # Add URL overlap diagnostic if available
+                if 'metrics' in record and record['metrics'].get('url_overlap_with_previous') is not None:
+                    overlap = record['metrics']['url_overlap_with_previous']
+                    lines.append(f"  URL Overlap with Previous: {overlap:.2f} ({'same docs' if overlap > 0.8 else 'mostly same' if overlap > 0.5 else 'different docs' if overlap < 0.3 else 'some overlap'})")
+
+                # Add Solr query inspection if available
+                if 'solr_query_inspection' in record and record['solr_query_inspection']:
+                    sqr = record['solr_query_inspection']
+                    if sqr.get('injected_terms'):
+                        lines.append("  Solr Query Augmentation Detected:")
+                        lines.append(f"    Original: {sqr['original']}")
+                        lines.append(f"    Actual: {sqr['actual']}")
+                        lines.append(f"    Injected terms: {', '.join(sqr['injected_terms'])}")
+
+                # Add retrieved vs expected docs summary if available
+                if 'retrieved_documents' in record and 'expected_documents' in record:
+                    retrieved_urls = {doc['url'] for doc in record['retrieved_documents']}
+                    expected_urls = {doc['url'] for doc in record['expected_documents']}
+                    matched = len(retrieved_urls & expected_urls)
+                    lines.append(f"  Retrieved {len(retrieved_urls)} docs, {matched}/{len(expected_urls)} expected docs found")
+
+            lines.append("")
+            lines.append("⚠️  IMPORTANT: Code has been reset to original state.")
+            lines.append("    Learn from the above attempts but start with clean code.")
+            lines.append("    Don't just increase the same boost - try a different approach if previous didn't work.")
+            lines.append("    If URL overlap is low but metrics don't improve, the change may be making things WORSE.")
+
         return "\n".join(lines)
 
 
@@ -123,20 +320,16 @@ class OkpMcpLLMAdvisor:
         self,
         model: str = "claude-sonnet-4-5@20250929",
         okp_mcp_root: Optional[Path] = None,
-        project_id: Optional[str] = None,
-        region: Optional[str] = None,
         # Tiered model routing
         use_tiered_models: bool = True,
         simple_model: Optional[str] = None,
         complex_model: Optional[str] = None,
     ):
-        """Initialize LLM advisor with Anthropic Vertex AI.
+        """Initialize LLM advisor with Claude Agent SDK.
 
         Args:
             model: Default model for medium complexity tasks
             okp_mcp_root: Path to okp-mcp repository for code context
-            project_id: GCP project ID (uses ANTHROPIC_VERTEX_PROJECT_ID if not set)
-            region: GCP region (uses CLOUD_ML_REGION if not set)
             use_tiered_models: Enable smart model routing
             simple_model: Model for simple tasks (default: claude-haiku-4-5@20251001)
             complex_model: Model for complex tasks (default: same as model)
@@ -145,62 +338,26 @@ class OkpMcpLLMAdvisor:
         self.okp_mcp_root = okp_mcp_root or (Path.home() / "Work/okp-mcp")
         self.use_tiered_models = use_tiered_models
 
-        # Get Vertex AI credentials from environment
-        self.project_id = project_id or os.getenv("ANTHROPIC_VERTEX_PROJECT_ID")
-        self.region = region or os.getenv("CLOUD_ML_REGION", "us-east5")
-
-        if not self.project_id:
-            raise ValueError(
-                "project_id not provided and ANTHROPIC_VERTEX_PROJECT_ID not set"
-            )
-
         # Set up tiered models
         if use_tiered_models:
             self.simple_model = simple_model or "claude-haiku-4-5@20251001"
             self.medium_model = model
-            self.complex_model = complex_model or model
+            self.complex_model = complex_model or "claude-opus-4-6"
         else:
             self.simple_model = model
             self.medium_model = model
             self.complex_model = model
 
-        # Handle custom credentials path to avoid conflicts with other GCP services
-        # Check for GOOGLE_CLAUDE_CREDENTIALS first (for Claude/Anthropic Vertex AI)
-        # Falls back to GOOGLE_APPLICATION_CREDENTIALS if not set
-        claude_creds = os.getenv("GOOGLE_CLAUDE_CREDENTIALS")
-        if claude_creds:
-            # Temporarily set GOOGLE_APPLICATION_CREDENTIALS for AnthropicVertex client
-            original_creds = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
-            os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = claude_creds
-            print(
-                f"🔑 Using custom credentials: GOOGLE_CLAUDE_CREDENTIALS={claude_creds}"
-            )
-
-        try:
-            # Create Anthropic Vertex AI client
-            self.client = AnthropicVertex(
-                project_id=self.project_id,
-                region=self.region,
-            )
-        finally:
-            # Restore original GOOGLE_APPLICATION_CREDENTIALS if we changed it
-            if claude_creds:
-                if original_creds:
-                    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = original_creds
-                else:
-                    os.environ.pop("GOOGLE_APPLICATION_CREDENTIALS", None)
-
-        print(f"✅ Initialized with Vertex AI project: {self.project_id}")
-        print(f"   Region: {self.region}")
+        print("✅ Initialized LLM Advisor with Claude Agent SDK")
         if use_tiered_models:
             print(f"   Simple model: {self.simple_model}")
             print(f"   Medium model: {self.medium_model}")
             print(f"   Complex model: {self.complex_model}")
 
-    def _call_with_structured_output(
+    async def _call_with_structured_output(
         self, model: str, system_prompt: str, user_prompt: str, output_schema: dict
     ) -> dict:
-        """Call Claude with structured output using tool use.
+        """Call Claude with structured output via JSON parsing.
 
         Args:
             model: Model to use
@@ -211,30 +368,140 @@ class OkpMcpLLMAdvisor:
         Returns:
             Parsed JSON response matching schema
         """
-        # Use Claude's tool use for structured outputs
-        response = self.client.messages.create(
-            model=model,
-            max_tokens=2048,
-            system=system_prompt,
-            messages=[{"role": "user", "content": user_prompt}],
-            tools=[
-                {
-                    "name": "provide_suggestion",
-                    "description": "Provide the structured suggestion",
-                    "input_schema": output_schema,
-                }
-            ],
-            tool_choice={"type": "tool", "name": "provide_suggestion"},
-        )
+        import json
+        import re
 
-        # Extract tool use from response
-        for content in response.content:
-            if content.type == "tool_use" and content.name == "provide_suggestion":
-                return content.input
+        # Combine system and user prompts for Agent SDK
+        full_prompt = f"""{system_prompt}
 
-        raise ValueError(f"No tool use found in response: {response}")
+USER REQUEST:
+{user_prompt}
 
-    def classify_problem_complexity(self, metrics: MetricSummary) -> str:
+CRITICAL - YOU MUST COMPLETE THESE TWO STEPS:
+
+STEP 1: Make the code change (use Edit tool)
+STEP 2: Provide a JSON summary (MANDATORY - your response MUST end with this JSON)
+
+The JSON summary must match this exact schema:
+{json.dumps(output_schema, indent=2)}
+
+Format the JSON exactly like this (this is REQUIRED, not optional):
+```json
+{{
+  "reasoning": "...",
+  "file_path": "...",
+  "suggested_change": "...",
+  "expected_improvement": "...",
+  "confidence": "high|medium|low"
+}}
+```
+
+IMPORTANT: Your response MUST end with the JSON block above. Do not skip this step."""
+
+        response_text = ""
+
+        from pathlib import Path
+        import os
+
+        # CRITICAL: Temporarily unset GOOGLE_APPLICATION_CREDENTIALS
+        # The .env file sets this for Gemini, but it conflicts with Claude CLI's ADC
+        saved_google_creds = os.environ.pop("GOOGLE_APPLICATION_CREDENTIALS", None)
+
+        print(f"🔍 DEBUG: _call_with_structured_output called with model={model}")
+        print(f"🔍 DEBUG: okp_mcp_root={self.okp_mcp_root}")
+        print(f"🔍 DEBUG: Prompt length: {len(full_prompt)} chars")
+
+        try:
+            # Log debug output to file
+            log_file = Path("/tmp/claude_sdk_debug.log")
+            print(f"🔍 DEBUG: Opening log file: {log_file}")
+            print(f"🔍 DEBUG: Claude will edit files in: {self.okp_mcp_root}")
+            print(f"🔍 DEBUG: Working directory exists: {Path(self.okp_mcp_root).exists()}")
+            with open(log_file, "a") as log:
+                log.write(f"\n{'='*80}\n")
+                log.write(f"suggest_boost_query_changes() - {model}\n")
+                log.write(f"okp_mcp_root (cwd): {self.okp_mcp_root}\n")
+                log.write(f"okp_mcp_root exists: {Path(self.okp_mcp_root).exists()}\n")
+                log.write(f"GOOGLE_APPLICATION_CREDENTIALS: {os.getenv('GOOGLE_APPLICATION_CREDENTIALS')} (should be None)\n")
+                log.write(f"{'='*80}\n")
+
+                # Use okp-mcp directory so Claude can edit files
+                try:
+                    async for message in query(
+                        prompt=full_prompt,
+                        options=ClaudeAgentOptions(
+                            model=model,
+                            allowed_tools=["Read", "Edit", "Glob", "Grep"],  # Enable file editing
+                            permission_mode="acceptEdits",  # Auto-approve edits
+                            max_turns=20,  # Increased from 10 - Claude needs turns for: Read, analyze, Edit, provide JSON
+                            debug_stderr=log,  # Write to log file
+                            cwd=str(self.okp_mcp_root),  # Work in okp-mcp repo
+                        ),
+                    ):
+                            if isinstance(message, AssistantMessage):
+                                for block in message.content:
+                                    if hasattr(block, "text"):
+                                        response_text += block.text
+                                        log.write(f"\n[Assistant text block]: {block.text[:200]}...\n")
+                                        log.flush()  # Ensure it's written
+                                    elif hasattr(block, "type"):
+                                        log.write(f"\n[Assistant block type]: {block.type}\n")
+                                        log.flush()
+                except Exception as e:
+                    log.write(f"\n❌ EXCEPTION during query loop: {type(e).__name__}: {e}\n")
+                    log.flush()
+                    raise
+
+                log.write(f"\n📝 Response collection complete. Total length: {len(response_text)} chars\n")
+                log.write(f"\n{'='*80}\n")
+                log.write("FULL RESPONSE TEXT:\n")
+                log.write(f"{'='*80}\n")
+                log.write(response_text[-2000:] if len(response_text) > 2000 else response_text)  # Last 2000 chars
+                log.write(f"\n{'='*80}\n")
+                log.flush()
+
+                # Check if any files were modified by Claude
+                import subprocess
+                git_status = subprocess.run(
+                    ["git", "status", "--porcelain"],
+                    cwd=str(self.okp_mcp_root),
+                    capture_output=True,
+                    text=True,
+                ).stdout
+                log.write(f"\n📝 Git status after Claude edits:\n{git_status}\n")
+                log.flush()
+
+                # Extract JSON from response (handle code blocks)
+                json_match = re.search(r'```json\s*(\{.*?\})\s*```', response_text, re.DOTALL)
+                if json_match:
+                    json_str = json_match.group(1)
+                    log.write("\n✅ Found JSON in code block\n")
+                else:
+                    # Try to find raw JSON object
+                    json_match = re.search(r'\{.*\}', response_text, re.DOTALL)
+                    if json_match:
+                        json_str = json_match.group(0)
+                        log.write("\n✅ Found raw JSON object\n")
+                    else:
+                        log.write("\n❌ NO JSON FOUND IN RESPONSE\n")
+                        log.write(f"Response text ({len(response_text)} chars):\n{response_text}\n")
+                        raise ValueError(f"No JSON found in response. Response length: {len(response_text)} chars. First 500 chars: {response_text[:500]}")
+
+                # Parse and return
+                try:
+                    result = json.loads(json_str)
+                    log.write(f"\n✅ Successfully parsed JSON: {list(result.keys())}\n")
+                    return result
+                except json.JSONDecodeError as e:
+                    log.write(f"\n❌ JSON parse error: {e}\n")
+                    log.write(f"Attempted to parse: {json_str[:500]}\n")
+                    raise
+        finally:
+            # Restore original GOOGLE_APPLICATION_CREDENTIALS
+            if saved_google_creds:
+                os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = saved_google_creds
+
+    async def classify_problem_complexity(self, metrics: MetricSummary) -> str:
         """Quickly classify problem complexity using cheap model.
 
         Args:
@@ -270,71 +537,231 @@ Respond with ONLY one word: SIMPLE, MEDIUM, or COMPLEX."""
 
 Is this SIMPLE, MEDIUM, or COMPLEX?"""
 
-        response = self.client.messages.create(
-            model=self.simple_model,
-            max_tokens=10,
-            system=system_prompt,
-            messages=[{"role": "user", "content": user_prompt}],
-        )
+        complexity = "MEDIUM"
 
-        complexity = response.content[0].text.strip().upper()
+        from pathlib import Path
+        import tempfile
 
-        # Validate response
-        if complexity not in ["SIMPLE", "MEDIUM", "COMPLEX"]:
-            return "MEDIUM"
+        # CRITICAL: Temporarily unset GOOGLE_APPLICATION_CREDENTIALS
+        # The .env file sets this for Gemini, but it conflicts with Claude CLI's ADC
+        import os
+        saved_google_creds = os.environ.pop("GOOGLE_APPLICATION_CREDENTIALS", None)
 
-        return complexity
+        try:
+            # Log debug output to file
+            log_file = Path("/tmp/claude_sdk_debug.log")
+            with open(log_file, "a") as log:
+                log.write(f"\n{'='*80}\n")
+                log.write(f"classify_problem_complexity() - {self.simple_model}\n")
+                log.write(f"CWD: {os.getcwd()}\n")
+                log.write(f"ANTHROPIC_VERTEX_PROJECT_ID: {os.getenv('ANTHROPIC_VERTEX_PROJECT_ID')}\n")
+                log.write(f"GOOGLE_APPLICATION_CREDENTIALS: {os.getenv('GOOGLE_APPLICATION_CREDENTIALS')} (should be None)\n")
+                log.write(f"{'='*80}\n")
 
-    def suggest_boost_query_changes(
+                # Use temp directory to avoid CLAUDE.md interference
+                with tempfile.TemporaryDirectory() as tmpdir:
+                    async for message in query(
+                        prompt=f"{system_prompt}\n\n{user_prompt}",
+                        options=ClaudeAgentOptions(
+                            model=self.simple_model,
+                            allowed_tools=[],
+                            permission_mode="auto",
+                            max_turns=5,
+                            debug_stderr=log,  # Write to log file
+                            cwd=tmpdir,
+                        ),
+                    ):
+                        if isinstance(message, AssistantMessage):
+                            for block in message.content:
+                                if hasattr(block, "text"):
+                                    text = block.text.strip().upper()
+                                    if text in ["SIMPLE", "MEDIUM", "COMPLEX"]:
+                                        complexity = text
+                                        break
+
+            return complexity
+        finally:
+            # Restore original GOOGLE_APPLICATION_CREDENTIALS
+            if saved_google_creds:
+                os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = saved_google_creds
+
+    async def suggest_solr_config_changes(
         self, metrics: MetricSummary, auto_escalate: bool = True
-    ) -> BoostQuerySuggestion:
-        """Suggest boost query improvements based on metrics.
+    ) -> SolrConfigSuggestion:
+        """Suggest Solr configuration improvements based on metrics and explain output.
 
         Args:
-            metrics: Evaluation metrics summary
+            metrics: Evaluation metrics summary with Solr explain output
             auto_escalate: If True and problem is COMPLEX, use more expensive model
 
         Returns:
-            Structured suggestion for boost query changes
+            Structured suggestion for Solr config changes
         """
+        print(f"🔍 DEBUG: suggest_solr_config_changes called for ticket {metrics.ticket_id}")
+        print(f"🔍 DEBUG: auto_escalate={auto_escalate}, medium_model={self.medium_model}")
+
         # Classify complexity if tiered models enabled
         model_to_use = self.medium_model
         if self.use_tiered_models and auto_escalate:
-            complexity = self.classify_problem_complexity(metrics)
+            complexity = await self.classify_problem_complexity(metrics)
             print(f"  Problem complexity: {complexity}")
 
             if complexity == "COMPLEX":
                 print(f"  Escalating to complex model: {self.complex_model}")
                 model_to_use = self.complex_model
 
-        system_prompt = """You are an expert in Solr/Lucene search optimization and boost query tuning.
+        system_prompt = """You are an expert in Solr/Lucene search optimization with deep knowledge of edismax query parser.
 
 Your task is to analyze evaluation metrics from an okp-mcp RAG system and suggest specific
-boost query improvements to improve document retrieval.
+configuration changes to improve document retrieval.
 
-Key context about okp-mcp:
-- Uses Solr for document search
-- Boost queries modify document scoring based on fields like:
-  - documentKind (e.g., solution, article, guide)
-  - product (e.g., RHEL, OpenShift)
-  - title relevance
-  - content type
-- Boost values are typically 1.0-10.0 (higher = more important)
+=== CURRENT SOLR CONFIGURATION ===
 
-When suggesting changes:
-1. Be SPECIFIC about what to change (exact field, exact boost value)
-2. Explain WHY based on the metrics
-3. Predict WHAT should improve
-4. Provide confidence level based on how clear the problem is
+okp-mcp uses Solr with edismax query parser. Configuration is in src/okp_mcp/solr.py (lines 95-151):
 
-Common patterns:
-- URL F1 = 0.0 → Wrong doc types retrieved, adjust documentKind boost
-- Low MRR (< 0.5) → Right docs exist but ranked too low, increase boost
-- Low context relevance → Query doesn't match content, may need query reformulation
+QUERY FIELD WEIGHTS (qf):
+  "title^5 main_content heading_h1^3 heading_h2 portal_synopsis allTitle^3 content^2 all_content^1"
 
-Always suggest conservative changes first (2x boost increase, not 10x)."""
+  - title^5: Matches in title get 5x weight (most important)
+  - heading_h1^3: H1 headings get 3x weight
+  - main_content: Body content (baseline 1x)
+  - allTitle^3, content^2: Additional title/content fields
 
-        user_prompt = f"""Analyze these evaluation metrics and suggest specific boost query changes:
+  TUNING: Increase title^ if expected docs have query in title but rank low.
+          Increase main_content if body text matches are important.
+
+PHRASE BOOSTING (pf, pf2, pf3):
+  pf: "main_content^5 title^8"    - Exact phrase boost
+  pf2: "main_content^3 title^5"   - Bigram phrase boost
+  pf3: "main_content^1 title^2"   - Trigram phrase boost
+
+  When query terms appear as exact phrase, these boost the score.
+
+  TUNING: Increase pf: title^8 → title^12 if exact title matches rank too low.
+          Decrease if forcing exact phrases hurts recall.
+
+PHRASE SLOP (ps, ps2, ps3):
+  ps: "3"   - Terms can be 3 positions apart for phrase boost
+  ps2: "2"  - Bigrams can be 2 positions apart
+  ps3: "5"  - Trigrams can be 5 positions apart
+
+  TUNING: Increase if query terms scattered across doc (e.g., ps: 5).
+          Decrease for stricter phrase matching.
+
+MINIMUM MATCH (mm):
+  "2<-1 5<75%"
+
+  Meaning:
+  - 1-2 terms: all must match (-1 means all)
+  - 5+ terms: at least 75% must match
+
+  TUNING: Increase "75%" → "90%" if getting too many irrelevant results (stricter).
+          Decrease "75%" → "60%" if missing expected docs (more lenient).
+
+BM25 HIGHLIGHTING PARAMS:
+  hl.score.k1: "1.0"    - Term saturation (higher = repeated terms matter more)
+  hl.score.b: "0.65"    - Length normalization (0=ignore length, 1=heavily penalize long docs)
+  hl.score.pivot: "200" - Average document length for normalization
+
+  TUNING: Increase k1 if query keywords repeat and should boost score more.
+          Adjust b to penalize/reward document length.
+
+=== BM25 RE-RANKING MULTIPLIERS ===
+
+After Solr returns results, okp-mcp re-ranks with BM25 and applies multipliers (lines 301-357):
+
+BOOST MULTIPLIER (default 2.0x):
+  Applied to paragraphs containing these keywords:
+  ["deprecated", "removed", "no longer", "not available", "end of life",
+   "unsupported", "required", "must", "warning", "important", "recommended",
+   "cockpit", "virsh", "cockpit-machines", "life cycle", "full support",
+   "maintenance support", "extended life"]
+
+  TUNING: Increase 2.0x → 3.0x if critical info (deprecations) ranks too low.
+          Add new keywords if specific terms should be boosted.
+
+DEMOTE MULTIPLIER (default 0.05x):
+  Applied to paragraphs about RHV when query has no RHV intent:
+  ["red hat virtualization", "rhv", "rhev", "red hat hyperconverged"]
+
+  TUNING: Decrease 0.05x → 0.01x to more aggressively demote.
+          Add new demote patterns for other unwanted content.
+
+=== WHAT YOU CAN CHANGE ===
+
+You can edit src/okp_mcp/solr.py to modify:
+
+1. FIELD WEIGHTS (qf):
+   Example: "title^5" → "title^7" to make title matches more important
+
+2. PHRASE BOOSTS (pf, pf2, pf3):
+   Example: "title^8" → "title^12" for stronger exact phrase matching in titles
+
+3. PHRASE SLOP (ps, ps2, ps3):
+   Example: "ps": "3" → "ps": "5" to allow more flexibility
+
+4. MINIMUM MATCH (mm):
+   Example: "2<-1 5<75%" → "2<-1 5<90%" for stricter matching
+
+5. BOOST/DEMOTE MULTIPLIERS (lines 308-313):
+   Example: multiplier *= 2.0 → multiplier *= 3.0
+
+6. BOOST/DEMOTE KEYWORDS (lines 248-278):
+   Example: Add "compatibility matrix" to _EXTRACTION_BOOST_KEYWORDS
+
+=== COMMON PATTERNS ===
+
+PROBLEM: URL F1 = 0.0 (completely wrong docs)
+→ Expected docs have different documentKind or special keywords
+→ FIX: Add keywords to _EXTRACTION_BOOST_KEYWORDS or adjust field weights
+
+PROBLEM: Low MRR (< 0.5) (right docs exist but ranked too low)
+→ Expected docs being outranked by less relevant docs
+→ FIX: Increase phrase boost (pf: title^8 → title^12) or field weights
+
+PROBLEM: Missing expected docs with query in title
+→ Title matches not weighted enough
+→ FIX: Increase "title^5" → "title^7" or "pf: title^8" → "title^12"
+
+PROBLEM: Too many irrelevant results
+→ Minimum match too lenient
+→ FIX: Tighten mm from "5<75%" to "5<90%"
+
+PROBLEM: Missing docs where query terms are scattered
+→ Phrase slop too strict
+→ FIX: Increase ps: "3" → "5"
+
+=== GUIDELINES ===
+
+1. Make ONE specific change per iteration
+2. Be SPECIFIC: exact line number, exact value, exact reasoning
+3. Start with conservative changes (2x boost, not 10x)
+4. Explain WHY based on metrics (not just guessing)
+5. Predict WHAT should improve (specific metrics)
+6. Provide confidence level: high (clear pattern), medium (likely), low (experimental)
+
+Always suggest the SIMPLEST fix first. Don't over-engineer."""
+
+        # Adjust instructions based on whether we have a config snapshot
+        if metrics.solr_config_snapshot:
+            # Config is already in the prompt - don't need to Read files
+            step1_instructions = """STEP 1 - ANALYZE:
+1. Review the Solr explain output above to understand WHY docs ranked the way they did
+2. Review the ranking analysis to see which expected docs are missing/ranked low
+3. Review the CURRENT SOLR CONFIGURATION shown above (parameters already provided)
+4. Determine ONE specific config change in src/okp_mcp/solr.py that will improve retrieval
+   - You can change field weights (qf), phrase boosts (pf/pf2/pf3), mm, or keyword lists
+   - Config snapshot shows current values and file locations"""
+        else:
+            # Need to use Read tool to examine files
+            step1_instructions = """STEP 1 - ANALYZE:
+1. Review the Solr explain output above to understand WHY docs ranked the way they did
+2. Review the ranking analysis to see which expected docs are missing/ranked low
+3. Review the CURRENT SOLR CONFIGURATION shown above
+4. Determine ONE specific config change in src/okp_mcp/solr.py that will improve retrieval
+   - You can change field weights (qf), phrase boosts (pf/pf2/pf3), mm, or keyword lists"""
+
+        user_prompt = f"""Analyze these evaluation metrics and Solr explain output to suggest a config change:
 
 {metrics.to_prompt_context()}
 
@@ -343,19 +770,60 @@ Problem context:
 - Query: "{metrics.query}"
 - Current state: {self._diagnosis_text(metrics)}
 
-Suggest ONE specific boost query change to improve retrieval.
-Be concrete: which field, which value, why."""
+YOU MUST COMPLETE BOTH STEPS BELOW:
 
-        result = self._call_with_structured_output(
-            model=model_to_use,
-            system_prompt=system_prompt,
-            user_prompt=user_prompt,
-            output_schema=BoostQuerySuggestion.model_json_schema(),
-        )
+{step1_instructions}
 
-        return BoostQuerySuggestion(**result)
+STEP 2 - PROVIDE JSON (MANDATORY):
+You MUST provide a JSON response with these fields:
+- reasoning: Why this change is needed based on the metrics
+- file_path: "src/okp_mcp/solr.py"
+- suggested_change: Brief description of the change
+- code_snippet: REQUIRED - The exact line of code AFTER the change. Include full syntax.
+  Examples:
+    \"mm\": \"2<-1 5<60%\",
+    multiplier *= 3.0  # boost
+    \"rhel 6\",  # Add to _EXTRACTION_BOOST_KEYWORDS
+- expected_improvement: What metrics should improve
+- confidence: high, medium, or low
 
-    def suggest_prompt_changes(
+Be concrete: which parameter, which line, which value, why based on explain output."""
+
+        # Try with selected model, fall back to medium model if it fails
+        try:
+            result = await self._call_with_structured_output(
+                model=model_to_use,
+                system_prompt=system_prompt,
+                user_prompt=user_prompt,
+                output_schema=SolrConfigSuggestion.model_json_schema(),
+            )
+        except Exception as e:
+            error_msg = str(e)
+            # Check if this is a Claude Agent SDK failure
+            if "Command failed with exit code 1" in error_msg and model_to_use != self.medium_model:
+                print(f"⚠️  {model_to_use} failed with: {error_msg}")
+                print(f"  Falling back to {self.medium_model}...")
+                # Retry with medium model
+                result = await self._call_with_structured_output(
+                    model=self.medium_model,
+                    system_prompt=system_prompt,
+                    user_prompt=user_prompt,
+                    output_schema=SolrConfigSuggestion.model_json_schema(),
+                )
+            else:
+                # Some other error, re-raise
+                raise
+
+        return SolrConfigSuggestion(**result)
+
+    # Backward compatibility alias
+    async def suggest_boost_query_changes(
+        self, metrics: MetricSummary, auto_escalate: bool = True
+    ) -> SolrConfigSuggestion:
+        """Backward compatibility alias for suggest_solr_config_changes."""
+        return await self.suggest_solr_config_changes(metrics, auto_escalate)
+
+    async def suggest_prompt_changes(
         self, metrics: MetricSummary, auto_escalate: bool = True
     ) -> PromptSuggestion:
         """Suggest system prompt improvements based on metrics.
@@ -370,7 +838,7 @@ Be concrete: which field, which value, why."""
         # Classify complexity if tiered models enabled
         model_to_use = self.medium_model
         if self.use_tiered_models and auto_escalate:
-            complexity = self.classify_problem_complexity(metrics)
+            complexity = await self.classify_problem_complexity(metrics)
             print(f"  Problem complexity: {complexity}")
 
             if complexity == "COMPLEX":
@@ -404,15 +872,37 @@ Problem context:
 - Query: "{metrics.query}"
 - Current state: {self._diagnosis_text(metrics)}
 
-Suggest ONE specific system prompt change to improve answer quality.
-Be concrete: what to add/modify, why."""
+YOU MUST COMPLETE BOTH STEPS:
 
-        result = self._call_with_structured_output(
-            model=model_to_use,
-            system_prompt=system_prompt,
-            user_prompt=user_prompt,
-            output_schema=PromptSuggestion.model_json_schema(),
-        )
+STEP 1: Suggest ONE specific system prompt change to improve answer quality
+        Be concrete: what to add/modify, why
+
+STEP 2: Provide a JSON summary (MANDATORY - your response MUST end with this)"""
+
+        # Try with selected model, fall back to medium model if it fails
+        try:
+            result = await self._call_with_structured_output(
+                model=model_to_use,
+                system_prompt=system_prompt,
+                user_prompt=user_prompt,
+                output_schema=PromptSuggestion.model_json_schema(),
+            )
+        except Exception as e:
+            error_msg = str(e)
+            # Check if this is a Claude Agent SDK failure
+            if "Command failed with exit code 1" in error_msg and model_to_use != self.medium_model:
+                print(f"⚠️  {model_to_use} failed with: {error_msg}")
+                print(f"  Falling back to {self.medium_model}...")
+                # Retry with medium model
+                result = await self._call_with_structured_output(
+                    model=self.medium_model,
+                    system_prompt=system_prompt,
+                    user_prompt=user_prompt,
+                    output_schema=PromptSuggestion.model_json_schema(),
+                )
+            else:
+                # Some other error, re-raise
+                raise
 
         return PromptSuggestion(**result)
 
@@ -447,10 +937,8 @@ if __name__ == "__main__":
     print("=" * 80)
     print("OKP-MCP LLM Advisor - Test Mode")
     print("=" * 80)
-    print("\nUsing Anthropic SDK with Vertex AI")
-    print(
-        "Authentication: ANTHROPIC_VERTEX_PROJECT_ID + Application Default Credentials"
-    )
+    print("\nUsing Claude Agent SDK")
+    print("Authentication: Uses Claude Code's existing auth")
     print()
 
     try:
@@ -461,9 +949,6 @@ if __name__ == "__main__":
         )
     except Exception as e:
         print(f"❌ Error initializing advisor: {e}")
-        print("\nMake sure:")
-        print("  export ANTHROPIC_VERTEX_PROJECT_ID=your-project-id")
-        print("  gcloud auth application-default login")
         sys.exit(1)
 
     # Test with sample metrics from RSPEED-2482
@@ -487,21 +972,24 @@ if __name__ == "__main__":
     print("=" * 80)
     print("BOOST QUERY SUGGESTION")
     print("=" * 80)
-    print("\nCalling Claude via Vertex AI...")
+    print("\nCalling Claude via Agent SDK...")
 
-    try:
-        suggestion = advisor.suggest_boost_query_changes(metrics)
-        print("\n✅ Success!")
-        print(f"\nReasoning: {suggestion.reasoning}")
-        print(f"\nFile: {suggestion.file_path}")
-        print(f"\nChange: {suggestion.suggested_change}")
-        if suggestion.code_snippet:
-            print(f"\nCode:\n{suggestion.code_snippet}")
-        print(f"\nExpected Improvement: {suggestion.expected_improvement}")
-        print(f"\nConfidence: {suggestion.confidence}")
-    except Exception as e:
-        print(f"\n❌ Error getting suggestion: {e}")
-        import traceback
+    async def test():
+        try:
+            suggestion = await advisor.suggest_boost_query_changes(metrics)
+            print("\n✅ Success!")
+            print(f"\nReasoning: {suggestion.reasoning}")
+            print(f"\nFile: {suggestion.file_path}")
+            print(f"\nChange: {suggestion.suggested_change}")
+            if suggestion.code_snippet:
+                print(f"\nCode:\n{suggestion.code_snippet}")
+            print(f"\nExpected Improvement: {suggestion.expected_improvement}")
+            print(f"\nConfidence: {suggestion.confidence}")
+        except Exception as e:
+            print(f"\n❌ Error getting suggestion: {e}")
+            import traceback
 
-        traceback.print_exc()
-        sys.exit(1)
+            traceback.print_exc()
+            sys.exit(1)
+
+    asyncio.run(test())
