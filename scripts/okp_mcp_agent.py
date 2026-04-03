@@ -2042,6 +2042,70 @@ class OkpMcpAgent:
             print("  (none)")
         print()
 
+    def calculate_url_f1(self, expected_urls: List[str], retrieved_urls: List[str]) -> float:
+        """Calculate F1 score for URL retrieval.
+
+        Args:
+            expected_urls: Expected URLs (normalized)
+            retrieved_urls: Retrieved URLs (normalized)
+
+        Returns:
+            F1 score (0.0 to 1.0)
+        """
+        if not expected_urls:
+            return 0.0
+        if not retrieved_urls:
+            return 0.0
+
+        # Normalize URLs (remove https:// prefix)
+        def normalize(url):
+            return url.replace('https://', '').replace('http://', '').rstrip('/')
+
+        expected_set = {normalize(url) for url in expected_urls}
+        retrieved_set = {normalize(url) for url in retrieved_urls}
+
+        # Calculate metrics
+        matched = len(expected_set & retrieved_set)
+        precision = matched / len(retrieved_set) if retrieved_set else 0.0
+        recall = matched / len(expected_set) if expected_set else 0.0
+
+        # F1 score
+        if precision + recall > 0:
+            return 2 * (precision * recall) / (precision + recall)
+        return 0.0
+
+    def calculate_mrr(self, expected_urls: List[str], retrieved_urls: List[str]) -> float:
+        """Calculate Mean Reciprocal Rank.
+
+        Args:
+            expected_urls: Expected URLs (normalized)
+            retrieved_urls: Retrieved URLs (in ranking order)
+
+        Returns:
+            MRR score (0.0 to 1.0)
+        """
+        if not expected_urls or not retrieved_urls:
+            return 0.0
+
+        # Normalize URLs
+        def normalize(url):
+            return url.replace('https://', '').replace('http://', '').rstrip('/')
+
+        expected_set = {normalize(url) for url in expected_urls}
+
+        # Find first occurrence of each expected URL
+        reciprocal_ranks = []
+        for expected_url in expected_set:
+            for i, retrieved_url in enumerate(retrieved_urls, 1):
+                if normalize(retrieved_url) == expected_url:
+                    reciprocal_ranks.append(1.0 / i)
+                    break
+
+        # MRR is average of reciprocal ranks (or 0 if none found)
+        if reciprocal_ranks:
+            return sum(reciprocal_ranks) / len(expected_set)
+        return 0.0
+
     def query_solr_direct(
         self, query: str, expected_urls: List[str], num_docs: int = 20
     ) -> Dict:
