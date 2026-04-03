@@ -1434,7 +1434,46 @@ class OkpMcpAgent:
             print(f"   Snippet: {doc['snippet'][:150]}...")
             print()
 
-        # Auto-select high-scoring docs or ask user
+        # ENHANCED: Verify which docs actually contain the answer
+        if self.llm_advisor and auto_select_threshold > 0:
+            print("🔍 Verifying which documents actually contain the answer information...\n")
+
+            verified_docs = []
+            for doc in results:
+                # Check if this doc's snippet contains answer info
+                check_result = self.check_answer_in_retrieved_docs(
+                    expected_answer=expected_response,
+                    retrieved_contexts=[doc['snippet']]
+                )
+
+                if check_result['contains_answer']:
+                    verified_docs.append({
+                        **doc,
+                        'verification_confidence': check_result['confidence'],
+                        'verification_reason': check_result['explanation']
+                    })
+                    status = "✅ VERIFIED"
+                else:
+                    status = "❌ REJECTED"
+
+                print(f"{status}: {doc['title'][:50]}...")
+                print(f"          {check_result['explanation'][:80]}")
+                print()
+
+            if verified_docs:
+                selected_urls = [doc['url'] for doc in verified_docs]
+                print(f"\n✅ Auto-selected {len(selected_urls)} verified documents:")
+                for doc in verified_docs:
+                    print(f"   - {doc['url']}")
+                    print(f"     Confidence: {doc['verification_confidence']:.2f}")
+                    print(f"     Reason: {doc['verification_reason'][:60]}...")
+                return selected_urls
+            else:
+                print("\n⚠️  No documents passed verification!")
+                print("   Falling back to score-based selection...")
+                # Fall through to score-based selection
+
+        # Auto-select high-scoring docs (fallback if no verification or no verified docs)
         if auto_select_threshold > 0:
             selected_urls = [doc['url'] for doc in results if doc['score'] >= auto_select_threshold]
             if selected_urls:
@@ -2106,6 +2145,97 @@ class OkpMcpAgent:
             return sum(reciprocal_ranks) / len(expected_set)
         return 0.0
 
+    def check_answer_in_retrieved_docs(
+        self, expected_answer: str, retrieved_contexts: List[str]
+    ) -> Dict:
+        """Check if retrieved documents contain the expected answer information.
+
+        Uses LLM to judge whether the retrieved docs have the information needed
+        to produce the expected answer.
+
+        Args:
+            expected_answer: Expected answer text (what LLM should say)
+            retrieved_contexts: List of retrieved document contents
+
+        Returns:
+            Dict with:
+                - contains_answer: bool
+                - confidence: float (0.0-1.0)
+                - explanation: str
+        """
+        if not self.llm_advisor:
+            return {
+                "contains_answer": None,
+                "confidence": 0.0,
+                "explanation": "LLM advisor not available"
+            }
+
+        if not retrieved_contexts:
+            return {
+                "contains_answer": False,
+                "confidence": 1.0,
+                "explanation": "No documents retrieved"
+            }
+
+        # Prepare contexts (truncate if too long)
+        contexts_text = "\n\n".join(str(c)[:500] for c in retrieved_contexts[:10])
+
+        prompt = f"""You are evaluating whether retrieved documents contain information to answer a question correctly.
+
+EXPECTED ANSWER (what the system should say):
+{expected_answer}
+
+RETRIEVED DOCUMENTS:
+{contexts_text}
+
+TASK: Do these documents contain the information needed to produce the expected answer?
+
+Consider:
+- Do the docs discuss the same topics/concepts?
+- Do they contain the key facts mentioned in the expected answer?
+- Could someone reading these docs write the expected answer?
+
+Answer in JSON format:
+{{
+    "contains_answer": true/false,
+    "confidence": 0.0-1.0,
+    "explanation": "brief explanation"
+}}
+"""
+
+        try:
+            import json
+            response = self.llm_advisor.client.messages.create(
+                model=self.llm_advisor.model,
+                max_tokens=500,
+                messages=[{"role": "user", "content": prompt}]
+            )
+
+            result_text = response.content[0].text.strip()
+
+            # Parse JSON response
+            # Try to extract JSON from markdown code blocks if present
+            if "```json" in result_text:
+                result_text = result_text.split("```json")[1].split("```")[0].strip()
+            elif "```" in result_text:
+                result_text = result_text.split("```")[1].split("```")[0].strip()
+
+            result = json.loads(result_text)
+
+            return {
+                "contains_answer": result.get("contains_answer", False),
+                "confidence": result.get("confidence", 0.5),
+                "explanation": result.get("explanation", "")
+            }
+
+        except Exception as e:
+            print(f"⚠️  Error checking answer in docs: {e}")
+            return {
+                "contains_answer": None,
+                "confidence": 0.0,
+                "explanation": f"Error: {e}"
+            }
+
     def query_solr_direct(
         self, query: str, expected_urls: List[str], num_docs: int = 20
     ) -> Dict:
@@ -2344,6 +2474,81 @@ class OkpMcpAgent:
             print("   → okp-mcp search returned empty results")
             print("   → Query reformulation may be needed")
             print("   → Check Solr index has relevant documents")
+            return result
+
+        # ANSWER-FIRST MODE: If no expected_urls, use answer quality to diagnose
+        if not result.expected_urls and result.expected_response:
+            print("\n📋 ANSWER-FIRST MODE (No expected URLs in config)")
+            print("   → Evaluating based on answer quality only")
+            print("   → Will discover correct URLs if answer is wrong\n")
+
+            # Check if answer is already correct
+            if result.answer_correctness and result.answer_correctness >= 0.8:
+                print("✅ ANSWER IS CORRECT!")
+                print(f"   Answer Correctness: {result.answer_correctness:.2f}")
+                print("\n   💾 Saving retrieved URLs as ground truth for regression testing...")
+
+                # Save discovered URLs to YAML
+                if result.retrieved_urls:
+                    self.enrich_config_with_expected_urls(
+                        config_path=self.functional_full,
+                        ticket_id=result.ticket_id,
+                        expected_urls=result.retrieved_urls[:5]  # Top 5 docs
+                    )
+                    print(f"   ✅ Saved {len(result.retrieved_urls[:5])} URLs to config")
+
+                return result
+
+            # Answer is wrong - diagnose why
+            print("❌ ANSWER IS INCORRECT")
+            print(f"   Answer Correctness: {result.answer_correctness:.2f}")
+
+            # Check if retrieved docs contain the answer
+            print("\n🔍 Checking if retrieved documents contain the expected answer...")
+
+            check_result = self.check_answer_in_retrieved_docs(
+                expected_answer=result.expected_response,
+                retrieved_contexts=result.contexts.split('\n') if result.contexts else []
+            )
+
+            if check_result['contains_answer']:
+                print("✅ Retrieved docs CONTAIN the answer")
+                print(f"   Confidence: {check_result['confidence']:.2f}")
+                print(f"   Reason: {check_result['explanation']}")
+                print("\n🔍 DIAGNOSIS: ANSWER EXTRACTION PROBLEM")
+                print("   → Correct docs retrieved but LLM failed to extract answer")
+                print("   → May need prompt engineering or context window optimization")
+
+                # Save URLs as ground truth
+                if result.retrieved_urls:
+                    print("\n   💾 Saving URLs for future regression testing...")
+                    self.enrich_config_with_expected_urls(
+                        config_path=self.functional_full,
+                        ticket_id=result.ticket_id,
+                        expected_urls=result.retrieved_urls[:5]
+                    )
+
+                print("\n   🎯 ITERATION STRATEGY:")
+                print("   → This is a prompt/LLM problem, not a retrieval problem")
+                print("   → Consider: prompt engineering, model selection, temperature")
+                print("   → Retrieved docs are correct (save as expected_urls)")
+
+            else:
+                print("❌ Retrieved docs DO NOT contain the answer")
+                print(f"   Confidence: {check_result['confidence']:.2f}")
+                print(f"   Reason: {check_result['explanation']}")
+                print("\n🔍 DIAGNOSIS: WRONG DOCUMENTS RETRIEVED")
+                print("   → Need to find which docs actually contain the answer")
+                print("   → Will use document discovery to find correct docs")
+
+                print("\n   🎯 ITERATION STRATEGY:")
+                print("   → Run bootstrap mode to discover correct documents")
+                print("   → Search Solr using expected_response as query")
+                print("   → Verify discovered docs with LLM")
+                print("   → Iterate to improve retrieval of verified docs")
+                print("\n   💡 Next command:")
+                print(f"      uv run scripts/okp_mcp_agent.py bootstrap {result.ticket_id} --yolo")
+
             return result
 
         # Determine problem type (RAG was used and returned docs)

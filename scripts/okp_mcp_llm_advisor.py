@@ -198,7 +198,7 @@ class MetricSummary:
             lines.append("SOLR CONFIGURATION (CURRENT):")
             lines.append("=" * 40)
             snap = self.solr_config_snapshot
-            lines.append("\nTunable Parameters:")
+            lines.append("\nDocument Ranking Parameters:")
             lines.append(f"  mm (minimum match): {snap['solr_params'].get('mm')}")
             lines.append(f"  qf (query fields): {snap['solr_params'].get('qf')}")
             lines.append(f"  pf (phrase fields): {snap['solr_params'].get('pf')}")
@@ -206,6 +206,15 @@ class MetricSummary:
             lines.append(f"  pf3 (trigram boost): {snap['solr_params'].get('pf3')}")
             lines.append(f"  boost_multiplier: {snap['solr_params'].get('boost_multiplier')}x")
             lines.append(f"  demote_multiplier: {snap['solr_params'].get('demote_multiplier')}x")
+
+            lines.append("\nHighlighting Parameters (snippet selection):")
+            if 'highlighting_params' in snap:
+                lines.append(f"  hl.snippets: {snap['highlighting_params'].get('hl.snippets')} (how many snippets per doc)")
+                lines.append(f"  hl.fragsize: {snap['highlighting_params'].get('hl.fragsize')} (chars per snippet)")
+                lines.append(f"  hl.score.k1: {snap['highlighting_params'].get('hl.score.k1')} (BM25 term saturation)")
+                lines.append(f"  hl.score.b: {snap['highlighting_params'].get('hl.score.b')} (BM25 length normalization)")
+                lines.append(f"  hl.score.pivot: {snap['highlighting_params'].get('hl.score.pivot')} (BM25 avg snippet length)")
+
             lines.append(f"\nBoost Keywords: {snap['boost_keywords_count']} total")
             lines.append(f"  Sample (first 30): {', '.join(snap['boost_keywords_sample'])}")
             lines.append(f"\nDemote Keywords: {snap['demote_keywords_count']} total")
@@ -661,13 +670,17 @@ MINIMUM MATCH (mm):
   TUNING: Increase "75%" → "90%" if getting too many irrelevant results (stricter).
           Decrease "75%" → "60%" if missing expected docs (more lenient).
 
-BM25 HIGHLIGHTING PARAMS:
-  hl.score.k1: "1.0"    - Term saturation (higher = repeated terms matter more)
-  hl.score.b: "0.65"    - Length normalization (0=ignore length, 1=heavily penalize long docs)
-  hl.score.pivot: "200" - Average document length for normalization
+HIGHLIGHTING PARAMS (snippet selection):
+  hl.snippets: "6"      - How many snippets to extract per document (sent to LLM as context)
+  hl.fragsize: "600"    - Target size in characters per snippet
+  hl.score.k1: "1.0"    - BM25 term saturation for snippet scoring
+  hl.score.b: "0.65"    - BM25 length normalization for snippet scoring
+  hl.score.pivot: "200" - BM25 average snippet length for normalization
 
-  TUNING: Increase k1 if query keywords repeat and should boost score more.
-          Adjust b to penalize/reward document length.
+  TUNING: Increase snippets (6 → 8) if answer is in doc but LLM missing context.
+          Increase fragsize (600 → 800) if snippets are too short to answer question.
+          Increase k1 (1.0 → 1.2) to favor snippets with repeated query terms.
+          Adjust b to control whether shorter/longer snippets are preferred.
 
 === BM25 RE-RANKING MULTIPLIERS ===
 
@@ -706,10 +719,15 @@ You can edit src/okp_mcp/solr.py to modify:
 4. MINIMUM MATCH (mm):
    Example: "2<-1 5<75%" → "2<-1 5<90%" for stricter matching
 
-5. BOOST/DEMOTE MULTIPLIERS (lines 308-313):
+5. HIGHLIGHTING PARAMS (hl.snippets, hl.fragsize, hl.score.*):
+   Example: "hl.snippets": "6" → "hl.snippets": "8" for more context per doc
+   Example: "hl.fragsize": "600" → "hl.fragsize": "800" for longer snippets
+   Example: "hl.score.k1": "1.0" → "hl.score.k1": "1.2" for stronger term matching
+
+6. BOOST/DEMOTE MULTIPLIERS (lines 308-313):
    Example: multiplier *= 2.0 → multiplier *= 3.0
 
-6. BOOST/DEMOTE KEYWORDS (lines 248-278):
+7. BOOST/DEMOTE KEYWORDS (lines 248-278):
    Example: Add "compatibility matrix" to _EXTRACTION_BOOST_KEYWORDS
 
 === COMMON PATTERNS ===
@@ -733,6 +751,14 @@ PROBLEM: Too many irrelevant results
 PROBLEM: Missing docs where query terms are scattered
 → Phrase slop too strict
 → FIX: Increase ps: "3" → "5"
+
+PROBLEM: Right docs retrieved but answer incorrect/incomplete
+→ LLM not getting enough context from snippets
+→ FIX: Increase hl.snippets: "6" → "8" or hl.fragsize: "600" → "800"
+
+PROBLEM: Answer missing key details that ARE in the document
+→ Important sections not being highlighted/sent to LLM
+→ FIX: Tune hl.score.k1 (1.0 → 1.2) to favor snippets with more query term matches
 
 === GUIDELINES ===
 
