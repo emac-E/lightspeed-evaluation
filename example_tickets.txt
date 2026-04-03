@@ -1,7 +1,39 @@
-# Example ticket list for batch processing
+# Ticket list from functional_tests_retrieval.yaml
 # Lines starting with # are comments
-# One ticket ID per line
+# Uncomment tickets you want to process
 
+# Container compatibility test (RHEL 6 on RHEL 9)
 RSPEED-2482
-RSPEED-2481
-RSPEED-2480
+
+# VM and virtualization tests
+# RSPEED-2481   # SPICE for RHEL VMs
+# RSPEED-2480   # VM management tool
+
+# EUS tests
+# RSPEED-2479   # EUS release support duration
+# RSPEED-2478   # RHEL 9 EUS availability
+
+# RHEL 10 tests
+# RSPEED-2698   # RHEL 10 support duration
+# RSPEED-2697   # RHEL 10 release date
+# RSPEED-2294   # Python version in RHEL 10
+
+# Configuration tests
+# RSPEED-2201   # RHEL on AWS with Secure Boot
+# RSPEED-2200   # Hugepages configuration
+
+# EOL migration tests
+# fuse_regression_eol      # Fuse → Apache Camel migration
+# gluster_regression_eol   # Gluster → Ceph migration
+# rhv_regression_eol       # RHV → OpenShift Virt migration
+
+# SAP tests
+# RSPEED-1998   # RHEL for SAP packages
+# sap_004       # RHEL System Roles for SAP
+
+# Other tests
+# RSPEED-2136   # SELinux policy from AVC messages
+# RSPEED-2123   # NIC driver debugging
+# RSPEED-2745   # RHEL 7 maintenance support end
+# RSPEED-2113   # LACP bond configuration
+# RSPEED-1931   # rpm-ostree kernel arguments
