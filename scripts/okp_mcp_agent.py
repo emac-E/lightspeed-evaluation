@@ -850,13 +850,14 @@ class OkpMcpAgent:
         return diag_file
 
     def save_iteration_summary_table(
-        self, ticket_id: str, iteration_history: List[Dict]
+        self, ticket_id: str, iteration_history: List[Dict], final_status: str = "In Progress"
     ) -> Path:
-        """Save human-readable iteration summary table.
+        """Save human-readable iteration summary table and progress report.
 
         Args:
             ticket_id: Ticket being fixed
             iteration_history: List of iteration records with metrics and changes
+            final_status: Final status (Fixed, Max Iterations, Failed, etc.)
 
         Returns:
             Path to saved summary file
@@ -866,8 +867,47 @@ class OkpMcpAgent:
 
         summary_file = diag_dir / "iteration_summary.txt"
 
+        # Calculate run statistics
+        if iteration_history:
+            start_time = iteration_history[0].get('timestamp', '')
+            end_time = iteration_history[-1].get('timestamp', '')
+            total_iterations = len(iteration_history)
+            changes_applied = sum(1 for r in iteration_history if r.get('improved', False))
+            changes_reverted = total_iterations - changes_applied
+
+            # Calculate duration if timestamps available
+            duration_str = "N/A"
+            if start_time and end_time:
+                from datetime import datetime
+                try:
+                    start_dt = datetime.fromisoformat(start_time)
+                    end_dt = datetime.fromisoformat(end_time)
+                    duration = end_dt - start_dt
+                    minutes = int(duration.total_seconds() / 60)
+                    seconds = int(duration.total_seconds() % 60)
+                    duration_str = f"{minutes}m {seconds}s"
+                except:
+                    pass
+        else:
+            start_time = end_time = duration_str = "N/A"
+            total_iterations = changes_applied = changes_reverted = 0
+
         lines = [
-            f"ITERATION SUMMARY - {ticket_id}",
+            "=" * 100,
+            f"PROGRESS REPORT - {ticket_id}",
+            "=" * 100,
+            "",
+            "RUN STATISTICS:",
+            f"  Status:           {final_status}",
+            f"  Start Time:       {start_time[:19] if start_time != 'N/A' else 'N/A'}",
+            f"  End Time:         {end_time[:19] if end_time != 'N/A' else 'N/A'}",
+            f"  Duration:         {duration_str}",
+            f"  Total Iterations: {total_iterations}",
+            f"  Changes Applied:  {changes_applied} (kept)",
+            f"  Changes Reverted: {changes_reverted} (didn't improve)",
+            "",
+            "=" * 100,
+            "ITERATION DETAILS",
             "=" * 100,
             "",
             f"{'Iter':<6} {'Change':<45} {'Metric Δ':<10} {'Overlap':<9} {'Result':<8} {'Notes'}",
@@ -943,20 +983,95 @@ class OkpMcpAgent:
 
             lines.append("")
 
+        # Add metric progression chart
         lines.extend([
             "=" * 100,
-            "",
-            "LEGEND:",
-            "  Metric Δ: Change in primary metric (URL F1 for retrieval, Answer Correctness for answer problems)",
-            "  Overlap: Jaccard similarity of retrieved URLs between iterations (1.0 = same docs, 0.0 = completely different)",
-            "  Result: ✓ = metrics improved (kept), ✗ = no improvement (reverted)",
+            "METRIC PROGRESSION",
+            "=" * 100,
             "",
         ])
 
+        # Track best scores
+        best_scores = {}
+        metric_names = ['url_f1', 'mrr', 'context_relevance', 'context_precision',
+                       'keywords_score', 'answer_correctness', 'faithfulness', 'response_relevancy']
+
+        # Build progression table
+        if iteration_history:
+            # Header
+            lines.append(f"{'Iter':<6} {'URL_F1':<8} {'MRR':<8} {'CtxRel':<8} {'CtxPrec':<8} {'Keywords':<9} {'AnsCorr':<9} {'Faith':<8}")
+            lines.append("-" * 100)
+
+            for record in iteration_history:
+                iter_num = record.get('iteration', '?')
+                m = record.get('metrics', {})
+
+                # Format each metric (N/A if not present)
+                url_f1 = f"{m.get('url_f1', 0):.2f}" if m.get('url_f1') is not None else "N/A"
+                mrr = f"{m.get('mrr', 0):.2f}" if m.get('mrr') is not None else "N/A"
+                ctx_rel = f"{m.get('context_relevance', 0):.2f}" if m.get('context_relevance') is not None else "N/A"
+                ctx_prec = f"{m.get('context_precision', 0):.2f}" if m.get('context_precision') is not None else "N/A"
+                kw = f"{m.get('keywords_score', 0):.2f}" if m.get('keywords_score') is not None else "N/A"
+                ans = f"{m.get('answer_correctness', 0):.2f}" if m.get('answer_correctness') is not None else "N/A"
+                faith = f"{m.get('faithfulness', 0):.2f}" if m.get('faithfulness') is not None else "N/A"
+
+                lines.append(f"{iter_num:<6} {url_f1:<8} {mrr:<8} {ctx_rel:<8} {ctx_prec:<8} {kw:<9} {ans:<9} {faith:<8}")
+
+                # Track best scores
+                for metric_name in metric_names:
+                    val = m.get(metric_name)
+                    if val is not None:
+                        if metric_name not in best_scores or val > best_scores[metric_name]['value']:
+                            best_scores[metric_name] = {
+                                'value': val,
+                                'iteration': iter_num
+                            }
+
+            lines.append("")
+
+        # Show best scores achieved
+        lines.extend([
+            "=" * 100,
+            "BEST SCORES ACHIEVED",
+            "=" * 100,
+            "",
+        ])
+
+        if best_scores:
+            for metric_name, data in best_scores.items():
+                if data['value'] > 0:  # Only show non-zero scores
+                    metric_display = metric_name.replace('_', ' ').title()
+                    lines.append(f"  {metric_display:<25} {data['value']:.3f} (iteration {data['iteration']})")
+        else:
+            lines.append("  No metrics recorded")
+
+        lines.extend([
+            "",
+            "=" * 100,
+            "LEGEND",
+            "=" * 100,
+            "",
+            "METRICS:",
+            "  URL_F1:     F1 score for retrieved URLs vs expected URLs",
+            "  MRR:        Mean Reciprocal Rank of first expected URL in results",
+            "  CtxRel:     Context Relevance - are retrieved docs relevant to question?",
+            "  CtxPrec:    Context Precision - what % of retrieved docs are useful?",
+            "  Keywords:   Were expected keywords present in answer?",
+            "  AnsCorr:    Answer Correctness - factually correct answer?",
+            "  Faith:      Faithfulness - answer grounded in retrieved context?",
+            "",
+            "TABLE COLUMNS:",
+            "  Metric Δ:   Change in primary metric (URL F1 or Answer Correctness)",
+            "  Overlap:    URL similarity between iterations (1.0 = same docs)",
+            "  Result:     ✓ = improved (kept), ✗ = no improvement (reverted)",
+            "",
+        ])
+
+        # Save to file
         with open(summary_file, 'w') as f:
             f.write('\n'.join(lines))
 
-        print(f"\n💾 Saved iteration summary: {summary_file}")
+        print(f"\n💾 Saved progress report: {summary_file}")
         return summary_file
 
     def load_iteration_history(self, ticket_id: str) -> List[Dict]:
@@ -2407,6 +2522,12 @@ class OkpMcpAgent:
         print(f"  Context Relevance: {final_result.context_relevance:.2f}")
         print(f"  Context Precision: {final_result.context_precision:.2f}")
 
+        # Save progress report
+        if iteration_history:
+            success = final_result.url_f1 >= 0.7
+            final_status = "✅ Fixed (URL F1 ≥ 0.70)" if success else f"⏱️ Max Iterations ({max_iterations})"
+            self.save_iteration_summary_table(ticket_id, iteration_history, final_status=final_status)
+
         return final_result.url_f1 >= 0.7
 
     def bootstrap_and_fix_ticket(
@@ -3463,7 +3584,7 @@ class OkpMcpAgent:
             print("✅ Already passing, nothing to fix")
             # Save summary even if no iterations ran (for completeness)
             if iteration_history:
-                self.save_iteration_summary_table(ticket_id, iteration_history)
+                self.save_iteration_summary_table(ticket_id, iteration_history, final_status="Already Passing")
             return True
 
         # Determine iteration mode based on problem type
@@ -3648,7 +3769,7 @@ class OkpMcpAgent:
 
                         # Save iteration summary before exiting
                         if iteration_history:
-                            self.save_iteration_summary_table(ticket_id, iteration_history)
+                            self.save_iteration_summary_table(ticket_id, iteration_history, final_status="✅ Fixed")
 
                         return True
                     else:
@@ -3692,7 +3813,7 @@ class OkpMcpAgent:
 
                     # Save iteration summary before exiting
                     if iteration_history:
-                        self.save_iteration_summary_table(ticket_id, iteration_history)
+                        self.save_iteration_summary_table(ticket_id, iteration_history, final_status="✅ Fixed")
 
                     return True
 
@@ -3772,7 +3893,7 @@ class OkpMcpAgent:
                 )
                 # Save iteration summary before escalating to human
                 if iteration_history:
-                    self.save_iteration_summary_table(ticket_id, iteration_history)
+                    self.save_iteration_summary_table(ticket_id, iteration_history, final_status="🚨 Escalated to Human")
                 return False
             elif new_model_tier != current_model_tier:
                 # Don't escalate to Opus if it has already failed
@@ -3821,7 +3942,7 @@ class OkpMcpAgent:
 
         # Save iteration summary before exiting
         if iteration_history:
-            self.save_iteration_summary_table(ticket_id, iteration_history)
+            self.save_iteration_summary_table(ticket_id, iteration_history, final_status=f"⏱️ Max Iterations ({max_iterations})")
 
         return False
 
