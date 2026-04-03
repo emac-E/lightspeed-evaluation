@@ -3,10 +3,20 @@
   turns:
   - turn_id: '1'
     query: Can I run a RHEL 6 container on RHEL 9?
+    expected_response: |
+      RHEL 6 containers on RHEL 9 hosts are UNSUPPORTED per the official
+      Red Hat Container Compatibility Matrix. Key facts:
+      - The matrix explicitly lists RHEL 6 image on RHEL 9 host as "Unsupported"
+      - RHEL 6 on RHEL 8 host IS supported (recommend this if RHEL 6 containers are needed)
+      - RHEL 6 Extended Life Support (ELS) ended June 30, 2024
+      - Recommend migrating to a supported base image (RHEL 7/8/9)
+    expected_keywords:
+    - - unsupported
+    - - compatibility matrix
+    - - container
     expected_urls:
-    - access.redhat.com/solutions/2726611
-    - access.redhat.com/rhel-container-compatibility
-    - access.redhat.com/container compatibility matrix
+    - access.redhat.com/support/policy/rhel-container-compatibility
+    - access.redhat.com/articles/4494341
     turn_metrics:
     - custom:url_retrieval_eval
     - ragas:context_precision_without_reference
