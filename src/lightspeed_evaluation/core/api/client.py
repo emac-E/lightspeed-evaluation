@@ -300,7 +300,7 @@ class APIClient:
                 if "output_tokens" in data:
                     response_data["output_tokens"] = data["output_tokens"]
                     logger.debug(
-                        f"{RED}output_tokens: {response_data['output_tokens']}{RESET}"
+                        f"output_tokens: {response_data["output_tokens"]}"
                     )
                 if "tool_calls" in data:
                     response_data["tool_calls"] = data["tool_calls"]
