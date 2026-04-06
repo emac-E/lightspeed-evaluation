@@ -295,7 +295,7 @@ class APIClient:
                 if "input_tokens" in data:
                     response_data["input_tokens"] = data["input_tokens"]
                     logger.debug(
-                        f"{RED}RLS API INPUT TOKENS: {response_data['input_tokens']}{RESET}"
+                        f"RLS API INPUT TOKENS: {response_data["input_tokens"]}"
                     )
                 if "output_tokens" in data:
                     response_data["output_tokens"] = data["output_tokens"]
