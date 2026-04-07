@@ -39,7 +39,7 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # Configuration
-BASE_DIR="/home/emackey/Work/lightspeed-core/lightspeed-evaluation"
+BASE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 OUTPUT_BASE="${BASE_DIR}/eval_output/full_suite_${TIMESTAMP}"
 ANALYSIS_OUTPUT="${BASE_DIR}/analysis_output/full_suite_${TIMESTAMP}"
@@ -117,7 +117,7 @@ for i in "${!TEST_CONFIGS[@]}"; do
         echo -e "${BLUE}  Debug mode: Reusing LLM judge cache...${NC}"
     fi
 
-    if lightspeed-eval \
+    if uv run lightspeed-eval \
         --system-config config/system.yaml \
         --eval-data "${config}" \
         --output-dir "${output_dir}"; then
@@ -141,7 +141,7 @@ CORRELATION_ANALYSIS_RAN=false
 if [ -n "$DETAILED_CSVS" ]; then
     echo -e "${YELLOW}Analyzing metrics from all evaluation runs...${NC}"
 
-    if python scripts/analyze_metric_correlations.py \
+    if uv run python scripts/analyze_metric_correlations.py \
         --input ${DETAILED_CSVS} \
         --output "${ANALYSIS_OUTPUT}/correlation_analysis" \
         --compare-runs; then
@@ -166,7 +166,7 @@ VERSION_ANALYSIS_RAN=false
 if [ -n "$TEMPORAL_CSV" ]; then
     echo -e "${YELLOW}Analyzing RHEL version distribution...${NC}"
 
-    if python scripts/analyze_version_distribution.py \
+    if uv run python scripts/analyze_version_distribution.py \
         --input "${TEMPORAL_CSV}" \
         --test-config config/temporal_validity_tests_runnable.yaml \
         --output "${ANALYSIS_OUTPUT}/version_analysis"; then
@@ -189,7 +189,7 @@ CURRENT_TIME=$(date +%s)
 RUNTIME_SECONDS=$((CURRENT_TIME - START_TIME))
 
 # Build command with optional analysis directories
-REPORT_CMD="python scripts/generate_okp_mcp_report.py --output-base \"${OUTPUT_BASE}\" --runtime-seconds ${RUNTIME_SECONDS}"
+REPORT_CMD="uv run python scripts/generate_okp_mcp_report.py --output-base \"${OUTPUT_BASE}\" --runtime-seconds ${RUNTIME_SECONDS}"
 
 if [ "$CORRELATION_ANALYSIS_RAN" = true ]; then
     REPORT_CMD="$REPORT_CMD --correlation-analysis \"${ANALYSIS_OUTPUT}/correlation_analysis\""
@@ -211,7 +211,7 @@ echo ""
 if [ -n "$DETAILED_CSVS" ]; then
     echo -e "${YELLOW}Creating question-level metrics breakdown...${NC}"
 
-    python scripts/generate_question_metrics_report.py \
+    uv run python scripts/generate_question_metrics_report.py \
         --input ${DETAILED_CSVS} \
         --output "${OUTPUT_BASE}/QUESTION_METRICS_REPORT.md"
 
