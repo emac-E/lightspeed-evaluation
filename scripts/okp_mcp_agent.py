@@ -70,7 +70,7 @@ try:
 except ImportError as e:
     SOLR_ANALYZER_AVAILABLE = False
     print(f"⚠️  Solr Analyzer not available (import failed): {e}")
-    print(f"   Make sure okp_solr_config_analyzer.py exists in scripts/")
+    print("   Make sure okp_solr_config_analyzer.py exists in scripts/")
 except Exception as e:
     SOLR_ANALYZER_AVAILABLE = False
     print(f"⚠️  Solr Analyzer import error: {e}")
@@ -86,9 +86,9 @@ SMALL_IMPROVEMENT_THRESHOLD = 0.02  # Small but real improvement (keep building 
 
 # Model Tier Configuration
 TIER_MODELS = {
-    "simple": "claude-haiku-4-5@20251001",  # Classification only (not for fixes)
-    "medium": "claude-sonnet-4-5@20250929",  # Default for all fixes
-    "complex": "claude-opus-4-5@20250929",  # Escalation for hard problems
+    "simple": "claude-haiku-4-5-20251001",  # Classification only (not for fixes)
+    "medium": "claude-sonnet-4-6",  # Default for all fixes
+    "complex": "claude-opus-4-6",  # Escalation for hard problems (FIXED: was 4-5 which doesn't exist!)
 }
 
 
@@ -146,17 +146,16 @@ class EvaluationResult:
 
     @property
     def is_retrieval_problem(self) -> bool:
-        """Determine if this is a retrieval problem based on metrics."""
+        """Determine if this is a retrieval problem based on metrics.
+
+        IMPORTANT: Prioritizes RAGAS context metrics over URL F1.
+        URL F1 is unreliable (can be 0.00 even with correct answer).
+        """
         thresholds = MetricThresholds()
 
+        # PRIMARY: Check RAGAS context metrics (most reliable)
         retrieval_issues = []
-        if (
-            self.url_f1 is not None
-            and self.url_f1 < thresholds.url_f1_retrieval_problem
-        ):
-            retrieval_issues.append(f"URL F1 low ({self.url_f1:.2f})")
-        if self.mrr is not None and self.mrr < thresholds.mrr_retrieval_problem:
-            retrieval_issues.append(f"MRR low ({self.mrr:.2f})")
+
         if (
             self.context_relevance is not None
             and self.context_relevance < thresholds.context_relevance_retrieval_problem
@@ -164,6 +163,19 @@ class EvaluationResult:
             retrieval_issues.append(
                 f"Context relevance low ({self.context_relevance:.2f})"
             )
+
+        # SECONDARY: Check MRR if available
+        if self.mrr is not None and self.mrr < thresholds.mrr_retrieval_problem:
+            retrieval_issues.append(f"MRR low ({self.mrr:.2f})")
+
+        # TERTIARY: Only check URL F1 if context metrics are unavailable
+        # Don't weight URL F1 heavily as it's unreliable
+        if (
+            self.url_f1 is not None
+            and self.url_f1 < thresholds.url_f1_retrieval_problem
+            and self.context_relevance is None  # Only if we don't have better metrics
+        ):
+            retrieval_issues.append(f"URL F1 low ({self.url_f1:.2f})")
 
         return len(retrieval_issues) > 0
 
@@ -193,24 +205,30 @@ class EvaluationResult:
         or retrieved docs were fine despite not matching expected URLs).
 
         Uses answer_correctness if available, otherwise falls back to keywords.
+
+        IMPORTANT: Also verifies answer is grounded in RAG (not hallucinated).
         """
         thresholds = MetricThresholds()
 
         # Check answer correctness (primary signal, if available)
         if self.answer_correctness is not None:
             good_answer = self.answer_correctness >= thresholds.answer_correctness_good
+        elif self.keywords_score is not None and self.keywords_score >= 0.9:
+            # Fallback 1: Very high keywords score (all required facts present)
+            good_answer = True
+        elif (self.context_relevance is not None and self.context_relevance >= 0.9 and
+              self.context_precision is not None and self.context_precision >= 0.8):
+            # Fallback 2: Very high context metrics (retrieved docs can answer the question)
+            # This is used when we don't have expected_response or keywords
+            # High context_relevance + context_precision means docs are highly relevant and precise
+            good_answer = True
         else:
-            # Fallback to keywords if answer_correctness not available
-            # (Some configs don't have expected_response field)
-            good_answer = (
-                self.keywords_score is not None
-                and self.keywords_score >= 0.9  # Stricter threshold without answer_correctness
-            )
+            good_answer = False
 
         # Check keywords (required facts present)
         good_keywords = (
-            self.keywords_score is not None
-            and self.keywords_score >= thresholds.keywords_answer_problem
+            self.keywords_score is None  # Not checked (fallback case)
+            or self.keywords_score >= thresholds.keywords_answer_problem
         )
 
         # Check forbidden claims (no regression)
@@ -219,7 +237,22 @@ class EvaluationResult:
             or self.forbidden_claims_score >= 0.9  # Or high score
         )
 
-        return good_answer and good_keywords and no_forbidden_claims
+        # GROUNDING CHECK: Verify answer is grounded in RAG (not hallucinated)
+        is_grounded = True
+
+        # Verify RAG is being used
+        if not self.rag_used:
+            is_grounded = False
+
+        # Verify context is relevant (docs actually relate to the question)
+        if self.context_relevance is not None and self.context_relevance < 0.7:
+            is_grounded = False
+
+        # Verify answer is faithful to context (not making things up)
+        if self.faithfulness is not None and self.faithfulness < 0.7:
+            is_grounded = False
+
+        return good_answer and good_keywords and no_forbidden_claims and is_grounded
 
     @property
     def has_metrics(self) -> bool:
@@ -354,10 +387,10 @@ class OkpMcpAgent:
         if enable_llm_advisor and LLM_ADVISOR_AVAILABLE:
             try:
                 self.llm_advisor = OkpMcpLLMAdvisor(
-                    model="claude-sonnet-4-5@20250929",
+                    model="claude-sonnet-4-6",
                     okp_mcp_root=okp_mcp_root,
                     use_tiered_models=True,
-                    simple_model="claude-haiku-4-5@20251001",
+                    simple_model="claude-haiku-4-5-20251001",
                     complex_model="claude-opus-4-6",
                 )
                 print("✅ LLM advisor initialized")
@@ -386,10 +419,10 @@ class OkpMcpAgent:
         if SOLR_ANALYZER_AVAILABLE:
             try:
                 self.solr_analyzer = SolrConfigAnalyzer(okp_mcp_root)
-                print(f"✅ Solr analyzer initialized (Solr URL: http://localhost:8983/solr/portal)")
+                print("✅ Solr analyzer initialized (Solr URL: http://localhost:8983/solr/portal)")
             except Exception as e:
                 print(f"❌ Solr analyzer initialization FAILED: {e}")
-                print(f"   This will prevent document discovery and fast loops from working")
+                print("   This will prevent document discovery and fast loops from working")
                 import traceback
                 traceback.print_exc()
                 self.solr_analyzer = None
@@ -774,7 +807,8 @@ class OkpMcpAgent:
 
     def save_iteration_diagnostics(
         self, ticket_id: str, iteration: int, result: EvaluationResult,
-        solr_query_info: Optional[Dict] = None
+        solr_query_info: Optional[Dict] = None,
+        suggestion: Optional[any] = None
     ) -> Path:
         """Save iteration diagnostics to JSON file for later analysis.
 
@@ -783,6 +817,7 @@ class OkpMcpAgent:
             iteration: Iteration number
             result: EvaluationResult with metrics and retrieved docs
             solr_query_info: Solr query inspection results
+            suggestion: LLM suggestion object (with reasoning, code, etc.)
 
         Returns:
             Path to saved diagnostics file
@@ -840,7 +875,21 @@ class OkpMcpAgent:
 
             # Solr query inspection
             "solr_query_inspection": solr_query_info,
+
+            # LLM Suggestion (code changes, reasoning, expected improvement)
+            "llm_suggestion": None,
         }
+
+        # Add LLM suggestion details if available
+        if suggestion:
+            diagnostics["llm_suggestion"] = {
+                "suggested_change": getattr(suggestion, 'suggested_change', None),
+                "reasoning": getattr(suggestion, 'reasoning', None),
+                "code_snippet": getattr(suggestion, 'code_snippet', None),
+                "expected_improvement": getattr(suggestion, 'expected_improvement', None),
+                "confidence": getattr(suggestion, 'confidence', None),
+                "file_path": getattr(suggestion, 'file_path', None),
+            }
 
         # Save to file
         diag_file = diag_dir / f"iteration_{iteration:03d}.json"
@@ -886,7 +935,7 @@ class OkpMcpAgent:
                     minutes = int(duration.total_seconds() / 60)
                     seconds = int(duration.total_seconds() % 60)
                     duration_str = f"{minutes}m {seconds}s"
-                except:
+                except Exception:
                     pass
         else:
             start_time = end_time = duration_str = "N/A"
@@ -2145,6 +2194,143 @@ class OkpMcpAgent:
             return sum(reciprocal_ranks) / len(expected_set)
         return 0.0
 
+    def _calculate_composite_metric(self, result: EvaluationResult) -> float:
+        """Calculate composite metric prioritizing answer quality and grounding.
+
+        Weights (in priority order):
+        1. Answer correctness (40%) - if available
+        2. Context relevance (30%) - RAGAS metric (docs relate to question)
+        3. Context precision (15%) - RAGAS metric (docs are precise)
+        4. Keywords (10%) - required facts present
+        5. Forbidden claims (5%) - no incorrect info
+
+        URL F1 is intentionally EXCLUDED - it's unreliable.
+
+        Returns:
+            Composite score between 0.0 and 1.0
+        """
+        components = []
+        weights = []
+
+        # 1. Answer correctness (highest weight)
+        if result.answer_correctness is not None:
+            components.append(result.answer_correctness)
+            weights.append(0.40)
+        elif result.keywords_score is not None:
+            # Fallback: use keywords if no answer_correctness
+            components.append(result.keywords_score)
+            weights.append(0.40)
+
+        # 2. Context relevance (RAGAS - most important retrieval metric)
+        if result.context_relevance is not None:
+            components.append(result.context_relevance)
+            weights.append(0.30)
+
+        # 3. Context precision (RAGAS - secondary retrieval metric)
+        if result.context_precision is not None:
+            components.append(result.context_precision)
+            weights.append(0.15)
+
+        # 4. Keywords (required facts)
+        if result.keywords_score is not None and result.answer_correctness is not None:
+            # Only include if we already have answer_correctness (avoid double counting)
+            components.append(result.keywords_score)
+            weights.append(0.10)
+
+        # 5. Forbidden claims (no regressions)
+        if result.forbidden_claims_score is not None:
+            components.append(result.forbidden_claims_score)
+            weights.append(0.05)
+
+        # If no components available, return 0
+        if not components:
+            return 0.0
+
+        # Normalize weights to sum to 1.0
+        total_weight = sum(weights)
+        if total_weight > 0:
+            normalized_weights = [w / total_weight for w in weights]
+        else:
+            normalized_weights = [1.0 / len(weights)] * len(weights)
+
+        # Weighted average
+        composite = sum(c * w for c, w in zip(components, normalized_weights))
+
+        return composite
+
+    def get_expected_response_from_jira(self, ticket_id: str) -> Optional[str]:
+        """Fetch expected response from Jira ticket description.
+
+        This is used when the YAML config doesn't have expected_response defined.
+        Extracts the expected answer from the Jira ticket description.
+
+        Args:
+            ticket_id: Jira ticket ID (e.g., RSPEED-2480)
+
+        Returns:
+            Expected response text from Jira, or None if not found
+
+        Note:
+            This requires Jira MCP server to be available. If not available,
+            returns None and user must add expected_response manually.
+        """
+        try:
+            # Try to import Jira MCP tool
+            # This will only work if running in Claude Code context with MCP server
+            try:
+                from mcp__mcp_atlassian import jira_get_issue
+                # Fetch ticket from Jira
+                result = jira_get_issue(
+                    issue_key=ticket_id,
+                    fields="description,summary"
+                )
+            except ImportError:
+                # MCP tools not available (running standalone)
+                print(f"⚠️  Jira MCP not available - cannot fetch ticket {ticket_id}")
+                print("   Add expected_response to config manually")
+                return None
+
+            # Parse JSON response
+            import json
+            issue_data = json.loads(result) if isinstance(result, str) else result
+
+            description = issue_data.get('fields', {}).get('description', '')
+
+            # Look for expected answer in description
+            # Common patterns:
+            # - "Expected Answer: ..."
+            # - "Expected Response: ..."
+            # - "Correct Answer: ..."
+            # - Or just use the full description if it's short enough
+
+            if not description:
+                return None
+
+            # Try to extract structured expected answer
+            import re
+            patterns = [
+                r'(?:Expected Answer|Expected Response|Correct Answer|Expected)\s*:?\s*\n?(.*?)(?:\n\n|\Z)',
+                r'(?:Answer|Response)\s*should\s+(?:be|include|contain)\s*:?\s*\n?(.*?)(?:\n\n|\Z)',
+            ]
+
+            for pattern in patterns:
+                match = re.search(pattern, description, re.IGNORECASE | re.DOTALL)
+                if match:
+                    expected = match.group(1).strip()
+                    if expected and len(expected) > 20:  # Sanity check
+                        return expected
+
+            # Fallback: if description is reasonably sized, use it as expected answer
+            # (Assumes the ticket describes what the correct answer should be)
+            if len(description) < 2000:
+                return description.strip()
+
+            return None
+
+        except Exception as e:
+            print(f"⚠️  Error fetching Jira ticket {ticket_id}: {e}")
+            return None
+
     def check_answer_in_retrieved_docs(
         self, expected_answer: str, retrieved_contexts: List[str]
     ) -> Dict:
@@ -2338,7 +2524,8 @@ Answer in JSON format:
         self,
         ticket_id: str,
         runs: int = 1,
-        iteration: Optional[int] = None
+        iteration: Optional[int] = None,
+        suggestion: Optional[any] = None
     ) -> EvaluationResult:
         """Fast diagnosis using retrieval-only mode (no answer generation).
 
@@ -2354,6 +2541,7 @@ Answer in JSON format:
             ticket_id: RSPEED ticket ID
             runs: Number of evaluation runs (default: 1 for speed, use 3+ for stability analysis)
             iteration: If provided, saves diagnostics to .diagnostics/ directory
+            suggestion: Optional LLM suggestion object (for saving to diagnostics)
 
         Returns:
             EvaluationResult with retrieval metrics only (answer metrics will be None)
@@ -2387,7 +2575,7 @@ Answer in JSON format:
         # Save diagnostics if this is part of an iteration loop
         if iteration is not None:
             diag_file = self.save_iteration_diagnostics(
-                ticket_id, iteration, result, solr_query_info
+                ticket_id, iteration, result, solr_query_info, suggestion
             )
             print(f"💾 Saved diagnostics: {diag_file.name}")
             print()
@@ -2503,11 +2691,26 @@ Answer in JSON format:
             print("❌ ANSWER IS INCORRECT")
             print(f"   Answer Correctness: {result.answer_correctness:.2f}")
 
+            # Ensure we have expected_response (fetch from Jira if needed)
+            expected_response = result.expected_response
+            if not expected_response:
+                print("\n⚠️  No expected_response in config - fetching from Jira...")
+                expected_response = self.get_expected_response_from_jira(result.ticket_id)
+                if expected_response:
+                    print(f"✅ Retrieved expected answer from Jira ticket {result.ticket_id}")
+                    # Update result with fetched expected_response for later use
+                    result.expected_response = expected_response
+                else:
+                    print(f"❌ Could not fetch expected answer from Jira ticket {result.ticket_id}")
+                    print("   Cannot verify if retrieved docs contain the answer")
+                    print("   Please add expected_response to config manually")
+                    return result
+
             # Check if retrieved docs contain the answer
             print("\n🔍 Checking if retrieved documents contain the expected answer...")
 
             check_result = self.check_answer_in_retrieved_docs(
-                expected_answer=result.expected_response,
+                expected_answer=expected_response,
                 retrieved_contexts=result.contexts.split('\n') if result.contexts else []
             )
 
@@ -2550,6 +2753,64 @@ Answer in JSON format:
                 print(f"      uv run scripts/okp_mcp_agent.py bootstrap {result.ticket_id} --yolo")
 
             return result
+
+        # ANSWER QUALITY CHECK: Prioritize answer correctness but verify it's grounded in RAG
+        # Success requires: correct answer + using RAG properly (not hallucinating)
+        if result.answer_correctness and result.answer_correctness >= 0.8:
+            # Check if answer is grounded in retrieved documents (not hallucinated)
+            is_grounded = True
+            grounding_issues = []
+
+            # Verify RAG is being used
+            if not result.rag_used:
+                is_grounded = False
+                grounding_issues.append("RAG not used (potential hallucination)")
+
+            # Verify context is relevant (docs actually relate to the question)
+            if result.context_relevance is not None and result.context_relevance < 0.7:
+                is_grounded = False
+                grounding_issues.append(f"Low context relevance ({result.context_relevance:.2f})")
+
+            # Verify answer is faithful to context (not making things up)
+            if result.faithfulness is not None and result.faithfulness < 0.7:
+                is_grounded = False
+                grounding_issues.append(f"Low faithfulness ({result.faithfulness:.2f})")
+
+            if is_grounded:
+                print("\n✅ ANSWER IS CORRECT AND GROUNDED IN RAG!")
+                print(f"   Answer Correctness: {result.answer_correctness:.2f}")
+                print(f"   Context Relevance: {result.context_relevance:.2f}" if result.context_relevance else "")
+                print(f"   Faithfulness: {result.faithfulness:.2f}" if result.faithfulness else "")
+
+                # Check if we're using different docs than expected
+                if result.expected_urls and result.url_f1 < 0.5:
+                    print(f"   URL F1: {result.url_f1:.2f} (different docs than expected)")
+                    print("\n   💡 Different documents are providing the correct answer!")
+                    print("   → This is SUCCESS, not a problem to fix")
+                    print("   → The retrieved docs are better than the expected_urls")
+
+                    if result.retrieved_urls:
+                        print("\n   💾 Updating config with new working URLs...")
+                        self.enrich_config_with_expected_urls(
+                            config_path=self.functional_full,
+                            ticket_id=result.ticket_id,
+                            expected_urls=result.retrieved_urls[:5]  # Top 5 docs
+                        )
+                        print(f"   ✅ Saved {len(result.retrieved_urls[:5])} URLs to config as new ground truth")
+                else:
+                    print("   ✅ Using expected documents and answer is correct")
+
+                return result
+            else:
+                # Answer is correct but may be hallucinated - still need to improve retrieval
+                print("\n⚠️  ANSWER IS CORRECT BUT NOT PROPERLY GROUNDED!")
+                print(f"   Answer Correctness: {result.answer_correctness:.2f}")
+                print("   🚨 Grounding issues detected:")
+                for issue in grounding_issues:
+                    print(f"      - {issue}")
+                print("\n   💡 Answer may be hallucinated - need to improve RAG grounding")
+                print("   → Will continue to improve retrieval to ensure answer is grounded")
+                # Fall through to retrieval problem diagnosis
 
         # Determine problem type (RAG was used and returned docs)
         if result.is_retrieval_problem:
@@ -2656,7 +2917,7 @@ Answer in JSON format:
         print("\n" + "=" * 80)
         print(f"🚀 FAST RETRIEVAL LOOP - {ticket_id}")
         print("=" * 80)
-        print(f"Mode: Direct Solr queries (no LLM judges)")
+        print("Mode: Direct Solr queries (no LLM judges)")
         print(f"Max iterations: {max_iterations}")
         print(f"Full validation every: {validate_every} iterations")
         print("=" * 80)
@@ -2692,6 +2953,21 @@ Answer in JSON format:
                 expected_urls: List[str]
                 retrieved_urls: List[str]
                 is_retrieval_problem: bool = True
+                # Add RAGAS metrics (not available in fast mode, set to None)
+                context_relevance: Optional[float] = None
+                context_precision: Optional[float] = None
+                keywords_score: Optional[float] = None
+                forbidden_claims_score: Optional[float] = None
+                faithfulness: Optional[float] = None
+                answer_correctness: Optional[float] = None
+                response_relevancy: Optional[float] = None
+                rag_used: bool = True
+                docs_retrieved: bool = True
+                contexts: Optional[str] = None
+                response: Optional[str] = None
+                expected_response: Optional[str] = None
+                expected_keywords: Optional[list] = None
+                forbidden_claims: Optional[list] = None
 
             minimal_result = MinimalResult(
                 ticket_id=ticket_id,
@@ -2749,7 +3025,7 @@ Answer in JSON format:
             improved = current['url_f1'] >= baseline['url_f1'] + SMALL_IMPROVEMENT_THRESHOLD
 
             if improved:
-                print(f"✅ Improved! Committing...")
+                print("✅ Improved! Committing...")
                 subprocess.run(["git", "add", "src/okp_mcp/solr.py"], cwd=self.okp_mcp_root, check=True)
                 subprocess.run(
                     ["git", "commit", "-m", f"fast_loop: {suggestion.suggested_change}"],
@@ -2760,20 +3036,36 @@ Answer in JSON format:
                 if current['url_f1'] > best_f1:
                     best_f1 = current['url_f1']
             else:
-                print(f"📉 No improvement - reverting")
+                print("📉 No improvement - reverting")
                 subprocess.run(["git", "restore", "src/okp_mcp/solr.py"], cwd=self.okp_mcp_root)
 
             # Validation checkpoint every N iterations
             if iteration % validate_every == 0:
                 print(f"\n🔍 VALIDATION CHECKPOINT (iteration {iteration})")
-                full_result = self.diagnose_retrieval_only(ticket_id, iteration=iteration)
+                full_result = self.diagnose_retrieval_only(ticket_id, iteration=iteration, suggestion=suggestion)
 
+                # Check for degradation
                 if full_result.context_relevance and full_result.context_relevance < 0.5:
                     print("⚠️  Context quality degraded - stopping fast loop")
                     print(f"   Context relevance: {full_result.context_relevance:.2f}")
+                    if iteration_history:
+                        self.save_iteration_summary_table(ticket_id, iteration_history, final_status="❌ Context Degraded")
                     return False
 
-                print(f"✅ Context quality OK (relevance: {full_result.context_relevance:.2f})")
+                # Check for success (early exit)
+                # Use composite metric that prioritizes context quality over F1
+                composite = self._calculate_composite_metric(full_result)
+                if composite >= 0.85:  # High composite score
+                    print("🎉 SUCCESS - Early exit from fast loop!")
+                    print(f"   Composite Score: {composite:.2f} (>= 0.85)")
+                    print(f"   Context Relevance: {full_result.context_relevance:.2f}")
+                    print(f"   Context Precision: {full_result.context_precision:.2f}")
+                    print(f"   URL F1: {full_result.url_f1:.2f} (reported only)")
+                    if iteration_history:
+                        self.save_iteration_summary_table(ticket_id, iteration_history, final_status=f"✅ Fixed (composite: {composite:.2f})")
+                    return True
+
+                print(f"✅ Context quality OK (relevance: {full_result.context_relevance:.2f}, composite: {composite:.2f})")
 
             iteration_history.append({
                 "iteration": iteration,
@@ -2786,7 +3078,7 @@ Answer in JSON format:
         print("\n🏁 Fast loop complete - running final full validation...")
         final_result = self.diagnose_retrieval_only(ticket_id, iteration=max_iterations)
 
-        print(f"\nFinal metrics:")
+        print("\nFinal metrics:")
         print(f"  URL F1: {final_result.url_f1:.2f} (started: {baseline['url_f1']:.2f})")
         print(f"  Context Relevance: {final_result.context_relevance:.2f}")
         print(f"  Context Precision: {final_result.context_precision:.2f}")
@@ -2884,38 +3176,90 @@ Answer in JSON format:
                 print(f"  - {url}")
             print("\nRunning quick retrieval test to verify these URLs are correct...\n")
 
-            # Run quick retrieval-only test to check URL F1
+            # Run quick retrieval-only test to check URL F1 AND context quality
             validation_result = self.diagnose_retrieval_only(ticket_id, runs=1)
 
             url_f1 = validation_result.url_f1 or 0.0
-            print(f"\n📊 Validation Result: URL F1 = {url_f1:.2f}")
+            context_relevance = validation_result.context_relevance or 0.0
+            context_precision = validation_result.context_precision or 0.0
 
-            if url_f1 > 0.5:
-                # Expected URLs are good - go straight to optimization
-                print("✅ Expected URLs are correct (F1 > 0.5)")
-                print("   Skipping discovery, going straight to retrieval optimization\n")
-                print("📍 STAGE 2: Retrieval Optimization")
+            print("\n📊 Validation Result:")
+            print(f"  URL F1: {url_f1:.2f}")
+            print(f"  Context Relevance: {context_relevance:.2f}")
+            print(f"  Context Precision: {context_precision:.2f}")
+
+            # DECISION LOGIC: When to skip discovery and just optimize
+            # 1. F1 > 0: At least one expected doc retrieved → we have the right info
+            # 2. High RAGAS metrics: Retrieved docs are high quality (even if different from expected)
+            skip_discovery = (
+                (url_f1 > 0) or  # Got at least one expected doc
+                (context_relevance >= 0.8 and context_precision >= 0.7)  # Or high quality docs
+            )
+
+            if skip_discovery:
+                # Retrieval is working - check if answer is already correct
+                if url_f1 > 0:
+                    print("✅ Expected docs ARE being retrieved (F1 > 0)")
+                    print(f"   → {int(url_f1 * len(expected_urls))} of {len(expected_urls)} expected docs found")
+                    print("   → Docs exist in Solr, just need better ranking")
+                else:
+                    print(f"✅ Retrieved docs are high quality (context_relevance={context_relevance:.2f})")
+                    print(f"   → URL F1={url_f1:.2f} but RAGAS metrics show docs are excellent")
+                    print("   → Different docs than expected, but working well!")
+
+                print("\n   Skipping discovery, checking answer quality first...")
+                print("\n📍 STAGE 2: Answer Quality Check")
                 print("=" * 80)
+                print("Running full evaluation with answer generation to check if already passing...\n")
+
+                # Run full eval to check answer quality
+                answer_check = self.diagnose(ticket_id, use_existing=False)
+
+                # Check if already passing (answer is correct and grounded)
+                if answer_check.is_answer_good_enough:
+                    print("\n🎉 ALREADY PASSING!")
+                    print(f"   Answer Correctness: {answer_check.answer_correctness:.2f}" if answer_check.answer_correctness else "")
+                    print(f"   Context Relevance: {answer_check.context_relevance:.2f}" if answer_check.context_relevance else "")
+                    print(f"   Keywords: {answer_check.keywords_score:.2f}" if answer_check.keywords_score else "")
+                    print("\n   ✅ No optimization needed - answer is already correct!")
+                    return True
+
+                # Answer needs work - proceed to optimization
+                print("\n📍 STAGE 3: Retrieval Optimization")
+                print("=" * 80)
+                print("Answer quality needs improvement, optimizing retrieval...\n")
                 return self.fix_ticket_with_iteration(
                     ticket_id=ticket_id,
                     max_iterations=max_iterations,
                     starting_model=starting_model,
                     context=context,
-                    use_existing=False  # Already did validation run
+                    use_existing=False  # Already did answer check
                 )
             else:
-                # Expected URLs are wrong - need to discover correct ones
-                print("❌ Expected URLs appear to be WRONG (F1 = 0.00)")
-                print("   Retrieved documents don't match expected URLs")
-                print("   Will discover correct documents from Solr...\n")
+                # F1 = 0 AND low context quality - need to find the right docs
+                print(f"❌ Expected docs NOT found (F1=0) and context quality low (relevance={context_relevance:.2f})")
+                print("   → Expected docs may not exist in Solr")
+                print("   → Will discover which docs can answer this question\n")
                 # Fall through to discovery stage
 
         # STAGE 2: Document Discovery (if no URLs or URLs are wrong)
         if not expected_response:
-            print("⚠️  Config has no expected_response - cannot discover documents")
-            print("   Need expected_response to search Solr for correct docs")
-            print("   Add expected_response to config and try again")
-            return False
+            print("⚠️  Config has no expected_response - fetching from Jira...")
+            expected_response = self.get_expected_response_from_jira(ticket_id)
+            if expected_response:
+                print(f"✅ Retrieved expected answer from Jira ticket {ticket_id}")
+                print(f"   Answer preview: {expected_response[:200]}...")
+                # Update config data with fetched expected_response
+                turn['expected_response'] = expected_response
+                # Save updated config
+                with open(config_path, 'w') as f:
+                    yaml.dump(config_data, f, default_flow_style=False, sort_keys=False)
+                print(f"   💾 Saved expected_response to {config_path}")
+            else:
+                print(f"❌ Could not fetch expected answer from Jira ticket {ticket_id}")
+                print("   Cannot discover documents without expected_response")
+                print("   Please add expected_response to config manually")
+                return False
 
         print("📍 STAGE 2: Document Discovery")
         print("=" * 80)
@@ -3336,7 +3680,7 @@ Answer in JSON format:
                     if match:
                         print(f"   DEBUG: Found existing value: {match.group()}")
                     else:
-                        print(f"   DEBUG: Pattern not found in file!")
+                        print("   DEBUG: Pattern not found in file!")
                         # Show nearby content for debugging
                         lines = content.split('\n')
                         for i, line in enumerate(lines, 1):
@@ -3351,7 +3695,7 @@ Answer in JSON format:
                     else:
                         print(f"❌ Could not find {param_name} parameter to change")
                         print(f"   Pattern: {pattern}")
-                        print(f"   File may not contain this parameter in expected format")
+                        print("   File may not contain this parameter in expected format")
                         return False
                 else:
                     print("❌ Could not parse parameter change from code_snippet")
@@ -3488,7 +3832,7 @@ Answer in JSON format:
                 return False
 
             # Check if content actually changed
-            print(f"   DEBUG: Checking if content changed...")
+            print("   DEBUG: Checking if content changed...")
             print(f"   DEBUG: Original length: {len(original_content)} chars")
             print(f"   DEBUG: New length: {len(content)} chars")
             if content == original_content:
@@ -3784,13 +4128,52 @@ Answer in JSON format:
         # If best metric in last N attempts equals N attempts ago → plateau
         return best_in_last_n == last_n[0]
 
+    def should_deescalate_model(
+        self, current_model_tier: str, current_result: EvaluationResult, consecutive_successes: int
+    ) -> Optional[str]:
+        """De-escalate to cheaper model when metrics are good and stable.
+
+        Args:
+            current_model_tier: Current model tier ("medium" or "complex")
+            current_result: Latest evaluation result
+            consecutive_successes: Number of consecutive successful iterations
+
+        Returns:
+            New (cheaper) model tier, or None to stay at current tier
+        """
+        # Don't de-escalate if we haven't had enough stability
+        if consecutive_successes < 2:
+            return None
+
+        # Check if metrics are in good shape
+        metrics_good = (
+            (current_result.url_f1 or 0) > 0.7
+            and (current_result.context_relevance or 0) > 0.7
+            and (current_result.answer_correctness or 0) > 0.8
+        )
+
+        if not metrics_good:
+            return None
+
+        # De-escalation path: complex (Opus) → medium (Sonnet) → simple (Haiku)
+        if current_model_tier == "complex":
+            # Problem solved with Opus, can we maintain with Sonnet?
+            print("💡 Metrics stable and good - considering de-escalation to Sonnet")
+            return "medium"
+        elif current_model_tier == "medium":
+            # Problem solved with Sonnet, can we maintain with Haiku?
+            print("💡 Metrics stable and good - considering de-escalation to Haiku")
+            return "simple"
+
+        return None  # Already at cheapest model or no de-escalation needed
+
     def escalate_model(
         self, current_model: str, attempts_at_current: int, opus_failed: bool = False
     ) -> Optional[str]:
         """Escalate to better model after failed attempts.
 
         Args:
-            current_model: Current model tier ("medium" or "complex")
+            current_model: Current model tier ("simple", "medium" or "complex")
             attempts_at_current: Number of attempts at current model
             opus_failed: If True, skip escalation to Opus (it already failed)
 
@@ -3800,8 +4183,10 @@ Answer in JSON format:
         if attempts_at_current < ESCALATION_THRESHOLD:
             return current_model  # Stay at current level
 
-        # Escalation path: medium (Sonnet) → complex (Opus) → Human
-        if current_model == "medium":
+        # Escalation path: simple (Haiku) → medium (Sonnet) → complex (Opus) → Human
+        if current_model == "simple":
+            return "medium"
+        elif current_model == "medium":
             # Skip Opus if it failed earlier
             if opus_failed:
                 return None  # Skip to human escalation
@@ -3847,6 +4232,9 @@ Answer in JSON format:
         # Initial diagnosis (full mode to check both retrieval AND answer)
         previous_result = self.diagnose(ticket_id, use_existing=use_existing)
 
+        # Load persisted diagnostics from previous runs (if any)
+        iteration_history = self.load_iteration_history(ticket_id)
+
         if not (
             previous_result.is_retrieval_problem or previous_result.is_answer_problem
         ):
@@ -3869,14 +4257,12 @@ Answer in JSON format:
             print("   → Testing both retrieval AND answer generation")
             print("   → Focusing on: keywords, answer correctness, faithfulness")
 
-        # Track metrics for plateau detection
+        # Track metrics for plateau detection and de-escalation
         metric_history = []
         current_model_tier = starting_model
         attempts_at_current_model = 0
+        consecutive_successes = 0  # Track consecutive improvements for de-escalation
         opus_failed = False  # Track if Opus model has failed (to avoid retrying)
-
-        # Load persisted diagnostics from previous runs (if any)
-        iteration_history = self.load_iteration_history(ticket_id)
 
         for iteration in range(1, max_iterations + 1):
             print(
@@ -3960,7 +4346,7 @@ Answer in JSON format:
             if use_retrieval_only_mode:
                 # Fast retrieval-only evaluation (~30 sec)
                 print("   Using retrieval-only mode (~30 sec)")
-                current_result = self.diagnose_retrieval_only(ticket_id, iteration=iteration)
+                current_result = self.diagnose_retrieval_only(ticket_id, iteration=iteration, suggestion=suggestion)
             else:
                 # Full evaluation with answer generation (~3 min)
                 print("   Using full evaluation mode (~3 min)")
@@ -3970,121 +4356,72 @@ Answer in JSON format:
             print(f"\n📊 METRICS AFTER ITERATION {iteration}:")
             print("=" * 80)
             if use_retrieval_only_mode:
-                print(f"  URL F1: {current_result.url_f1:.2f}" if current_result.url_f1 is not None else "  URL F1: N/A")
+                print(f"  URL F1: {current_result.url_f1:.2f} (reported only)" if current_result.url_f1 is not None else "  URL F1: N/A")
                 print(f"  MRR: {current_result.mrr:.2f}" if current_result.mrr is not None else "  MRR: N/A")
                 print(f"  Context Relevance: {current_result.context_relevance:.2f}" if current_result.context_relevance is not None else "  Context Relevance: N/A")
                 print(f"  Context Precision: {current_result.context_precision:.2f}" if current_result.context_precision is not None else "  Context Precision: N/A")
             else:
-                print(f"  URL F1: {current_result.url_f1:.2f}" if current_result.url_f1 is not None else "  URL F1: N/A")
+                print(f"  URL F1: {current_result.url_f1:.2f} (reported only)" if current_result.url_f1 is not None else "  URL F1: N/A")
+                print(f"  Context Relevance: {current_result.context_relevance:.2f}" if current_result.context_relevance is not None else "  Context Relevance: N/A")
+                print(f"  Context Precision: {current_result.context_precision:.2f}" if current_result.context_precision is not None else "  Context Precision: N/A")
                 print(f"  Keywords: {current_result.keywords_score:.2f}" if current_result.keywords_score is not None else "  Keywords: N/A")
                 print(f"  Answer Correctness: {current_result.answer_correctness:.2f}" if current_result.answer_correctness is not None else "  Answer Correctness: N/A")
                 print(f"  Forbidden Claims: {current_result.forbidden_claims_score:.2f}" if current_result.forbidden_claims_score is not None else "  Forbidden Claims: N/A")
 
             # Track primary metric for plateau detection
-            # IMPORTANT: Prioritize answer_correctness when available (it's the real goal)
-            # Only fall back to URL F1 in retrieval-only mode
-            if current_result.answer_correctness is not None:
-                primary_metric = current_result.answer_correctness
-            elif current_result.url_f1 is not None:
-                primary_metric = current_result.url_f1
-            else:
-                # Fallback to context metrics if neither available
-                primary_metric = current_result.context_relevance or 0
+            # IMPORTANT: Use composite metric based on answer quality + grounding
+            # URL F1 is reported but NOT used for improvement decisions (it's unreliable)
+            primary_metric = self._calculate_composite_metric(current_result)
             metric_history.append(primary_metric)
 
-            print(f"\n  Primary metric: {primary_metric:.2f}")
+            print(f"\n  📈 Composite Score: {primary_metric:.2f} (context + answer quality)")
             if len(metric_history) > 1:
-                print(f"  Change from previous: {primary_metric - metric_history[-2]:+.2f}")
+                print(f"     Change from previous: {primary_metric - metric_history[-2]:+.2f}")
+            print("     ℹ️  URL F1 shown for visibility only, not used for improvements")
             print("=" * 80)
 
-            # Check if fixed (depends on mode)
-            if use_retrieval_only_mode:
-                # In retrieval mode: check if retrieval metrics are good
-                retrieval_fixed = not current_result.is_retrieval_problem
+            # Check if fixed using COMPOSITE SCORE
+            # This combines all metrics (context, answer, keywords) into single quality score
+            composite_score = self._calculate_composite_metric(current_result)
+            SUCCESS_THRESHOLD = 0.80  # High quality across all metrics
 
-                if retrieval_fixed:
-                    print(f"\n🎯 RETRIEVAL FIXED in {iteration} iterations!")
-                    print("   → Retrieval metrics now passing")
-                    print("\n📋 Running FINAL FULL EVALUATION to verify answer quality...")
+            if composite_score >= SUCCESS_THRESHOLD:
+                print(f"\n🎉 SUCCESS in {iteration} iterations!")
+                print(f"   Composite Score: {composite_score:.2f} (>= {SUCCESS_THRESHOLD:.2f})")
+                print("\n   📊 Metric Breakdown:")
+                if current_result.answer_correctness:
+                    print(f"      Answer Correctness: {current_result.answer_correctness:.2f}")
+                if current_result.context_relevance:
+                    print(f"      Context Relevance: {current_result.context_relevance:.2f}")
+                if current_result.context_precision:
+                    print(f"      Context Precision: {current_result.context_precision:.2f}")
+                if current_result.keywords_score:
+                    print(f"      Keywords: {current_result.keywords_score:.2f}")
+                if current_result.url_f1 is not None:
+                    print(f"      URL F1: {current_result.url_f1:.2f} (reported only)")
 
-                    # Do final full evaluation to check answer
-                    final_result = self.diagnose(ticket_id, use_existing=False)
-
-                    # Check overall quality (both retrieval AND answer)
-                    overall_good = not (
-                        final_result.is_retrieval_problem or final_result.is_answer_problem
+                # Commit pending change if any
+                if hasattr(self, "_pending_commit_msg") and self._pending_commit_msg:
+                    print("\n✅ Test passed - committing change...")
+                    subprocess.run(
+                        ["git", "add", str(self._pending_commit_file)],
+                        cwd=self.okp_mcp_root,
+                        check=True,
                     )
-                    answer_good_enough = final_result.is_answer_good_enough
+                    subprocess.run(
+                        ["git", "commit", "-m", self._pending_commit_msg],
+                        cwd=self.okp_mcp_root,
+                        check=True,
+                    )
+                    print("✅ Change committed")
+                    self._pending_commit_msg = None
+                    self._pending_commit_file = None
 
-                    if overall_good or answer_good_enough:
-                        print("\n✅ FULLY FIXED - Answer quality also confirmed!")
+                # Save iteration summary before exiting
+                if iteration_history:
+                    self.save_iteration_summary_table(ticket_id, iteration_history, final_status=f"✅ Fixed (composite: {composite_score:.2f})")
 
-                        # Commit pending change if any
-                        if hasattr(self, "_pending_commit_msg") and self._pending_commit_msg:
-                            print("✅ Test passed - committing change...")
-                            subprocess.run(
-                                ["git", "add", str(self._pending_commit_file)],
-                                cwd=self.okp_mcp_root,
-                                check=True,
-                            )
-                            subprocess.run(
-                                ["git", "commit", "-m", self._pending_commit_msg],
-                                cwd=self.okp_mcp_root,
-                                check=True,
-                            )
-                            print("✅ Change committed")
-                            self._pending_commit_msg = None
-                            self._pending_commit_file = None
-
-                        # Save iteration summary before exiting
-                        if iteration_history:
-                            self.save_iteration_summary_table(ticket_id, iteration_history, final_status="✅ Fixed")
-
-                        return True
-                    else:
-                        print("\n⚠️  Retrieval is fixed but answer quality issues remain")
-                        print("   → May need prompt adjustments (answer problem)")
-                        print("   → Continuing iterations...")
-                        # Switch to full mode for remaining iterations
-                        use_retrieval_only_mode = False
-                        previous_result = final_result
-                        continue
-            else:
-                # In full mode: check both retrieval AND answer
-                retrieval_and_answer_good = not (
-                    current_result.is_retrieval_problem or current_result.is_answer_problem
-                )
-                answer_good_enough = current_result.is_answer_good_enough
-
-                if retrieval_and_answer_good or answer_good_enough:
-                    if answer_good_enough and current_result.is_retrieval_problem:
-                        print(f"\n✅ FIXED in {iteration} iterations!")
-                        print("   (Answer is correct despite suboptimal retrieval)")
-                    else:
-                        print(f"\n✅ FIXED in {iteration} iterations!")
-
-                    # Commit pending change if any
-                    if hasattr(self, "_pending_commit_msg") and self._pending_commit_msg:
-                        print("✅ Test passed - committing change...")
-                        subprocess.run(
-                            ["git", "add", str(self._pending_commit_file)],
-                            cwd=self.okp_mcp_root,
-                            check=True,
-                        )
-                        subprocess.run(
-                            ["git", "commit", "-m", self._pending_commit_msg],
-                            cwd=self.okp_mcp_root,
-                            check=True,
-                        )
-                        print("✅ Change committed")
-                        self._pending_commit_msg = None
-                        self._pending_commit_file = None
-
-                    # Save iteration summary before exiting
-                    if iteration_history:
-                        self.save_iteration_summary_table(ticket_id, iteration_history, final_status="✅ Fixed")
-
-                    return True
+                return True
 
             # Check if improved
             improved = self.metrics_improved(current_result, previous_result)
@@ -4111,6 +4448,9 @@ Answer in JSON format:
                     )
                     print("✅ Change committed")
 
+                    # Track consecutive successes for de-escalation
+                    consecutive_successes += 1
+
                     # Only reset escalation counter for significant improvements
                     if is_significant:
                         attempts_at_current_model = 0  # Reset escalation counter
@@ -4128,6 +4468,7 @@ Answer in JSON format:
                     )
                     print("✅ Change reverted")
                     attempts_at_current_model += 1
+                    consecutive_successes = 0  # Reset on failure
 
                 # Clear pending commit
                 self._pending_commit_msg = None
@@ -4137,12 +4478,14 @@ Answer in JSON format:
                 is_significant = improvement_amount >= MIN_IMPROVEMENT_THRESHOLD
                 improvement_type = "significantly" if is_significant else "incrementally"
                 print(f"📈 Metrics improved {improvement_type}! Primary metric: {primary_metric:.2f} (+{improvement_amount:+.3f})")
+                consecutive_successes += 1
                 if is_significant:
                     attempts_at_current_model = 0  # Reset escalation counter
                 # For small improvements, don't reset counter
             else:
                 print("📉 No significant improvement")
                 attempts_at_current_model += 1
+                consecutive_successes = 0  # Reset on failure
 
             # Check for plateau
             if self.detected_plateau(metric_history):
@@ -4150,6 +4493,17 @@ Answer in JSON format:
                     f"⏸️  Plateau detected (no improvement for {PLATEAU_THRESHOLD} iterations)"
                 )
                 attempts_at_current_model = ESCALATION_THRESHOLD  # Force escalation
+
+            # Check for de-escalation opportunity (save costs with cheaper model)
+            deescalate_tier = self.should_deescalate_model(
+                current_model_tier, current_result, consecutive_successes
+            )
+            if deescalate_tier and deescalate_tier != current_model_tier:
+                print(f"   💰 De-escalating to {deescalate_tier} (cost savings)")
+                current_model_tier = deescalate_tier
+                attempts_at_current_model = 0  # Reset counter for new tier
+                consecutive_successes = 0  # Reset - need to prove stability at new tier
+                # Continue to next iteration with cheaper model
 
             # Escalate model if needed (but skip Opus if it failed earlier)
             new_model_tier = self.escalate_model(

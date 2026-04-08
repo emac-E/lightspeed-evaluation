@@ -1,0 +1,1004 @@
+# Verified Tickets Missing from Strict JQL Query
+# Total tickets: 32
+# These tickets have ground truth but were not returned by:
+# project = RSPEED AND component = "command-line-assistant" AND resolution = Unresolved AND labels = "cla-incorrect-answer"
+#
+# Possible reasons:
+# - JIRA API caching/indexing issues
+# - Label applied after query was run
+# - Component field missing/different
+#
+
+- conversation_group_id: RSPEED-2794
+  turns:
+  - query: Is GFS2 (Global File System 2) available in RHEL 10?
+    expected_response: 'No, GFS2 is NOT available in RHEL 10. Red Hat has discontinued
+      the Resilient Storage Add-On with RHEL 10 or later. According to Red Hat''s
+      official support policies: "With RHEL 10 or later the packages (ctdb, gfs2-utils,
+      dlm) that were included with Resilient Storage Add-On will be discontinued.
+      In addition, the gfs2 and dlm modules will be removed from the kernel for RHEL
+      10 or later." Organizations using GFS2 filesystems in previous RHEL versions
+      (RHEL 6, 7, 8, or 9) must migrate to alternative clustered storage solutions
+      before upgrading to RHEL 10. While the leapp upgrade process from RHEL 9 to
+      RHEL 10 may complete successfully with GFS2 filesystems configured, any Pacemaker
+      resource agents using fstype=gfs2 will fail to start on RHEL 10 cluster nodes.'
+    turn_metrics:
+    - ragas:context_relevance
+    - custom:answer_correctness
+    expected_urls:
+    - https://access.redhat.com/articles/3290201/index.html
+    - https://access.redhat.com/solutions/7134031/index.html
+    - https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/10/html-single/considerations_in_adopting_rhel_10/index/index.html
+  metadata:
+    confidence: HIGH
+    notes: Verified ticket with ground truth but NOT returned by strict JQL query
+- conversation_group_id: RSPEED-2754
+  turns:
+  - query: Can I run a RHEL 6 container on RHEL 9?
+    expected_response: 'No, RHEL 6 container images are unsupported on RHEL 9 hosts
+      according to the official Red Hat Enterprise Linux Container Compatibility Matrix.
+      The matrix explicitly shows that RHEL 6 images are only supported on RHEL 8
+      hosts and are marked as "Unsupported" for RHEL 9 and RHEL 10 hosts. While containers
+      may technically run using Podman or other OCI-compliant runtimes, Red Hat''s
+      documentation states that "containers directly depend on the underlying Linux
+      host and kernel for critical interfaces" and there are "known limitations with
+      mixing and matching versions of the operating system in the container image
+      and the container host." Red Hat does not support this configuration, and customers
+      should not expect commercial support. For production environments, use supported
+      combinations: RHEL 7, 8, 9, or 10 container images on RHEL 9 hosts are all supported
+      according to the compatibility matrix.'
+    turn_metrics:
+    - ragas:context_relevance
+    - custom:answer_correctness
+    expected_urls:
+    - https://access.redhat.com/support/policy/rhel-container-compatibility/index.html
+  metadata:
+    confidence: HIGH
+    notes: Verified ticket with ground truth but NOT returned by strict JQL query
+- conversation_group_id: RSPEED-2745
+  turns:
+  - query: When does the maintenance support phase end for Red Hat Enterprise Linux
+      7?
+    expected_response: 'The maintenance support phase for Red Hat Enterprise Linux
+      7 ended on June 30, 2024. Specifically, RHEL 7''s Maintenance Support 2 phase
+      concluded on this date, after which RHEL 7 entered the Extended Life Phase.
+      As stated in the final retirement notice (RHBA-2024:4113): "Red Hat Enterprise
+      Linux 7 is retired as of June 30, 2024 and entered Extended Life Phase which
+      means users will receive the below support: Limited technical support for existing
+      Red Hat Enterprise Linux 7 deployments, previously released bug fixes (RHBAs),
+      security errata (RHSAs), and product enhancements (RHEAs)." Since today is April
+      7, 2026, this date is in the past. Customers who require continued maintenance
+      can subscribe to Extended Life Cycle Support (ELS), which is available until
+      June 30, 2028, though this is an add-on subscription and requires migrating
+      to RHEL 7.9.'
+    turn_metrics:
+    - ragas:context_relevance
+    - custom:answer_correctness
+    expected_urls:
+    - https://access.redhat.com/errata/RHBA-2024:4113/index.html
+    - https://access.redhat.com/errata/RHBA-2024:3499/index.html
+    - https://access.redhat.com/errata/RHBA-2024:1658/index.html
+    - https://access.redhat.com/errata/RHBA-2023:7849/index.html
+    - https://access.redhat.com/errata/RHBA-2023:4632/index.html
+  metadata:
+    confidence: HIGH
+    notes: Verified ticket with ground truth but NOT returned by strict JQL query
+- conversation_group_id: RSPEED-2702
+  turns:
+  - query: 'RSPEED-2702: okp-mcp tool incorrectly includes /index.html suffix in source
+      URLs, causing 404 errors'
+    expected_response: 'TODO: This ticket is not about RHEL technical knowledge verification.
+      RSPEED-2702 is a software defect ticket reporting that the okp-mcp tool incorrectly
+      formats source URLs by including /index.html suffixes (e.g., https://access.redhat.com/articles/5268351/index.html),
+      which causes 404 errors when users attempt to access them. The retrieved documentation
+      confirms these URLs do contain /index.html paths, validating the bug report.
+      This requires code changes to tools.py and formatting.py to strip the /index.html
+      suffix from URLs, not RHEL documentation verification.'
+    turn_metrics:
+    - ragas:context_relevance
+    - custom:answer_correctness
+    expected_urls:
+    - https://access.redhat.com/articles/5268351/index.html
+    - https://access.redhat.com/articles/6072011/index.html
+    - https://access.redhat.com/solutions/7131683/index.html
+  metadata:
+    confidence: HIGH
+    notes: Verified ticket with ground truth but NOT returned by strict JQL query
+- conversation_group_id: RSPEED-2657
+  turns:
+  - query: Is ticket RSPEED-2657 about rh-identity authentication header role extraction
+      a RHEL support question or an application development task?
+    expected_response: 'This ticket is NOT a Red Hat Enterprise Linux support question.
+      While ''Red Hat Identity Management'' (IdM/FreeIPA) is a legitimate RHEL feature
+      for enterprise authentication and authorization with RBAC support (documented
+      at https://access.redhat.com/articles/1586893), this ticket refers to ''rh-identity''
+      HTTP authentication headers, which are custom headers used in Red Hat''s cloud/SaaS
+      applications for passing authenticated user context between microservices. The
+      ticket describes a software development task: implementing middleware logic
+      in a Python application to extract role information (is_org_admin, entitlements)
+      from these custom HTTP headers instead of assigning all users a wildcard role.
+      This is application-level code implementation, not RHEL system administration,
+      IdM configuration, or any RHEL operating system feature.'
+    turn_metrics:
+    - ragas:context_relevance
+    - custom:answer_correctness
+    expected_urls:
+    - https://access.redhat.com/articles/1586893
+    - https://access.redhat.com/solutions/2133001
+    - https://access.redhat.com/solutions/3823622
+  metadata:
+    confidence: HIGH
+    notes: Verified ticket with ground truth but NOT returned by strict JQL query
+- conversation_group_id: RSPEED-2653
+  turns:
+  - query: What identity types should be supported in Red Hat Hybrid Cloud Console's
+      rh-identity authentication module, and how should ServiceAccount, Associate,
+      and X509 identity types be properly authenticated?
+    expected_response: 'This is a Red Hat Hybrid Cloud Console platform development
+      issue, not a RHEL operating system question. Based on retrieved documentation,
+      ServiceAccount is a confirmed identity type used for authenticating applications
+      and services on console.redhat.com. According to Red Hat''s official guidance
+      (Article 7036194): ''Service accounts are used to authenticate applications
+      and services, whereas user accounts are used to authenticate human users.''
+      The Hybrid Cloud Console has transitioned from basic authentication to token-based
+      authentication via service accounts for enhanced security. While the documentation
+      confirms ServiceAccount as a critical identity type for service-to-service authentication
+      and automation, specific implementation details about the identity-schemas specification
+      defining all 5 identity types (User, System, ServiceAccount, Associate, X509)
+      are not found in customer-facing documentation. The rh-identity module should
+      support ServiceAccount authentication by extracting client_id and username from
+      the identity.service_account block. For Associate and X509 identity types, implementation
+      details require access to internal Red Hat development specifications not available
+      in public documentation.'
+    turn_metrics:
+    - ragas:context_relevance
+    - custom:answer_correctness
+    expected_urls:
+    - https://access.redhat.com/articles/7036194
+    - https://access.redhat.com/articles/6977699
+  metadata:
+    confidence: MEDIUM
+    notes: Verified ticket with ground truth but NOT returned by strict JQL query
+- conversation_group_id: RSPEED-2652
+  turns:
+  - query: What are the security best practices for validating identity fields (user_id,
+      username, org_id, account_number) extracted from authentication headers to prevent
+      log injection and ensure type safety before using them in database queries and
+      application logs?
+    expected_response: 'TODO: This is an application-level security concern, not a
+      RHEL operating system configuration issue. RHEL documentation does not provide
+      specific guidance on validating authentication header fields. The retrieved
+      documentation on ''Hardening Apache web server (httpd)'' references OWASP as
+      ''an industry leader in web server/application security'' for securing web applications
+      and modules beyond the base server. For input validation best practices for
+      authentication modules, consult OWASP Input Validation Cheat Sheet and application-specific
+      security guidelines rather than RHEL documentation. The validation requirements
+      (type checking, length limits, control character filtering, log injection prevention)
+      are application security patterns not covered in RHEL system administration
+      guides.'
+    turn_metrics:
+    - ragas:context_relevance
+    - custom:answer_correctness
+    expected_urls:
+    - https://access.redhat.com/solutions/393403/index.html
+  metadata:
+    confidence: LOW
+    notes: Verified ticket with ground truth but NOT returned by strict JQL query
+- conversation_group_id: RSPEED-2651
+  turns:
+  - query: What security measures should be implemented for x-rh-identity header validation
+      to prevent denial-of-service attacks in Red Hat authentication services?
+    expected_response: 'TODO: Retrieved documentation does not contain specific guidance
+      on x-rh-identity header validation or header size limits for Red Hat authentication
+      services. While general security best practices emphasize input validation (as
+      noted in CVE-2018-15869 regarding improper input validation), no RHEL documentation
+      was found that specifically addresses DoS prevention measures for the x-rh-identity
+      authentication header, recommended header size limits, or base64 decode protection
+      strategies. This appears to be an implementation-specific security concern that
+      may require consulting Red Hat product security documentation, service-specific
+      security guides, or filing a support case for authoritative guidance.'
+    turn_metrics:
+    - ragas:context_relevance
+    - custom:answer_correctness
+    expected_urls:
+    - https://access.redhat.com/security/cve/CVE-2018-15869/index.html
+    - https://access.redhat.com/solutions/4368071/index.html
+  metadata:
+    confidence: LOW
+    notes: Verified ticket with ground truth but NOT returned by strict JQL query
+- conversation_group_id: RSPEED-2536
+  turns:
+  - query: 'Why does tar fail with ''Cannot utime: Operation not permitted'' and ''Cannot
+      change mode'' errors when extracting archives as a non-root user under OpenShift''s
+      restricted-v2 Security Context Constraint, and how can this be resolved?'
+    expected_response: 'Under OpenShift''s restricted-v2 SCC (introduced as default
+      in OCP 4.11+), containers run with randomly assigned high-numbered UIDs from
+      namespace-specific ranges and operate with severely restricted capabilities.
+      Official documentation confirms that restricted-v2 ''drops all capabilities''
+      and is ''the most restrictive policy that matches the current pod security standards''
+      (KCS 6975936, KCS 6973044). While the documentation does not specifically address
+      tar extraction failures, the root cause follows from standard RHEL permission
+      models: tar''s default behavior attempts to preserve original file ownership
+      (chown), permissions (chmod), and timestamps (utime) from the archive. These
+      operations require elevated privileges that randomly-assigned unprivileged UIDs
+      lack under restricted-v2. When these syscalls fail with EPERM (Operation not
+      permitted), tar exits with errors. The solution is to use tar extraction flags
+      --no-same-owner and --no-same-permissions, which instruct tar to skip preservation
+      of original ownership and permissions, instead using the extracting user''s
+      UID/GID and applying umask-based permissions.'
+    turn_metrics:
+    - ragas:context_relevance
+    - custom:answer_correctness
+    expected_urls:
+    - https://access.redhat.com/solutions/6975936/index.html
+    - https://access.redhat.com/articles/6973044/index.html
+    - https://access.redhat.com/articles/6844071/index.html
+  metadata:
+    confidence: MEDIUM
+    notes: Verified ticket with ground truth but NOT returned by strict JQL query
+- conversation_group_id: RSPEED-2482
+  turns:
+  - query: Can I run a RHEL 6 container on RHEL 9?
+    expected_response: 'No, running RHEL 6 containers on RHEL 9 hosts is explicitly
+      unsupported. According to the official Red Hat Enterprise Linux Container Compatibility
+      Matrix, RHEL 6 container images are marked as ''Unsupported'' on RHEL 9 hosts.
+      The compatibility matrix states: ''While containers have strong isolation between
+      other containers, they directly depend on the underlying Linux host and kernel
+      for critical interfaces. There are known limitations with mixing and matching
+      versions of the operating system in the container image and the container host.''
+      The matrix explicitly shows RHEL 6 Image on RHEL 9 Host as ''Unsupported''.
+      Supported alternatives include: (1) Using a RHEL 8 host to run RHEL 6 containers,
+      as the matrix shows this combination is ''Supported'', (2) Migrating the application
+      to a supported container base image (RHEL 7, 8, or 9) on the RHEL 9 host, or
+      (3) Planning migration away from RHEL 6 as it has reached end of support. Red
+      Hat recommends using supported combinations to ensure access to support and
+      avoid potential compatibility issues.'
+    turn_metrics:
+    - ragas:context_relevance
+    - custom:answer_correctness
+    expected_urls:
+    - https://access.redhat.com/support/policy/rhel-container-compatibility/index.html
+  metadata:
+    confidence: HIGH
+    notes: Verified ticket with ground truth but NOT returned by strict JQL query
+- conversation_group_id: RSPEED-2481
+  turns:
+  - query: Is SPICE available for RHEL 9 virtual machines, and what is its current
+      support status?
+    expected_response: 'SPICE is NOT available in RHEL 9. It has been completely removed
+      from the QEMU/KVM virtualization stack in RHEL 9.0. According to Red Hat documentation:
+      "Smartcard support was removed in RHEL9. Previously, smartcards were supported
+      through SPICE-based virtualization which has since been deprecated." VNC is
+      now the officially supported display protocol for VM console access in RHEL
+      9. Customers should use VNC for graphical console access to virtual machines.
+      SPICE-dependent features like smartcard passthrough from host to VM are no longer
+      supported natively and are only available through third-party remote visualization
+      solutions. The removal was documented in the RHEL 9.0.0 release considerations.'
+    turn_metrics:
+    - ragas:context_relevance
+    - custom:answer_correctness
+    expected_urls:
+    - https://access.redhat.com/solutions/7127683/index.html
+    - https://access.redhat.com/solutions/7132090/index.html
+  metadata:
+    confidence: HIGH
+    notes: Verified ticket with ground truth but NOT returned by strict JQL query
+- conversation_group_id: RSPEED-2480
+  turns:
+  - query: What are the recommended tools for managing virtual machines in RHEL 9
+      and later versions?
+    expected_response: 'TODO: Retrieved documentation does not verify VM management
+      tools. Documents found relate to RHEL 9 cloud deployments, subscription issues
+      with virt-who, and upgrade paths - but do not contain information about virt-manager
+      deprecation, cockpit-machines, virsh, or OpenShift Virtualization recommendations.
+      Need to retrieve official RHEL 9 virtualization guide or KVM/virtualization
+      management documentation.'
+    turn_metrics:
+    - ragas:context_relevance
+    - custom:answer_correctness
+    expected_urls:
+    - https://access.redhat.com/solutions/6962671/index.html
+    - https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/9/html-single/considerations_in_adopting_rhel_9/index/index.html
+    - https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/9/html-single/deploying_rhel_9_on_google_cloud/index/index.html
+    - https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/9/html-single/deploying_rhel_9_on_microsoft_azure/index/index.html
+    - https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/9/html-single/upgrading_from_rhel_8_to_rhel_9/index/index.html
+  metadata:
+    confidence: LOW
+    notes: Verified ticket with ground truth but NOT returned by strict JQL query
+- conversation_group_id: RSPEED-2479
+  turns:
+  - query: How long is an EUS (Extended Update Support) release supported for in RHEL?
+    expected_response: 'An EUS release in RHEL is supported for 24 months from the
+      General Availability (GA) date of the minor release. This is the total support
+      period, not additional time on top of standard support.
+
+
+      As stated in the official documentation:
+
+      - "Each Red Hat Enterprise Linux EUS stream is available for 24 months from
+      the availability of the minor release." (RHEL 8 EUS FAQ, RHEL 9 EUS FAQ)
+
+
+      For RHEL 9 and later versions, Enhanced EUS is also available, providing extended
+      support:
+
+      - "Each Red Hat Enterprise Linux Enhanced EUS stream is available for 48 months
+      from the availability of the minor release." (RHEL 9 EUS FAQ)
+
+
+      Key clarifications:
+
+      - The 24-month EUS period starts from the minor release GA date, not from the
+      end of standard support
+
+      - This applies consistently across RHEL 7, 8, and 9
+
+      - Enhanced EUS (48 months) is available for select RHEL 9 minor releases: 9.0,
+      9.2, 9.4, 9.6, and 9.8'
+    turn_metrics:
+    - ragas:context_relevance
+    - custom:answer_correctness
+    expected_urls:
+    - https://access.redhat.com/articles/rhel9-eus-faq/index.html
+    - https://access.redhat.com/articles/4520991/index.html
+    - https://access.redhat.com/solutions/1312903/index.html
+  metadata:
+    confidence: HIGH
+    notes: Verified ticket with ground truth but NOT returned by strict JQL query
+- conversation_group_id: RSPEED-2478
+  turns:
+  - query: Which RHEL 9 minor releases have Extended Update Support (EUS) available?
+    expected_response: 'Extended Update Support (EUS) is available for the following
+      even-numbered RHEL 9 minor releases: 9.0, 9.2, 9.4, 9.6, and 9.8. According
+      to the official Red Hat Enterprise Linux 9 EUS FAQ, "Red Hat Enterprise Linux
+      9.0, 9.2, 9.4, 9.6, and 9.8 (RHEL 9 minor releases through Full Support Phase)"
+      are planned to have EUS and Enhanced EUS support. Each EUS stream is available
+      for 24 months from the minor release availability, while Enhanced EUS extends
+      this to 48 months. Odd-numbered releases (9.1, 9.3, 9.5, 9.7, etc.) do not receive
+      EUS support, consistent with Red Hat''s policy of providing EUS only for even-numbered
+      minor releases.'
+    turn_metrics:
+    - ragas:context_relevance
+    - custom:answer_correctness
+    expected_urls:
+    - https://access.redhat.com/articles/rhel9-eus-faq/index.html
+    - https://access.redhat.com/solutions/6992982/index.html
+  metadata:
+    confidence: HIGH
+    notes: Verified ticket with ground truth but NOT returned by strict JQL query
+- conversation_group_id: RSPEED-2294
+  turns:
+  - query: What is the most current version of Python available for RHEL 10?
+    expected_response: 'TODO: While RHEL 10.0 has been officially released (confirmed
+      by documentation showing RHEL 10.0 kernel packages and support articles updated
+      through September 2025), the specific Python versions available in RHEL 10''s
+      AppStream repository are not verified by the retrieved documentation. Additional
+      documentation specifically covering RHEL 10 Python packages, AppStream modules,
+      or software collections is needed to provide an accurate answer.'
+    turn_metrics:
+    - ragas:context_relevance
+    - custom:answer_correctness
+    expected_urls:
+    - https://access.redhat.com/solutions/7131787/index.html
+    - https://access.redhat.com/solutions/7000060/index.html
+  metadata:
+    confidence: LOW
+    notes: Verified ticket with ground truth but NOT returned by strict JQL query
+- conversation_group_id: RSPEED-2218
+  turns:
+  - query: Why does 'rhel-cla start' fail with error 'executable file ramalama not
+      found in $PATH' on RHEL 10.1 with podman 5.6.0?
+    expected_response: 'This is a known issue (bug RSPEED-2218) in the RHEL command-line
+      assistant offline developer preview release available with RHEL 10.1. The error
+      ''runtime stderr: executable file ramalama not found in $PATH'' occurs when
+      starting rhel-cla.
+
+
+      Workaround:
+
+      1. For CPU-only systems: Edit ~/.config/rhel-cla/.env and update LLAMACPP_IMAGE
+      to: LLAMACPP_IMAGE="quay.io/ramalama/ramalama:6ae863e9f552797b45d0fd8632c4f7ec9b78c430"
+
+      2. For NVIDIA GPU systems: Edit ~/.config/rhel-cla/.env and update LLAMACPP_IMAGE
+      to: LLAMACPP_IMAGE="quay.io/ramalama/cuda:0.14"
+
+      3. Start rhel-cla using: rhel-cla start
+
+
+      Note: RHEL CLA for offline use is in Developer Preview and not intended for
+      production use. The system must be registered via RHEL Satellite, RHSM, or RHC
+      to use this feature.'
+    turn_metrics:
+    - ragas:context_relevance
+    - custom:answer_correctness
+    expected_urls:
+    - https://access.redhat.com/solutions/7134825/index.html
+    - https://access.redhat.com/solutions/7136542/index.html
+  metadata:
+    confidence: HIGH
+    notes: Verified ticket with ground truth but NOT returned by strict JQL query
+- conversation_group_id: RSPEED-2201
+  turns:
+  - query: How to configure RHEL on AWS with Secure Boot mechanism for Nitro instances?
+    expected_response: 'TODO: No Red Hat documentation found confirming AWS Secure
+      Boot support for RHEL instances. Retrieved articles discuss AWS Nitro instances
+      (kernel panic/NMI only) and Secure Boot in other contexts (RHEL AI, signing
+      third-party drivers, KVM/QEMU VMs), but none confirm or provide configuration
+      steps for Secure Boot on RHEL running on AWS EC2. This capability may exist
+      on AWS side but lacks official Red Hat documentation or support guidance.'
+    turn_metrics:
+    - ragas:context_relevance
+    - custom:answer_correctness
+    expected_urls:
+    - https://access.redhat.com/solutions/4464301/index.html
+    - https://access.redhat.com/solutions/7097480/index.html
+    - https://access.redhat.com/solutions/7011187/index.html
+    - https://access.redhat.com/solutions/3938641/index.html
+    - https://access.redhat.com/solutions/7041103/index.html
+  metadata:
+    confidence: LOW
+    notes: Verified ticket with ground truth but NOT returned by strict JQL query
+- conversation_group_id: RSPEED-2136
+  turns:
+  - query: How to prepare a custom SELinux policy based on AVC messages?
+    expected_response: "Creating custom SELinux policy modules based on AVC messages\
+      \ is a documented procedure in RHEL, though Red Hat officially states that 'Red\
+      \ Hat doesn't support creating custom SELinux policy modules, because this falls\
+      \ outside of the Production Support Scope of Coverage' (https://access.redhat.com/articles/5494701).\
+      \ Despite this support policy caveat, Red Hat provides comprehensive documentation\
+      \ and tools for this procedure, and Red Hat solutions frequently use this approach\
+      \ as verified workarounds.\n\nThe standard procedure involves:\n\n1. **Collect\
+      \ AVC denials**: Use ausearch to gather recent denials:\n   ```\n   ausearch\
+      \ -m avc -ts recent\n   ```\n\n2. **Generate policy module**: Use audit2allow\
+      \ to create a policy module:\n   ```\n   ausearch -m avc -ts recent | audit2allow\
+      \ -M <module_name>\n   ```\n\n3. **Review generated policy**: Examine the .te\
+      \ file to understand security implications:\n   ```\n   cat <module_name>.te\n\
+      \   ```\n\n4. **Install the policy module**: Apply the compiled policy:\n  \
+      \ ```\n   semodule -i <module_name>.pp\n   ```\n\n5. **Verify**: Re-test the\
+      \ application to confirm the policy resolves the denials.\n\nRed Hat provides\
+      \ the required tools (policycoreutils-python-utils package) and extensive documentation\
+      \ on creating custom policy modules wisely (https://access.redhat.com/articles/5494701).\
+      \ Multiple verified Red Hat solutions demonstrate this procedure, including\
+      \ solutions 7126448, 4400471, and 5030621. While Red Hat recommends consulting\
+      \ experts and understanding security implications before creating custom policies,\
+      \ the procedure itself is well-documented and the tools are officially provided."
+    turn_metrics:
+    - ragas:context_relevance
+    - custom:answer_correctness
+    expected_urls:
+    - https://access.redhat.com/articles/5494701
+    - https://access.redhat.com/solutions/7126448
+    - https://access.redhat.com/solutions/4400471
+    - https://access.redhat.com/solutions/5030621
+  metadata:
+    confidence: HIGH
+    notes: Verified ticket with ground truth but NOT returned by strict JQL query
+- conversation_group_id: RSPEED-2123
+  turns:
+  - query: How to enable debugging for the bnxt_en network interface card (NIC) driver
+      in RHEL?
+    expected_response: 'To enable bnxt_en driver debugging in RHEL, use the ethtool
+      message level interface (preferred) or module parameters:
+
+
+      **Method 1: ethtool (Preferred - No Reboot Required)**
+
+      The bnxt_en driver supports the ethtool message level dynamic interface. Check
+      current level:
+
+      ```
+
+      ethtool <device>
+
+      ```
+
+      Enable specific debug categories:
+
+      ```
+
+      ethtool -s <device> msglvl drv on probe on link on hw on ifdown on ifup on
+
+      ```
+
+      Or set numerically:
+
+      ```
+
+      ethtool -s <device> msglvl 0x2037
+
+      ```
+
+      Enable full logging (WARNING: floods kernel log):
+
+      ```
+
+      ethtool -s <device> msglvl 0xffffff
+
+      ```
+
+      According to Red Hat: "This is preferable as it requires no reboot or downtime.
+      The logging of debug messages can be targeted to specific areas and turned on/off
+      as desired."
+
+
+      **Method 2: Module Parameters**
+
+      Set debug parameter via /etc/modprobe.d/ configuration file:
+
+      ```
+
+      options bnxt_en debug=<level>
+
+      ```
+
+      Then reload the module or reboot. Can also set at runtime via sysfs:
+
+      ```
+
+      echo <level> > /sys/module/bnxt_en/parameters/debug
+
+      ```
+
+
+      **View Debug Output:**
+
+      Use `dmesg` or `journalctl -k` to view kernel debug messages.
+
+
+      Note: Each NIC driver has unique debug settings. The ethtool msglvl interface
+      allows targeting specific message types (drv, probe, link, ifdown, ifup, hw,
+      tx_err, rx_err, etc.) without requiring module reload.'
+    turn_metrics:
+    - ragas:context_relevance
+    - custom:answer_correctness
+    expected_urls:
+    - https://access.redhat.com/solutions/45950/index.html
+  metadata:
+    confidence: HIGH
+    notes: Verified ticket with ground truth but NOT returned by strict JQL query
+- conversation_group_id: RSPEED-2113
+  turns:
+  - query: How to configure a LACP bond named 'prod' with slave interfaces ens6 and
+      ens8, LACP rate slow, IP address 192.9.8.3/24, and gateway 192.9.8.1 using nmcli
+      commands on RHEL?
+    expected_response: 'To configure a LACP bond using nmcli on RHEL, use the following
+      commands:
+
+
+      1. Create the bond interface:
+
+      ```
+
+      nmcli con add type bond ifname prod con-name prod bond.options "mode=802.3ad,lacp_rate=slow"
+      ipv4.method manual ipv4.addresses 192.9.8.3/24 ipv4.gateway 192.9.8.1
+
+      ```
+
+
+      2. Add slave interfaces:
+
+      ```
+
+      nmcli con add type bond-slave ifname ens6 con-name prod-slave-ens6 master prod
+
+      nmcli con add type bond-slave ifname ens8 con-name prod-slave-ens8 master prod
+
+      ```
+
+
+      3. Activate the bond:
+
+      ```
+
+      nmcli con up prod
+
+      ```
+
+
+      Key points verified from RHEL documentation:
+
+      - Mode 4 is equivalent to 802.3ad (LACP): "Bonding Mode 4 ( 802.3ad ) also known
+      as LACP (Link Aggregation Control Protocol)" (source: https://access.redhat.com/solutions/666853)
+
+      - LACP rate slow is a valid parameter, as shown in bonding proc output: "LACP
+      rate: slow" (source: https://access.redhat.com/solutions/160283)
+
+      - Mode 4/802.3ad requires switch configuration to establish an "EtherChannel"
+      or similar port grouping (source: https://access.redhat.com/solutions/67546)
+
+      - All switch ports connected to the bonded interfaces must be assigned to the
+      same static/active trunk for proper aggregator ID negotiation (source: https://access.redhat.com/solutions/30469)
+
+
+      Note: The bond mode must be specified as either ''mode=802.3ad'' or ''mode=4'',
+      not ''mode=active-lacp'' which is invalid. Bond options are comma-separated
+      within the bond.options parameter.'
+    turn_metrics:
+    - ragas:context_relevance
+    - custom:answer_correctness
+    expected_urls:
+    - https://access.redhat.com/solutions/160283
+    - https://access.redhat.com/solutions/666853
+    - https://access.redhat.com/solutions/67546
+    - https://access.redhat.com/solutions/30469
+  metadata:
+    confidence: MEDIUM
+    notes: Verified ticket with ground truth but NOT returned by strict JQL query
+- conversation_group_id: RSPEED-2004
+  turns:
+  - query: How do I resolve CLA authentication failures when RHEL is registered to
+      Red Hat Satellite 6.17+ instead of the cloud service?
+    expected_response: "To resolve CLA authentication failures when using Red Hat\
+      \ Satellite as the Lightspeed backend, perform the following steps:\n\n1. **Update\
+      \ the Lightspeed endpoint configuration** (Primary fix):\n   - Edit `/etc/xdg/command-line-assistant/config.toml`\n\
+      \   - Set: `endpoint = \"https://satellite.example.com/api/lightspeed/v1\"`\
+      \ (replace with your actual Satellite FQDN)\n   - Restart the clad service:\
+      \ `systemctl restart clad`\n   - This is required because Satellite 6.17+ proxies\
+      \ Lightspeed API requests through the Satellite server\n\n2. **If Satellite\
+      \ uses self-signed certificates** (Additional step when applicable):\n   - Copy\
+      \ the Satellite CA certificate to the system trust store: `cp /path/to/satellite_ca.crt\
+      \ /etc/pki/ca-trust/source/anchors/`\n   - Update the system trust bundles:\
+      \ `update-ca-trust`\n   - The CLA relies on the system-wide trust store to validate\
+      \ HTTPS connections; without the Satellite CA certificate, authentication will\
+      \ fail even with correct endpoint configuration\n\n**Prerequisites**: Red Hat\
+      \ Satellite 6.17 or later (issue SAT-32475 was fixed in this version)\n\n**Troubleshooting**:\
+      \ Enable debug logging by setting `level = \"DEBUG\"` under `[logging]` in config.toml\
+      \ and check logs with `journalctl -u clad --no-pager`\n\nSource: Red Hat Solutions\
+      \ 7121796, 7132350"
+    turn_metrics:
+    - ragas:context_relevance
+    - custom:answer_correctness
+    expected_urls:
+    - https://access.redhat.com/solutions/7121796/index.html
+    - https://access.redhat.com/solutions/7132350/index.html
+    - https://access.redhat.com/solutions/7129813/index.html
+    - https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/10/html-single/interacting_with_the_command-line_assistant_powered_by_rhel_lightspeed/index/index.html
+    - https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/9/html-single/interacting_with_the_command-line_assistant_powered_by_rhel_lightspeed/index/index.html
+  metadata:
+    confidence: HIGH
+    notes: Verified ticket with ground truth but NOT returned by strict JQL query
+- conversation_group_id: RSPEED-2003
+  turns:
+  - query: 1. What is an immutable file in RHEL and how is it created? 2. How do you
+      install and configure an Apache HTTP web server on RHEL?
+    expected_response: '1. An immutable file in RHEL is a file with the immutable
+      attribute (i flag) set, which prevents the file from being modified, deleted,
+      or renamed, even by the root user. To create an immutable file, use the chattr
+      command: ''chattr +i filename''. To verify the immutable attribute is set, use
+      ''lsattr filename'' which will show ''----i-------'' in the output. The immutable
+      attribute can be removed with ''chattr -i filename''. This is commonly used
+      to protect critical system files like /etc/resolv.conf, /etc/sudoers, and /etc/sysctl.conf
+      from accidental or malicious changes. As stated in Red Hat Solution 1336303:
+      "A file with i immutable attribute can''t be modified. It can''t be deleted
+      or renamed. No data can be written to this file even as the root user."
+
+
+      2. TODO: No official RHEL documentation was retrieved to verify the Apache HTTP
+      Server installation and configuration steps. The hypothesis provided needs verification
+      from official Red Hat documentation before it can be confirmed as the expected
+      response.'
+    turn_metrics:
+    - ragas:context_relevance
+    - custom:answer_correctness
+    expected_urls:
+    - https://access.redhat.com/solutions/1336303
+    - https://access.redhat.com/solutions/7073620
+    - https://access.redhat.com/solutions/7034610
+    - https://access.redhat.com/solutions/209863
+    - https://access.redhat.com/solutions/6257221
+  metadata:
+    confidence: MEDIUM
+    notes: Verified ticket with ground truth but NOT returned by strict JQL query
+- conversation_group_id: RSPEED-1998
+  turns:
+  - query: How to install and configure the Kea DHCP server on RHEL 10?
+    expected_response: 'Kea is the official DHCP server solution in RHEL 10, replacing
+      the deprecated ISC DHCP server. As stated in Red Hat documentation: ''The Kea
+      DHCP server replaces ISC DHCP'' and ''RHEL 10 uses kea for DHCP.''
+
+
+      Installation:
+
+      - Install via: dnf install kea
+
+      - For DHCPv4 and DHCPv6 support, install the kea package from RHEL 10 repositories
+
+
+      Configuration:
+
+      - Configuration files are located in /etc/kea/ directory
+
+      - Uses JSON format (e.g., /etc/kea/kea-dhcp4.conf for DHCPv4)
+
+      - Supports both DHCPv4 and DHCPv6 services
+
+      - Includes features like lease database management, logger configuration, client
+      classification, and static host assignments
+
+
+      Detailed setup instructions are available in the official RHEL 10 documentation
+      under ''Managing networking infrastructure services'' > ''Providing DHCP services''
+      > ''Setting up a Kea DHCP server''. A practical PXE server configuration example
+      demonstrating Kea DHCP setup is also available in Red Hat solution articles.'
+    turn_metrics:
+    - ragas:context_relevance
+    - custom:answer_correctness
+    expected_urls:
+    - https://access.redhat.com/solutions/435003/index.html
+    - https://access.redhat.com/solutions/7126352/index.html
+    - https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/10/html-single/managing_networking_infrastructure_services/index/index.html
+  metadata:
+    confidence: HIGH
+    notes: Verified ticket with ground truth but NOT returned by strict JQL query
+- conversation_group_id: RSPEED-1931
+  turns:
+  - query: How do I manage kernel arguments on rpm-ostree-based RHEL systems (RHEL
+      for Edge, RHEL CoreOS, RHEL Atomic Host)?
+    expected_response: 'On rpm-ostree-based systems (RHEL for Edge, RHEL CoreOS, RHEL
+      Atomic Host), you must use ''rpm-ostree kargs'' to manage kernel arguments.
+      The command syntax is:
+
+
+      - Add arguments: ''rpm-ostree kargs --append=KEY=VALUE'' (use --append-if-missing=KEY=VALUE
+      to only add if not present)
+
+      - Replace arguments: ''rpm-ostree kargs --replace=KEY=VALUE=NEWVALUE''
+
+      - Remove arguments: ''rpm-ostree kargs --delete=KEY=VALUE'' (use --delete-if-present=KEY=VALUE
+      to avoid errors if missing)
+
+      - View current arguments: ''rpm-ostree kargs'' (without options)
+
+      - Edit interactively: ''rpm-ostree kargs --editor''
+
+
+      After making changes, the output will show ''Changes queued for next boot. Run
+      "systemctl reboot" to start a reboot''. A reboot is required to apply kernel
+      argument changes. The rpm-ostree changes will be preserved after cluster/system
+      updates.
+
+
+      Important notes:
+
+      - For arguments with special characters like quotes, use escape characters (e.g.,
+      ''rpm-ostree kargs --append-if-missing=cgroup_no_v1=\"all\"'')
+
+      - The --delete operation will fail if the specified kernel argument doesn''t
+      exist (unless using --delete-if-present)
+
+      - On OpenShift, MachineConfig is the standard way to manage kernel arguments,
+      but rpm-ostree kargs is used for operations not supported by MachineConfig Operator
+      (like removing certain arguments)
+
+      - Do not use grubby on rpm-ostree systems, as it is designed for traditional
+      RPM-based RHEL systems'
+    turn_metrics:
+    - ragas:context_relevance
+    - custom:answer_correctness
+    expected_urls:
+    - https://access.redhat.com/solutions/7069583
+    - https://access.redhat.com/solutions/7124614
+    - https://access.redhat.com/solutions/6972920
+    - https://access.redhat.com/solutions/6178742
+    - https://access.redhat.com/solutions/3909051
+  metadata:
+    confidence: HIGH
+    notes: Verified ticket with ground truth but NOT returned by strict JQL query
+- conversation_group_id: RSPEED-1912
+  turns:
+  - query: Why does restarting the clad service on RHEL 10.0 ppc64le architecture
+      produce a 'could not allocate closure' error that was not present in RHEL 9.6?
+    expected_response: 'TODO: Insufficient documentation found. While RHEL documentation
+      confirms the Python version upgrade from 3.9 (RHEL 9) to 3.12 (RHEL 10), no
+      specific documentation was found addressing the ''could not allocate closure''
+      FFI error, libffi library changes on ppc64le architecture, or known issues with
+      the clad service on RHEL 10. This requires further investigation through: (1)
+      Red Hat Bugzilla for ppc64le-specific libffi or Python 3.12 FFI issues, (2)
+      analysis of clad service dependencies and D-Bus binding initialization, (3)
+      comparison of libffi package versions between RHEL 9.6 and 10.0 on ppc64le,
+      (4) verification of known regressions with available errata or workarounds.'
+    turn_metrics:
+    - ragas:context_relevance
+    - custom:answer_correctness
+    expected_urls:
+    - https://access.redhat.com/solutions/7135490/index.html
+    - https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/10/html-single/installing_and_using_dynamic_programming_languages/index/index.html
+  metadata:
+    confidence: LOW
+    notes: Verified ticket with ground truth but NOT returned by strict JQL query
+- conversation_group_id: RSPEED-1902
+  turns:
+  - query: How to mount a Kerberos-authenticated CIFS share at boot time on RHEL using
+      a keytab file?
+    expected_response: 'TODO: Retrieved documentation confirms CIFS mounts support
+      Kerberos authentication via sec=krb5 mount option across RHEL 6, 7, and 8, but
+      lacks detailed procedural guidance on keytab configuration, request-key.d setup,
+      and boot-time mounting specifics needed to provide a complete verified answer.
+      Retrieved sources are troubleshooting articles addressing specific kernel bugs
+      (credential expiration, session setup errors) rather than how-to guides for
+      initial configuration.'
+    turn_metrics:
+    - ragas:context_relevance
+    - custom:answer_correctness
+    expected_urls:
+    - https://access.redhat.com/solutions/2573141/index.html
+    - https://access.redhat.com/solutions/7087983/index.html
+    - https://access.redhat.com/solutions/3403331/index.html
+  metadata:
+    confidence: LOW
+    notes: Verified ticket with ground truth but NOT returned by strict JQL query
+- conversation_group_id: RSPEED-1759
+  turns:
+  - query: Does dbus-broker automatically detect newly installed D-Bus service files
+      after RPM package installation, or does it require a manual reload via systemctl
+      or busctl?
+    expected_response: 'dbus-broker does not automatically detect newly installed
+      D-Bus service files placed in /usr/share/dbus-1/system-services/ during package
+      installation. The D-Bus service must be made aware of new service files through
+      one of these methods:
+
+
+      1. **System reboot** (automatic but impractical)
+
+      2. **Manual reload**: `systemctl reload dbus-broker` or `busctl --system call
+      org.freedesktop.DBus /org/freedesktop/DBus org.freedesktop.DBus ReloadConfig`
+
+      3. **RPM %post scriptlet** (recommended): Add to the package spec file:
+
+
+      ```bash
+
+      %post
+
+      systemctl reload dbus-broker.service >/dev/null 2>&1 || :
+
+      ```
+
+
+      The %post scriptlet approach is standard practice in RHEL packaging for services
+      that install D-Bus activation files. The `|| :` ensures the scriptlet doesn''t
+      fail if dbus-broker is not running. This is the recommended solution for the
+      command-line-assistant package to ensure clad.service becomes bus-activatable
+      immediately after installation.
+
+
+      Note: While RPM packaging best practices confirm that %post scriptlets are the
+      standard mechanism for post-installation service configuration tasks, the specific
+      technical behavior of dbus-broker''s service file detection was not directly
+      confirmed in the retrieved documentation.'
+    turn_metrics:
+    - ragas:context_relevance
+    - custom:answer_correctness
+    expected_urls:
+    - https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/9/html-single/packaging_and_distributing_software/index/index.html
+    - https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/8/html-single/packaging_and_distributing_software/index/index.html
+    - https://access.redhat.com/solutions/3025611/index.html
+  metadata:
+    confidence: MEDIUM
+    notes: Verified ticket with ground truth but NOT returned by strict JQL query
+- conversation_group_id: RSPEED-1736
+  turns:
+  - query: What are the standard formatting conventions for CLI help output section
+      headers in RHEL/Red Hat tools, specifically regarding consistent casing (e.g.,
+      'options:' vs 'Filtering Options:')?
+    expected_response: 'TODO: Retrieved documentation about roxctl CLI does not contain
+      information about help output formatting conventions or section header casing
+      standards. The search results only show installation and usage guides without
+      actual help text examples. No official Red Hat style guide for CLI help formatting
+      was found. Need to either: 1) Search for Red Hat developer documentation or
+      CLI style guides, 2) Examine actual roxctl help output to identify current conventions,
+      or 3) Review Python argparse/Click library documentation that Red Hat tools
+      commonly use.'
+    turn_metrics:
+    - ragas:context_relevance
+    - custom:answer_correctness
+    expected_urls:
+    - https://access.redhat.com/documentation/en-us/red_hat_advanced_cluster_security_for_kubernetes/3.70/html-single/roxctl_cli/index/index.html
+    - https://access.redhat.com/documentation/en-us/red_hat_advanced_cluster_security_for_kubernetes/3.71/html-single/roxctl_cli/index/index.html
+    - https://access.redhat.com/documentation/en-us/red_hat_advanced_cluster_security_for_kubernetes/4.0/html-single/roxctl_cli/index/index.html
+  metadata:
+    confidence: LOW
+    notes: Verified ticket with ground truth but NOT returned by strict JQL query
+- conversation_group_id: RSPEED-1735
+  turns:
+  - query: How to make the CLI command 'c' respect LC_TIME locale settings for date
+      formatting in its output
+    expected_response: 'TODO: Retrieved documentation covers Red Hat Lightspeed service
+      (insights-client, rhc client) but contains no information about a CLI command
+      named ''c'' or its locale handling. The documentation discusses insights-client
+      configuration, remote host configuration (rhc), and OpenShift Lightspeed Advisor,
+      none of which address locale-aware date formatting for a ''c'' command. Additional
+      investigation needed to identify what the ''c'' command refers to and locate
+      relevant documentation or source code.'
+    turn_metrics:
+    - ragas:context_relevance
+    - custom:answer_correctness
+    expected_urls:
+    - https://access.redhat.com/documentation/en-us/red_hat_lightspeed/1-latest/html-single/client_configuration_guide_for_red_hat_lightspeed/index/index.html
+    - https://access.redhat.com/documentation/en-us/red_hat_lightspeed/1-latest/html-single/client_configuration_guide_for_red_hat_lightspeed_with_fedramp/index/index.html
+    - https://access.redhat.com/documentation/en-us/red_hat_lightspeed/1-latest/html-single/remote_host_configuration_and_management/index/index.html
+  metadata:
+    confidence: LOW
+    notes: Verified ticket with ground truth but NOT returned by strict JQL query
+- conversation_group_id: RSPEED-1653
+  turns:
+  - query: 'What is the correct Nmstate YAML configuration to: (1) delete the bond
+      device bond99, and (2) disable the tlb_dynamic_lb option for bond99?'
+    expected_response: "**Part 1 - Deleting bond99 (VERIFIED):**\n\nTo delete the\
+      \ bond device bond99, set the interface state to 'absent' in the Nmstate configuration:\n\
+      \n```yaml\ninterfaces:\n- name: bond99\n  type: bond\n  state: absent\n```\n\
+      \nThis is confirmed by multiple official Red Hat solutions. As stated in the\
+      \ documentation: \"Edit the NodeNetworkConfigurationPolicy object and specify\
+      \ the status as absent\" and \"Deleting the NodeNetworkConfigurationPolicy will\
+      \ not remove the bond from the nodes, making the NodeNetworkConfigurationPolicy\
+      \ status absent will remove the configuration from the node.\"\n\n**Important**:\
+      \ Simply deleting the NodeNetworkConfigurationPolicy (NNCP) does not remove\
+      \ the interface from nodes. You must explicitly set `state: absent` in the interface\
+      \ configuration and apply the updated policy.\n\n**Part 2 - Disabling tlb_dynamic_lb\
+      \ (NOT VERIFIED):**\n\nThe retrieved documentation does not contain information\
+      \ about the tlb_dynamic_lb bonding option. Based on general Linux bonding knowledge,\
+      \ the configuration would be:\n\n```yaml\ninterfaces:\n- name: bond99\n  type:\
+      \ bond\n  state: up\n  link-aggregation:\n    mode: balance-tlb\n    options:\n\
+      \      tlb_dynamic_lb: 0\n```\n\nHowever, this portion is inferred from Linux\
+      \ kernel bonding documentation, not from official RHEL/NMState documentation."
+    turn_metrics:
+    - ragas:context_relevance
+    - custom:answer_correctness
+    expected_urls:
+    - https://access.redhat.com/solutions/7033585/index.html
+    - https://access.redhat.com/solutions/7124091/index.html
+    - https://access.redhat.com/solutions/7032087/index.html
+    - https://access.redhat.com/solutions/6956117/index.html
+    - https://access.redhat.com/solutions/7050803/index.html
+  metadata:
+    confidence: MEDIUM
+    notes: Verified ticket with ground truth but NOT returned by strict JQL query
+- conversation_group_id: RSPEED-1573
+  turns:
+  - query: RHEL Lightspeed CLI --plain option default behavior and expected output
+      formatting
+    expected_response: 'TODO: This is a CLI implementation bug, not a documentation
+      question. The retrieved documentation covers Red Hat Lightspeed general features,
+      proxy configuration, and MCP integration, but contains no information about
+      the --plain command-line option, its expected behavior, or CLI output formatting
+      specifications. This ticket requires code inspection and debugging of the RHEL
+      Lightspeed CLI tool to determine why the --plain flag appears to be enabled
+      by default, rather than documentation verification.'
+    turn_metrics:
+    - ragas:context_relevance
+    - custom:answer_correctness
+    expected_urls:
+    - https://access.redhat.com/documentation/en-us/red_hat_hybrid_cloud_console/1-latest/html-single/getting_started_with_the_red_hat_hybrid_cloud_console/index/index.html
+    - https://access.redhat.com/articles/7134679/index.html
+    - https://access.redhat.com/documentation/en-us/red_hat_lightspeed/1-latest/html-single/connecting_your_rhel_systems_through_the_red_hat_lightspeed_proxy/index/index.html
+    - https://access.redhat.com/node/7020737/index.html
+  metadata:
+    confidence: LOW
+    notes: Verified ticket with ground truth but NOT returned by strict JQL query
+- conversation_group_id: RSPEED-1570
+  turns:
+  - query: Does RHEL Lightspeed command-line assistant work with on-premise Red Hat
+      Insights deployments, or does it require cloud-based Insights connectivity?
+    expected_response: RHEL Lightspeed command-line assistant requires connectivity
+      to Red Hat's cloud-based Insights service and does NOT support on-premise Insights
+      deployments without cloud connectivity. Red Hat Lightspeed (Insights) requires
+      outbound network access to cloud endpoints including 'https://api.access.redhat.com:443',
+      'https://cert-api.access.redhat.com:443', 'https://cert.cloud.redhat.com:443',
+      'https://sso.redhat.com:443', and 'https://console.redhat.com:443'. Even Satellite-managed
+      deployments require these cloud URLs for Insights functionality to work. The
+      Hybrid Cloud Console (console.redhat.com) is the centralized platform for Lightspeed
+      services, and all events, notifications, and AI-powered features depend on this
+      cloud infrastructure. On-premise Insights deployments that lack outbound cloud
+      connectivity cannot use Lightspeed features. This limitation should be explicitly
+      documented in product documentation for Satellite-managed and air-gapped environments.
+    turn_metrics:
+    - ragas:context_relevance
+    - custom:answer_correctness
+    expected_urls:
+    - https://access.redhat.com/solutions/1583183
+    - https://access.redhat.com/articles/7112807
+    - https://access.redhat.com/articles/7093850
+    - https://access.redhat.com/articles/6985526
+  metadata:
+    confidence: HIGH
+    notes: Verified ticket with ground truth but NOT returned by strict JQL query

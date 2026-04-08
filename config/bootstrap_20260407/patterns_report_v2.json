@@ -1,0 +1,483 @@
+{
+  "generated_at": "2026-04-08T03:40:23.478634",
+  "summary": {
+    "total_tickets": 76,
+    "patterns_found": 12,
+    "tickets_grouped": 45,
+    "tickets_ungrouped": 31,
+    "grouping_rate": "59.2%",
+    "min_pattern_size": 3
+  },
+  "patterns": [
+    {
+      "pattern_id": "RHEL10_DEPRECATED_FEATURES",
+      "description": "Features deprecated or removed in RHEL 10 across multiple subsystems (storage, networking, filesystem)",
+      "ticket_count": 3,
+      "representative_tickets": [
+        "RSPEED-2794",
+        "RSPEED-1998"
+      ],
+      "matched_tickets": [
+        "RSPEED-2794",
+        "RSPEED-1998",
+        "RSPEED-1584"
+      ],
+      "common_problem_type": "DEPRECATED_FEATURE",
+      "common_components": [
+        "storage",
+        "networking",
+        "filesystem",
+        "GFS2",
+        "Resilient Storage",
+        "dhcp"
+      ],
+      "version_pattern": "RHEL 10",
+      "verification_queries": [
+        {
+          "query": "RHEL 10 deprecated features storage GFS2",
+          "context": "Verify GFS2 and Resilient Storage deprecation status in RHEL 10",
+          "expected_doc_type": "documentation"
+        },
+        {
+          "query": "RHEL 10 dhcp deprecated replacement",
+          "context": "Verify DHCP deprecation and recommended alternatives in RHEL 10",
+          "expected_doc_type": "documentation"
+        },
+        {
+          "query": "RHEL 10 filesystem features deprecated",
+          "context": "Verify filesystem-related deprecations in RHEL 10",
+          "expected_doc_type": "documentation"
+        },
+        {
+          "query": "RHEL 10 release notes deprecated removed features",
+          "context": "Comprehensive list of deprecated/removed features in RHEL 10",
+          "expected_doc_type": "documentation"
+        }
+      ]
+    },
+    {
+      "pattern_id": "EOL_RHEL_VERSION_SUPPORT",
+      "description": "Support questions related to end-of-life RHEL versions (6, 7) including lifecycle queries and upgrade compatibility concerns",
+      "ticket_count": 4,
+      "representative_tickets": [
+        "RSPEED-2754",
+        "RSPEED-2745"
+      ],
+      "matched_tickets": [
+        "RSPEED-2754",
+        "RSPEED-2745",
+        "RSPEED-2482",
+        "RSPEED-1648"
+      ],
+      "common_problem_type": "EOL_UNSUPPORTED",
+      "common_components": [
+        "lifecycle",
+        "support",
+        "containers"
+      ],
+      "version_pattern": "EOL RHEL versions (6, 7); subset includes multi-major version upgrade scenarios (6\u21929 spanning 3 major versions)",
+      "verification_queries": [
+        {
+          "query": "RHEL 6 end of life date extended lifecycle support",
+          "context": "Verify EOL status and available support options for RHEL 6",
+          "expected_doc_type": "documentation"
+        },
+        {
+          "query": "RHEL 7 end of life date extended lifecycle support",
+          "context": "Verify EOL status and available extended support for RHEL 7",
+          "expected_doc_type": "documentation"
+        },
+        {
+          "query": "RHEL 6 to RHEL 9 container compatibility upgrade",
+          "context": "Verify container compatibility and migration path when upgrading across multiple major versions (6\u21929)",
+          "expected_doc_type": "documentation"
+        },
+        {
+          "query": "container compatibility EOL RHEL versions",
+          "context": "Verify general container support policies for EOL RHEL versions",
+          "expected_doc_type": "documentation"
+        }
+      ]
+    },
+    {
+      "pattern_id": "AUTHENTICATION_SECURITY",
+      "description": "Authentication and security configuration issues across IdM, RBAC, and identity management",
+      "ticket_count": 4,
+      "representative_tickets": [
+        "RSPEED-2657",
+        "RSPEED-2652"
+      ],
+      "matched_tickets": [
+        "RSPEED-2657",
+        "RSPEED-2653",
+        "RSPEED-2652",
+        "RSPEED-2651"
+      ],
+      "common_problem_type": "AUTHENTICATION_AUTHORIZATION",
+      "common_components": [
+        "authentication",
+        "security"
+      ],
+      "version_pattern": "Not version-specific",
+      "verification_queries": [
+        {
+          "query": "RHEL IdM authentication configuration",
+          "context": "Identity management and RBAC setup",
+          "expected_doc_type": "documentation"
+        },
+        {
+          "query": "RHEL authentication security validation",
+          "context": "Security validation and networking authentication",
+          "expected_doc_type": "documentation"
+        }
+      ]
+    },
+    {
+      "pattern_id": "DOCUMENTATION_GAPS",
+      "description": "Missing or unclear documentation across multiple RHEL features and components",
+      "ticket_count": 5,
+      "representative_tickets": [
+        "RSPEED-2480",
+        "RSPEED-1650"
+      ],
+      "matched_tickets": [
+        "RSPEED-2480",
+        "RSPEED-2294",
+        "RSPEED-2124",
+        "RSPEED-1812",
+        "RSPEED-1650"
+      ],
+      "common_problem_type": "DOCUMENTATION_MISSING",
+      "common_components": [
+        "documentation"
+      ],
+      "version_pattern": "RHEL 9 and 10 emphasis",
+      "verification_queries": [
+        {
+          "query": "RHEL {version} {component} documentation",
+          "context": "Documentation gaps for virtualization, packages, system-roles, bootc, containers",
+          "expected_doc_type": "documentation"
+        },
+        {
+          "query": "RHEL official documentation completeness",
+          "context": "Verify documentation coverage for newer features",
+          "expected_doc_type": "documentation"
+        }
+      ]
+    },
+    {
+      "pattern_id": "CLI_TOOL_ISSUES",
+      "description": "CLI tool functionality and usability issues across various command-line utilities",
+      "ticket_count": 4,
+      "representative_tickets": [
+        "RSPEED-1735",
+        "RSPEED-1614"
+      ],
+      "matched_tickets": [
+        "RSPEED-1736",
+        "RSPEED-1735",
+        "RSPEED-1614",
+        "RSPEED-1573"
+      ],
+      "common_problem_type": "CLI_FUNCTIONALITY",
+      "common_components": [
+        "CLI",
+        "cli",
+        "commands"
+      ],
+      "version_pattern": "Not version-specific",
+      "verification_queries": [
+        {
+          "query": "RHEL CLI tools locale support",
+          "context": "CLI locale issues with insights-client and other tools",
+          "expected_doc_type": "documentation"
+        },
+        {
+          "query": "RHEL command-line utilities {tool_name}",
+          "context": "Usage documentation for roxctl, insights-client, lightspeed CLI",
+          "expected_doc_type": "documentation"
+        }
+      ]
+    },
+    {
+      "pattern_id": "CONTAINER_UNSUPPORTED_CONFIG",
+      "description": "Unsupported container platform configurations including OpenShift, container images, and containerization technologies",
+      "ticket_count": 3,
+      "representative_tickets": [
+        "RSPEED-2536",
+        "RSPEED-1717"
+      ],
+      "matched_tickets": [
+        "RSPEED-2536",
+        "RSPEED-2218",
+        "RSPEED-1717"
+      ],
+      "common_problem_type": "UNSUPPORTED_CONFIG",
+      "common_components": [
+        "containers"
+      ],
+      "version_pattern": "Multiple RHEL versions (unspecified to RHEL 10)",
+      "verification_queries": [
+        {
+          "query": "RHEL container compatibility supported configurations",
+          "context": "Verify supported container platforms, OpenShift versions, and container image requirements",
+          "expected_doc_type": "documentation"
+        },
+        {
+          "query": "OpenShift Security Context Constraints SCC requirements",
+          "context": "Validate supported SCC configurations for RHEL containers in OpenShift",
+          "expected_doc_type": "documentation"
+        },
+        {
+          "query": "RHEL {version} container image certification",
+          "context": "Check supported container images and virtualization configurations",
+          "expected_doc_type": "documentation"
+        }
+      ]
+    },
+    {
+      "pattern_id": "SECURITY_POLICY_UNSUPPORTED_CONFIG",
+      "description": "Unsupported security policy and configuration settings across cloud, container, and OS-level security mechanisms",
+      "ticket_count": 3,
+      "representative_tickets": [
+        "RSPEED-2136",
+        "RSPEED-2201"
+      ],
+      "matched_tickets": [
+        "RSPEED-2536",
+        "RSPEED-2201",
+        "RSPEED-2136"
+      ],
+      "common_problem_type": "UNSUPPORTED_CONFIG",
+      "common_components": [
+        "security"
+      ],
+      "version_pattern": "RHEL (version unspecified)",
+      "verification_queries": [
+        {
+          "query": "RHEL SELinux supported policies and modes",
+          "context": "Verify supported SELinux configurations and custom policy requirements",
+          "expected_doc_type": "documentation"
+        },
+        {
+          "query": "RHEL AWS cloud security best practices",
+          "context": "Validate supported AWS security configurations for RHEL instances",
+          "expected_doc_type": "documentation"
+        },
+        {
+          "query": "OpenShift SCC security context constraints supported settings",
+          "context": "Check supported security context constraints in container environments",
+          "expected_doc_type": "documentation"
+        }
+      ]
+    },
+    {
+      "pattern_id": "INCORRECT_BOOT_FIRMWARE_PROCEDURES",
+      "description": "Incorrect procedures for bootloader, GRUB, UEFI, and firmware operations across multiple RHEL versions",
+      "ticket_count": 6,
+      "representative_tickets": [
+        "RSPEED-1726",
+        "RSPEED-1722",
+        "RSPEED-1724"
+      ],
+      "matched_tickets": [
+        "RSPEED-1726",
+        "RSPEED-1724",
+        "RSPEED-1723",
+        "RSPEED-1722",
+        "RSPEED-1721",
+        "RSPEED-1720"
+      ],
+      "common_problem_type": "INCORRECT_PROCEDURE",
+      "common_components": [
+        "grub",
+        "bootloader",
+        "uefi",
+        "efi",
+        "firmware",
+        "security"
+      ],
+      "version_pattern": "Multiple RHEL versions (7, 8, 9, 10)",
+      "verification_queries": [
+        {
+          "query": "RHEL {version} GRUB bootloader configuration",
+          "context": "Verify correct GRUB configuration procedures across RHEL versions",
+          "expected_doc_type": "documentation"
+        },
+        {
+          "query": "RHEL UEFI Secure Boot setup",
+          "context": "Confirm proper UEFI and firmware update procedures",
+          "expected_doc_type": "documentation"
+        },
+        {
+          "query": "RHEL bootloader troubleshooting",
+          "context": "Validate boot-related troubleshooting steps",
+          "expected_doc_type": "documentation"
+        }
+      ]
+    },
+    {
+      "pattern_id": "INCORRECT_RPM_OSTREE_PROCEDURES",
+      "description": "Incorrect procedures for rpm-ostree operations including kernel and package management",
+      "ticket_count": 4,
+      "representative_tickets": [
+        "RSPEED-1931",
+        "RSPEED-1930",
+        "RSPEED-1929"
+      ],
+      "matched_tickets": [
+        "RSPEED-1931",
+        "RSPEED-1930",
+        "RSPEED-1929",
+        "RSPEED-1859"
+      ],
+      "common_problem_type": "INCORRECT_PROCEDURE",
+      "common_components": [
+        "rpm-ostree",
+        "kernel",
+        "packages"
+      ],
+      "version_pattern": "RHEL (image-mode/CoreOS systems)",
+      "verification_queries": [
+        {
+          "query": "rpm-ostree package management procedures",
+          "context": "Verify correct rpm-ostree package layering and management procedures",
+          "expected_doc_type": "documentation"
+        },
+        {
+          "query": "rpm-ostree kernel updates",
+          "context": "Confirm proper kernel update procedures in rpm-ostree systems",
+          "expected_doc_type": "documentation"
+        },
+        {
+          "query": "RHEL image-mode administration",
+          "context": "Validate image-mode system administration procedures",
+          "expected_doc_type": "documentation"
+        }
+      ]
+    },
+    {
+      "pattern_id": "INCORRECT_CLUSTERING_PROCEDURES",
+      "description": "Incorrect procedures for Pacemaker clustering and pcs management",
+      "ticket_count": 3,
+      "representative_tickets": [
+        "RSPEED-1710",
+        "RSPEED-1709",
+        "RSPEED-1711"
+      ],
+      "matched_tickets": [
+        "RSPEED-1710",
+        "RSPEED-1709",
+        "RSPEED-1711"
+      ],
+      "common_problem_type": "INCORRECT_PROCEDURE",
+      "common_components": [
+        "clustering",
+        "pacemaker",
+        "pcs"
+      ],
+      "version_pattern": "RHEL 9 and general",
+      "verification_queries": [
+        {
+          "query": "RHEL {version} Pacemaker cluster configuration",
+          "context": "Verify correct Pacemaker cluster setup and management procedures",
+          "expected_doc_type": "documentation"
+        },
+        {
+          "query": "pcs command reference RHEL",
+          "context": "Confirm proper pcs command usage for cluster management",
+          "expected_doc_type": "documentation"
+        },
+        {
+          "query": "RHEL HA clustering best practices",
+          "context": "Validate high availability clustering procedures",
+          "expected_doc_type": "documentation"
+        }
+      ]
+    },
+    {
+      "pattern_id": "INCORRECT_SATELLITE_PROCEDURES",
+      "description": "Incorrect procedures for Satellite server operations including authentication, registration, and capsule management",
+      "ticket_count": 3,
+      "representative_tickets": [
+        "RSPEED-2004",
+        "RSPEED-1743",
+        "RSPEED-1634"
+      ],
+      "matched_tickets": [
+        "RSPEED-2004",
+        "RSPEED-1743",
+        "RSPEED-1634"
+      ],
+      "common_problem_type": "INCORRECT_PROCEDURE",
+      "common_components": [
+        "satellite",
+        "authentication",
+        "registration",
+        "capsule",
+        "hammer",
+        "rhc",
+        "subscription-manager"
+      ],
+      "version_pattern": "RHEL (Satellite-managed systems)",
+      "verification_queries": [
+        {
+          "query": "Red Hat Satellite client registration",
+          "context": "Verify correct Satellite registration and subscription-manager procedures",
+          "expected_doc_type": "documentation"
+        },
+        {
+          "query": "Satellite Capsule server configuration",
+          "context": "Confirm proper Capsule server management procedures",
+          "expected_doc_type": "documentation"
+        },
+        {
+          "query": "Satellite hammer CLI usage",
+          "context": "Validate hammer CLI command procedures for Satellite",
+          "expected_doc_type": "documentation"
+        }
+      ]
+    },
+    {
+      "pattern_id": "INCORRECT_NETWORKING_PROCEDURES",
+      "description": "Incorrect procedures for networking configuration including drivers and nmcli operations",
+      "ticket_count": 3,
+      "representative_tickets": [
+        "RSPEED-2123",
+        "RSPEED-2113",
+        "RSPEED-1902"
+      ],
+      "matched_tickets": [
+        "RSPEED-2123",
+        "RSPEED-2113",
+        "RSPEED-1902"
+      ],
+      "common_problem_type": "INCORRECT_PROCEDURE",
+      "common_components": [
+        "networking",
+        "drivers",
+        "nmcli",
+        "filesystem",
+        "security"
+      ],
+      "version_pattern": "Multiple RHEL versions (6, 7, 8)",
+      "verification_queries": [
+        {
+          "query": "RHEL {version} NetworkManager nmcli configuration",
+          "context": "Verify correct nmcli command usage for network configuration",
+          "expected_doc_type": "documentation"
+        },
+        {
+          "query": "RHEL network driver installation",
+          "context": "Confirm proper network driver configuration procedures",
+          "expected_doc_type": "documentation"
+        },
+        {
+          "query": "RHEL networking troubleshooting",
+          "context": "Validate network configuration and troubleshooting procedures",
+          "expected_doc_type": "documentation"
+        }
+      ]
+    }
+  ]
+}

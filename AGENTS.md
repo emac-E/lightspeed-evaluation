@@ -85,6 +85,10 @@ The LightSpeed Evaluation Framework is a comprehensive evaluation system for Gen
   - `core/`: Configuration, LLM management, metrics, output handling
   - `pipeline/`: Evaluation orchestration and processing
   - `runner/`: Command-line interface and main entry points
+  - `agents/`: Multi-agent system (Linux Expert, Solr Expert, Pattern Discovery)
+- **Scripts**: Utility scripts for JIRA processing, evaluation analysis, reporting
+  - See [scripts/README.md](scripts/README.md) for comprehensive documentation
+  - Categories: JIRA ticket processing, OKP-MCP automation, analysis, cost tracking, visualization
 - **Configuration**: YAML-based system and evaluation data configs in `config/`
 - **Testing**: Comprehensive test suite in `tests/` following pytest conventions
 

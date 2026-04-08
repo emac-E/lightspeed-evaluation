@@ -1,0 +1,299 @@
+# Pattern: BOOTLOADER_UEFI_FIRMWARE
+# Description: Incorrect bootloader, UEFI, and firmware configuration procedures
+# Total tickets: 6
+# Problem Type: INCORRECT_PROCEDURE
+# Components: bootloader, grub2, UEFI, firmware, security, mokutil, packages
+
+- conversation_group_id: RSPEED-1726
+  metadata:
+    jira_ticket: RSPEED-1726
+    jira_url: https://redhat.atlassian.net/browse/RSPEED-1726
+    confidence: HIGH
+    pattern_id: BOOTLOADER_UEFI_FIRMWARE
+  turns:
+  - query: How do I recreate the GRUB configuration file on Red Hat Enterprise Linux?
+    expected_response: 'To recreate the GRUB configuration file on RHEL, use the grub2-mkconfig
+      command:
+
+
+      For BIOS-based systems (RHEL 7, 8, 9, 10):
+
+      # grub2-mkconfig -o /boot/grub2/grub.cfg
+
+
+      For UEFI-based systems:
+
+      # grub2-mkconfig -o /boot/efi/EFI/redhat/grub.cfg
+
+
+      This command generates a new GRUB configuration file by scanning /etc/default/grub
+      and scripts in /etc/grub.d/. It is typically used after modifying kernel parameters
+      in /etc/default/grub.
+
+
+      For RHEL 8, 9, and 10, you can alternatively use grubby to update kernel parameters:
+
+      # grubby --update-kernel=ALL --args="parameter=value"
+
+      # grub2-mkconfig -o /boot/grub2/grub.cfg
+
+
+      Note: The grub2-mkconfig command scans all disks on the system. If you have
+      many disks and the command appears to hang, add GRUB_DISABLE_OS_PROBER=true
+      to /etc/default/grub before running grub2-mkconfig.'
+    expected_urls:
+    - https://access.redhat.com/solutions/6567761
+    - https://access.redhat.com/solutions/5227991
+    - https://access.redhat.com/solutions/283233
+    - https://access.redhat.com/solutions/2939391
+    expected_keywords: []
+    forbidden_claims: []
+    turn_metrics:
+    - ragas:context_relevance
+    - ragas:context_precision_without_reference
+    - custom:answer_correctness
+- conversation_group_id: RSPEED-1724
+  metadata:
+    jira_ticket: RSPEED-1724
+    jira_url: https://redhat.atlassian.net/browse/RSPEED-1724
+    confidence: MEDIUM
+    pattern_id: BOOTLOADER_UEFI_FIRMWARE
+  turns:
+  - query: How do I change the EFI boot order on a UEFI-based RHEL system?
+    expected_response: 'To change the EFI boot order on a UEFI-based RHEL system,
+      use the ''efibootmgr'' utility, which manages UEFI firmware boot settings stored
+      in NVRAM. The EFI boot order is NOT controlled by editing grub.cfg. As confirmed
+      in Red Hat documentation, when you install RHEL, ''Anaconda creates a UEFI boot
+      entry named Red Hat Enterprise Linux which points to hard disk''s (EFI Partition)/EFI/redhat/shimx64.efi
+      executable'' and establishes a boot order at the firmware level (e.g., ''Red
+      Hat Enterprise Linux, UEFI Misc Device, UEFI QEMU DVD-ROM QM00001''). To manage
+      this boot order: ''efibootmgr'' displays current boot entries and order, ''efibootmgr
+      -n 000x'' sets a one-time BootNext entry for the next boot only, and ''efibootmgr
+      -o 000x,000y,000z'' permanently changes the boot order. The EFI firmware boot
+      order (which bootloader the firmware loads) is separate from the GRUB menu order
+      (which OS/kernel GRUB presents after it''s loaded).'
+    expected_urls:
+    - https://access.redhat.com/articles/6645591/index.html
+    expected_keywords: []
+    forbidden_claims: []
+    turn_metrics:
+    - ragas:context_relevance
+    - ragas:context_precision_without_reference
+    - custom:answer_correctness
+- conversation_group_id: RSPEED-1723
+  metadata:
+    jira_ticket: RSPEED-1723
+    jira_url: https://redhat.atlassian.net/browse/RSPEED-1723
+    confidence: HIGH
+    pattern_id: BOOTLOADER_UEFI_FIRMWARE
+  turns:
+  - query: How do I update the GRUB bootloader package in RHEL?
+    expected_response: 'To update GRUB in RHEL, use the standard package manager to
+      update the GRUB2 packages:
+
+
+      **For RHEL 8+:**
+
+      ```
+
+      sudo dnf update grub2-common grub2-tools
+
+      ```
+
+
+      **For RHEL 7:**
+
+      ```
+
+      sudo yum update grub2-common grub2-tools
+
+      ```
+
+
+      This updates the GRUB package itself. Note that updating the GRUB package is
+      different from regenerating the GRUB configuration file:
+
+
+      - **Package update** (above commands): Updates GRUB software to newer version
+
+      - **Configuration regeneration**: Updates boot menu entries, done with `grub2-mkconfig
+      -o /boot/grub2/grub.cfg`
+
+
+      Configuration regeneration is typically handled automatically during kernel
+      updates. Manual regeneration is only needed when:
+
+      - Changing boot parameters in /etc/default/grub
+
+      - Working around specific bugs (e.g., RHEL 10 with GRUB_ENABLE_BLSCFG=false)
+
+      - Manually removing stale kernel entries
+
+
+      **On BIOS-based systems only:** After updating the GRUB package, you may need
+      to reinstall the bootloader to the MBR: `grub2-install /dev/sdX` (where sdX
+      is the boot disk). UEFI systems do not require this step.
+
+
+      Sources:
+
+      - https://access.redhat.com/solutions/7126344 (RHEL 10 grub.cfg update issue
+      - shows distinction between package update and config regeneration)
+
+      - https://access.redhat.com/solutions/4110091 (RHEL 7 grub2-common update procedure)
+
+      - https://access.redhat.com/solutions/3682321 (grub2-common update using yum)'
+    expected_urls:
+    - https://access.redhat.com/solutions/7126344
+    - https://access.redhat.com/solutions/4110091
+    - https://access.redhat.com/solutions/3682321
+    - https://access.redhat.com/solutions/5657501
+    expected_keywords: []
+    forbidden_claims: []
+    turn_metrics:
+    - ragas:context_relevance
+    - ragas:context_precision_without_reference
+    - custom:answer_correctness
+- conversation_group_id: RSPEED-1722
+  metadata:
+    jira_ticket: RSPEED-1722
+    jira_url: https://redhat.atlassian.net/browse/RSPEED-1722
+    confidence: HIGH
+    pattern_id: BOOTLOADER_UEFI_FIRMWARE
+  turns:
+  - query: How do I disable Secure Boot on a Red Hat Enterprise Linux system?
+    expected_response: "Secure Boot is a UEFI firmware feature that must be disabled\
+      \ through the system's firmware settings, not through the operating system.\n\
+      \nFor physical systems:\n1. Reboot the system and press the BIOS key (F2, F10,\
+      \ Del, or Esc) during boot to enter the Boot Manager/UEFI setup\n2. Navigate\
+      \ to find the Secure Boot option (may be called 'Trusted Boot' or similar depending\
+      \ on vendor)\n3. Set it to 'Disabled'\n4. Save and Exit\n5. Verify after reboot:\
+      \ `mokutil --sb-state` should show 'SecureBoot disabled'\n\nFor VMware virtual\
+      \ machines:\n1. Power off the VM\n2. In vSphere Client, right-click the VM and\
+      \ select 'Edit Settings'\n3. Click VM Options tab → expand Boot Options\n4.\
+      \ Ensure firmware is set to EFI\n5. Uncheck the box next to 'Secure Boot'\n\
+      6. Click OK to save\n\nFor KVM/libvirt VMs on RHEL 8, configure the domain XML\
+      \ with enrolled-keys disabled:\n```xml\n<os firmware='efi'>\n  <firmware>\n\
+      \    <feature enabled='yes' name='secure-boot'/>\n    <feature enabled='no'\
+      \ name='enrolled-keys'/>\n  </firmware>\n</os>\n```\n\nNote: MOK (Machine Owner\
+      \ Key) enrollment is NOT used to disable Secure Boot. MOK enrollment is used\
+      \ to add trusted keys when keeping Secure Boot enabled, allowing custom-signed\
+      \ kernels and modules to run. Contact your hardware vendor if you encounter\
+      \ issues disabling Secure Boot."
+    expected_urls:
+    - https://access.redhat.com/solutions/6959181
+    - https://access.redhat.com/solutions/7132716
+    - https://access.redhat.com/solutions/7041103
+    - https://access.redhat.com/solutions/6753681
+    expected_keywords: []
+    forbidden_claims: []
+    turn_metrics:
+    - ragas:context_relevance
+    - ragas:context_precision_without_reference
+    - custom:answer_correctness
+- conversation_group_id: RSPEED-1721
+  metadata:
+    jira_ticket: RSPEED-1721
+    jira_url: https://redhat.atlassian.net/browse/RSPEED-1721
+    confidence: HIGH
+    pattern_id: BOOTLOADER_UEFI_FIRMWARE
+  turns:
+  - query: How to check if Secure Boot is enabled on a running RHEL system
+    expected_response: 'The correct method to check if Secure Boot is enabled on a
+      running RHEL system is to use the command `mokutil --sb-state`. This is the
+      official Red Hat documented approach.
+
+
+      According to Red Hat''s verified solution "How to disable Secure Boot on VMware
+      virtual machine?" (applies to RHEL 7, 8, 9, and 10), the diagnostic step to
+      "Check the current status of Secure Boot on the system" is:
+
+
+      ```
+
+      # mokutil --sb-state
+
+      SecureBoot enabled
+
+      ```
+
+
+      The mokutil utility is part of the mokutil package and is specifically designed
+      for managing Machine Owner Keys (MOK) and checking Secure Boot status. When
+      Secure Boot is enabled, the command outputs "SecureBoot enabled". When disabled,
+      it outputs "SecureBoot disabled".
+
+
+      Alternative methods include:
+
+      - Checking `/sys/firmware/efi/efivars/SecureBoot-*` files directly
+
+      - Using `bootctl status` on systemd-based systems (shows "Secure Boot: enabled/disabled")
+
+
+      The CLA answer suggesting the use of the `crash` utility is fundamentally incorrect.
+      The crash utility is a kernel crash dump analysis tool that requires a vmcore
+      file generated during system crashes. It is designed for post-mortem analysis
+      of crashed systems, not for checking the Secure Boot status of live, running
+      systems.'
+    expected_urls:
+    - https://access.redhat.com/solutions/7132716/index.html
+    - https://access.redhat.com/solutions/4669801/index.html
+    - https://access.redhat.com/solutions/7011187/index.html
+    expected_keywords: []
+    forbidden_claims: []
+    turn_metrics:
+    - ragas:context_relevance
+    - ragas:context_precision_without_reference
+    - custom:answer_correctness
+- conversation_group_id: RSPEED-1720
+  metadata:
+    jira_ticket: RSPEED-1720
+    jira_url: https://redhat.atlassian.net/browse/RSPEED-1720
+    confidence: MEDIUM
+    pattern_id: BOOTLOADER_UEFI_FIRMWARE
+  turns:
+  - query: How do I determine if my RHEL system is using BIOS or UEFI firmware?
+    expected_response: 'To determine if your RHEL system is using BIOS or UEFI firmware,
+      check for the existence of the /sys/firmware/efi directory. If this directory
+      exists, the system is using UEFI firmware. If it does not exist, the system
+      is using legacy BIOS.
+
+
+      You can check this with the command:
+
+      ```bash
+
+      ls /sys/firmware/efi
+
+      ```
+
+      or
+
+      ```bash
+
+      test -d /sys/firmware/efi && echo "UEFI" || echo "BIOS"
+
+      ```
+
+
+      Note: The path ''/sys/firmware/type'' mentioned in the incorrect answer is not
+      a standard file in RHEL systems for firmware detection.
+
+
+      Context: RHEL systems support both BIOS and UEFI firmware modes, with different
+      configurations required for each. UEFI systems use the /boot/efi partition,
+      while BIOS systems may use BIOSBOOT partitions (with GPT) or traditional MBR.
+      UEFI firmware is required for certain virtualization features and is standard
+      on modern hardware.'
+    expected_urls:
+    - https://access.redhat.com/articles/7040206/index.html
+    - https://access.redhat.com/solutions/4829041/index.html
+    - https://access.redhat.com/solutions/4829201/index.html
+    - https://access.redhat.com/solutions/3232691/index.html
+    expected_keywords: []
+    forbidden_claims: []
+    turn_metrics:
+    - ragas:context_relevance
+    - ragas:context_precision_without_reference
+    - custom:answer_correctness

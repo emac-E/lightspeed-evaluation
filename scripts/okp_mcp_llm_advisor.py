@@ -15,15 +15,49 @@ from pydantic import BaseModel, Field
 
 
 class SolrConfigSuggestion(BaseModel):
-    """Structured suggestion for Solr configuration changes.
+    """Structured suggestion for Solr eDismax configuration changes.
 
-    Can suggest changes to:
-    - Field weights (qf)
-    - Phrase boosts (pf, pf2, pf3)
-    - Phrase slop (ps, ps2, ps3)
-    - Minimum match (mm)
-    - Boost/demote multipliers
-    - Boost/demote keyword lists
+    This Pydantic model represents an AI-generated suggestion for improving
+    Solr document retrieval by modifying search configuration parameters.
+    Used by OkpMcpLLMAdvisor to communicate changes to okp-mcp's Solr search.
+
+    The advisor analyzes evaluation metrics (URL F1, MRR, context relevance) and
+    Solr explain output to suggest targeted configuration changes that should
+    improve document retrieval for specific queries.
+
+    Configuration Parameters That Can Be Suggested:
+        - Field weights (qf): "title^4.0 main_content^2.0" - which fields to search
+        - Phrase boosts (pf/pf2/pf3): "title^8.0" - boost exact phrase matches
+        - Phrase slop (ps/ps2/ps3): Allow word proximity matching
+        - Minimum match (mm): "2<-1 5<60%" - how many query terms must match
+        - Boost/demote multipliers: Dynamic score adjustments
+        - Boost/demote keyword lists: Keywords that trigger score changes
+
+    Usage Flow:
+        1. OkpMcpAgent runs evaluation, gets poor retrieval metrics
+        2. Calls OkpMcpLLMAdvisor.suggest_boost_query_changes()
+        3. LLM analyzes metrics + Solr explain output
+        4. Returns SolrConfigSuggestion with specific change to try
+        5. Agent applies change to okp-mcp/src/okp_mcp/solr.py
+        6. Restarts service and re-tests
+
+    Example:
+        suggestion = SolrConfigSuggestion(
+            reasoning="Expected docs have 'uefi' in title, but title weight is low",
+            file_path="src/okp_mcp/solr.py",
+            suggested_change="Increase title boost from 4.0 to 6.0",
+            code_snippet='"qf": "title^6.0 main_content^2.0",',
+            expected_improvement="URL F1 should increase from 0.2 to >0.5",
+            confidence="high"
+        )
+
+    Attributes:
+        reasoning: Why this change is needed (based on metrics/explain output)
+        file_path: Path to file to edit (usually 'src/okp_mcp/solr.py')
+        suggested_change: Human-readable description of the change
+        code_snippet: Exact Python code after the change (REQUIRED for Edit tool)
+        expected_improvement: What metrics should improve and by how much
+        confidence: "high", "medium", or "low" - LLM's confidence in suggestion
     """
 
     reasoning: str = Field(
@@ -48,7 +82,47 @@ BoostQuerySuggestion = SolrConfigSuggestion
 
 
 class PromptSuggestion(BaseModel):
-    """Structured suggestion for system prompt changes."""
+    """Structured suggestion for system prompt modifications.
+
+    This Pydantic model represents an AI-generated suggestion for improving
+    answer quality by modifying the system prompt used by the LLM under test.
+    Used by OkpMcpLLMAdvisor when retrieval is good but answers are incorrect.
+
+    When to Use:
+        - Good retrieval (URL F1 > 0.5, context relevance > 0.7)
+        - Poor answer quality (answer_correctness < 0.75, keywords missing)
+        - LLM is not properly using the retrieved context
+
+    Common Prompt Issues Addressed:
+        - LLM ignoring context → Add "ONLY use provided documentation"
+        - Keywords missing → Add "Include specific terms: X, Y, Z"
+        - Wrong tone/format → Add output formatting instructions
+        - Hallucination → Add "Do not make assumptions beyond the documentation"
+        - Context not grounded → Add "Quote directly from provided context"
+
+    Usage Flow:
+        1. OkpMcpAgent detects answer problem (good retrieval, bad answer)
+        2. Calls OkpMcpLLMAdvisor.suggest_prompt_changes()
+        3. LLM analyzes metrics + actual vs expected response
+        4. Returns PromptSuggestion with specific prompt modification
+        5. Agent applies change to okp-mcp system prompt
+        6. Restarts service and re-tests answer quality
+
+    Example:
+        suggestion = PromptSuggestion(
+            reasoning="Answer missing 'deprecated' keyword despite context containing it",
+            suggested_change="Add instruction: 'When describing removed features, "
+                           "explicitly use the word deprecated or removed'",
+            expected_improvement="keywords_score should increase from 0.5 to >0.8",
+            confidence="medium"
+        )
+
+    Attributes:
+        reasoning: Why prompt changes are needed (based on metrics and response analysis)
+        suggested_change: Specific modification to make to the system prompt
+        expected_improvement: What metrics should improve (keywords, answer_correctness, etc.)
+        confidence: "high", "medium", or "low" - LLM's confidence in suggestion
+    """
 
     reasoning: str = Field(
         description="Why prompt changes are needed based on the metrics"
@@ -60,7 +134,95 @@ class PromptSuggestion(BaseModel):
 
 @dataclass
 class MetricSummary:
-    """Summary of evaluation metrics for LLM analysis."""
+    """Comprehensive evaluation metrics package for LLM-powered analysis.
+
+    This dataclass aggregates all metrics, ground truth, and diagnostic data needed
+    for OkpMcpLLMAdvisor to analyze retrieval and answer quality issues. It serves
+    as the input to the LLM advisor's suggestion methods.
+
+    The summary is converted to a human-readable prompt context via to_prompt_context()
+    and passed to Claude along with Solr explain output to generate targeted fixes.
+
+    Metric Categories:
+        1. Retrieval Metrics: How well documents are retrieved
+           - url_f1: F1 score for expected URL retrieval (0.0-1.0, threshold: 0.7)
+           - mrr: Mean Reciprocal Rank (0.0-1.0, threshold: 0.5)
+           - context_relevance: Are retrieved docs relevant? (Ragas, threshold: 0.7)
+           - context_precision: What % of retrieved docs useful? (Ragas, threshold: 0.7)
+
+        2. Answer Quality Metrics: How good is the LLM's answer
+           - answer_correctness: Factual accuracy vs expected (custom, threshold: 0.75)
+           - faithfulness: Answer grounded in context? (Ragas, threshold: 0.8)
+           - response_relevancy: Answer addresses question? (Ragas, threshold: 0.8)
+           - keywords_score: Required keywords present? (custom, threshold: 0.7)
+           - forbidden_claims_score: No forbidden claims? (custom, threshold: 1.0)
+
+        3. Ground Truth: Expected values for comparison
+           - expected_response: What the answer should say (from SME)
+           - expected_keywords: Required terms that must appear
+           - expected_urls: Which docs should be retrieved
+           - forbidden_claims: Statements that must NOT appear
+
+        4. Diagnostic Data: For root cause analysis
+           - solr_explain: Solr's scoring explanation for each doc
+           - solr_config_snapshot: Current search config parameters
+           - ranking_analysis: Why expected docs ranked poorly
+           - iteration_history: Previous fix attempts and results
+
+    Usage Flow:
+        1. OkpMcpAgent runs evaluation, gets metrics
+        2. Creates MetricSummary with all data
+        3. Passes to OkpMcpLLMAdvisor.suggest_boost_query_changes() or suggest_prompt_changes()
+        4. LLM analyzes metrics + diagnostics
+        5. Returns SolrConfigSuggestion or PromptSuggestion
+        6. Agent applies fix and re-tests
+
+    Example:
+        metrics = MetricSummary(
+            ticket_id="RSPEED-2482",
+            query="Can I run RHEL 6 containers on RHEL 9?",
+            url_f1=0.0,  # No expected docs retrieved!
+            mrr=0.2,
+            context_relevance=0.0,
+            answer_correctness=0.3,
+            rag_used=True,
+            docs_retrieved=True,
+            num_docs=5,
+            expected_urls=["docs/rhel9/container-compatibility.html"],
+            retrieved_urls=["docs/rhel8/general-info.html"],
+            solr_explain={...},  # Why wrong docs ranked higher
+            solr_config_snapshot={"qf": "title^4.0 main_content^2.0", ...}
+        )
+        suggestion = await advisor.suggest_boost_query_changes(metrics)
+
+    Attributes:
+        ticket_id: JIRA ticket ID (e.g., "RSPEED-2482")
+        query: User's question/search query
+        url_f1: F1 score for URL retrieval (None if not measured)
+        mrr: Mean Reciprocal Rank (None if not measured)
+        context_relevance: Ragas context relevance score (None if not measured)
+        context_precision: Ragas context precision score (None if not measured)
+        keywords_score: Custom keywords metric (None if not measured)
+        forbidden_claims_score: Custom forbidden claims metric (None if not measured)
+        faithfulness: Ragas faithfulness score (None if not measured)
+        answer_correctness: Custom answer correctness score (None if not measured)
+        response_relevancy: Ragas response relevancy score (None if not measured)
+        rag_used: Was RAG/search tool called?
+        docs_retrieved: Were any documents retrieved?
+        num_docs: Number of documents retrieved
+        response: Actual LLM answer (None if not generated)
+        expected_response: Expected answer from SME (None if not provided)
+        expected_keywords: Required keywords (None if not specified)
+        expected_urls: Expected URLs to retrieve (None if not provided)
+        forbidden_claims: Forbidden statements (None if not specified)
+        retrieved_urls: Actually retrieved URLs (None if RAG not used)
+        contexts: Retrieved document texts (None if not available)
+        iteration_history: Previous fix attempts (None on first iteration)
+        solr_explain: Solr explain output (None if not available)
+        solr_config_summary: Full Solr config text (None if not loaded)
+        solr_config_snapshot: Structured Solr config (None if not extracted)
+        ranking_analysis: Why expected docs ranked poorly (None if not analyzed)
+    """
 
     ticket_id: str
     query: str
@@ -326,11 +488,102 @@ class MetricSummary:
 
 
 class OkpMcpLLMAdvisor:
-    """LLM-powered advisor for okp-mcp improvements with tiered model routing."""
+    """AI-powered advisor for automatically diagnosing and fixing okp-mcp RAG issues.
+
+    This class uses Claude (via Claude Agent SDK) to analyze evaluation metrics and
+    suggest targeted code changes to improve document retrieval and answer quality.
+    It implements tiered model routing to optimize cost vs. quality tradeoffs.
+
+    Core Capabilities:
+        1. Diagnose Problems: Analyzes metrics to identify retrieval vs. answer issues
+        2. Suggest Fixes: Generates specific code changes for Solr config or prompts
+        3. Learn from History: Uses iteration_history to avoid repeating failed approaches
+        4. Route Smartly: Uses Haiku for classification, Sonnet for most work, Opus for hard problems
+
+    Problem Types Addressed:
+        - Poor Document Retrieval: Wrong docs retrieved → Suggest Solr config changes
+        - Good Retrieval, Bad Answer: Right docs but LLM ignores them → Suggest prompt changes
+        - Complex Multi-faceted Issues: Automatically escalates to more capable model
+
+    Tiered Model Routing:
+        - Simple (Haiku): Fast problem classification (SIMPLE/MEDIUM/COMPLEX)
+        - Medium (Sonnet): Default for most suggestions, good balance of cost/quality
+        - Complex (Opus): Escalation for ambiguous or multi-faceted problems
+
+        Cost comparison (approximate):
+        - Haiku: $0.25/$1.25 per 1M tokens (input/output)
+        - Sonnet: $3/$15 per 1M tokens
+        - Opus: $15/$75 per 1M tokens
+
+        The advisor automatically classifies problem complexity and routes to the
+        appropriate model, falling back to cheaper models on failure.
+
+    Usage Example - Solr Config Optimization:
+        # Initialize advisor
+        advisor = OkpMcpLLMAdvisor(
+            model="claude-sonnet-4-6",
+            okp_mcp_root=Path("~/Work/okp-mcp"),
+            use_tiered_models=True
+        )
+
+        # Create metrics summary from evaluation
+        metrics = MetricSummary(
+            ticket_id="RSPEED-2482",
+            query="Can I run RHEL 6 containers on RHEL 9?",
+            url_f1=0.0,  # Poor retrieval!
+            context_relevance=0.0,
+            expected_urls=["docs/rhel9/container-compatibility.html"],
+            retrieved_urls=["docs/rhel8/general-info.html"],
+            solr_explain={...}
+        )
+
+        # Get suggestion (automatically routes to appropriate model)
+        suggestion = await advisor.suggest_boost_query_changes(metrics)
+        # Returns: SolrConfigSuggestion with specific Solr config change
+
+        # Agent applies the change and re-tests
+
+    Usage Example - Prompt Optimization:
+        metrics = MetricSummary(
+            ticket_id="RSPEED-2003",
+            query="Is DHCP deprecated in RHEL 10?",
+            url_f1=0.8,  # Good retrieval!
+            context_relevance=0.9,
+            answer_correctness=0.5,  # But bad answer
+            keywords_score=0.3,  # Missing "deprecated" keyword
+            expected_keywords=["deprecated", "RHEL 10"],
+            response="DHCP is still available in RHEL 10",
+            expected_response="ISC DHCP is deprecated in RHEL 10..."
+        )
+
+        suggestion = await advisor.suggest_prompt_changes(metrics)
+        # Returns: PromptSuggestion to add keyword instructions
+
+    Integration with OkpMcpAgent:
+        The advisor is designed to work with OkpMcpAgent's fix loop:
+        1. Agent runs evaluation → gets metrics
+        2. Agent calls advisor.suggest_* → gets suggestion
+        3. Agent applies code change using Edit tool
+        4. Agent restarts okp-mcp and re-tests
+        5. Repeat until fixed or max iterations reached
+
+    Attributes:
+        model: Default model for medium complexity (usually claude-sonnet-4-6)
+        okp_mcp_root: Path to okp-mcp repository for code editing
+        use_tiered_models: Whether to enable smart model routing
+        simple_model: Model for fast classification (claude-haiku-4-5-20251001)
+        medium_model: Model for most work (same as model param)
+        complex_model: Model for hard problems (claude-opus-4-6)
+
+    Methods:
+        suggest_boost_query_changes: Analyze retrieval issues, suggest Solr config fixes
+        suggest_prompt_changes: Analyze answer issues, suggest system prompt fixes
+        classify_problem_complexity: Classify as SIMPLE/MEDIUM/COMPLEX for routing
+    """
 
     def __init__(
         self,
-        model: str = "claude-sonnet-4-5@20250929",
+        model: str = "claude-sonnet-4-6",
         okp_mcp_root: Optional[Path] = None,
         # Tiered model routing
         use_tiered_models: bool = True,
@@ -340,11 +593,11 @@ class OkpMcpLLMAdvisor:
         """Initialize LLM advisor with Claude Agent SDK.
 
         Args:
-            model: Default model for medium complexity tasks
-            okp_mcp_root: Path to okp-mcp repository for code context
-            use_tiered_models: Enable smart model routing
-            simple_model: Model for simple tasks (default: claude-haiku-4-5@20251001)
-            complex_model: Model for complex tasks (default: same as model)
+            model: Default model for medium complexity tasks (default: claude-sonnet-4-6)
+            okp_mcp_root: Path to okp-mcp repository for code context (default: ~/Work/okp-mcp)
+            use_tiered_models: Enable smart model routing (default: True)
+            simple_model: Model for simple tasks (default: claude-haiku-4-5-20251001)
+            complex_model: Model for complex tasks (default: claude-opus-4-6)
         """
         self.model = model
         self.okp_mcp_root = okp_mcp_root or (Path.home() / "Work/okp-mcp")
@@ -352,7 +605,7 @@ class OkpMcpLLMAdvisor:
 
         # Set up tiered models
         if use_tiered_models:
-            self.simple_model = simple_model or "claude-haiku-4-5@20251001"
+            self.simple_model = simple_model or "claude-haiku-4-5-20251001"
             self.medium_model = model
             self.complex_model = complex_model or "claude-opus-4-6"
         else:
@@ -972,9 +1225,9 @@ if __name__ == "__main__":
 
     try:
         advisor = OkpMcpLLMAdvisor(
-            model="claude-sonnet-4-5@20250929",
+            model="claude-sonnet-4-6",
             use_tiered_models=True,
-            simple_model="claude-haiku-4-5@20251001",
+            simple_model="claude-haiku-4-5-20251001",
         )
     except Exception as e:
         print(f"❌ Error initializing advisor: {e}")

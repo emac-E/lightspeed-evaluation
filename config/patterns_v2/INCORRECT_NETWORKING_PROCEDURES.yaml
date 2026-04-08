@@ -1,0 +1,180 @@
+# Pattern: INCORRECT_NETWORKING_PROCEDURES
+# Description: Incorrect procedures for networking configuration including drivers and nmcli operations
+# Total tickets: 3
+# Problem Type: INCORRECT_PROCEDURE
+# Components: networking, drivers, nmcli, filesystem, security
+
+- conversation_group_id: RSPEED-2123
+  turns:
+  - query: How to enable debugging for the bnxt_en network interface card (NIC) driver
+      in RHEL?
+    expected_response: 'To enable bnxt_en driver debugging in RHEL, use the ethtool
+      message level interface (preferred) or module parameters:
+
+
+      **Method 1: ethtool (Preferred - No Reboot Required)**
+
+      The bnxt_en driver supports the ethtool message level dynamic interface. Check
+      current level:
+
+      ```
+
+      ethtool <device>
+
+      ```
+
+      Enable specific debug categories:
+
+      ```
+
+      ethtool -s <device> msglvl drv on probe on link on hw on ifdown on ifup on
+
+      ```
+
+      Or set numerically:
+
+      ```
+
+      ethtool -s <device> msglvl 0x2037
+
+      ```
+
+      Enable full logging (WARNING: floods kernel log):
+
+      ```
+
+      ethtool -s <device> msglvl 0xffffff
+
+      ```
+
+      According to Red Hat: "This is preferable as it requires no reboot or downtime.
+      The logging of debug messages can be targeted to specific areas and turned on/off
+      as desired."
+
+
+      **Method 2: Module Parameters**
+
+      Set debug parameter via /etc/modprobe.d/ configuration file:
+
+      ```
+
+      options bnxt_en debug=<level>
+
+      ```
+
+      Then reload the module or reboot. Can also set at runtime via sysfs:
+
+      ```
+
+      echo <level> > /sys/module/bnxt_en/parameters/debug
+
+      ```
+
+
+      **View Debug Output:**
+
+      Use `dmesg` or `journalctl -k` to view kernel debug messages.
+
+
+      Note: Each NIC driver has unique debug settings. The ethtool msglvl interface
+      allows targeting specific message types (drv, probe, link, ifdown, ifup, hw,
+      tx_err, rx_err, etc.) without requiring module reload.'
+    turn_metrics:
+    - custom:url_retrieval_eval
+    - ragas:context_relevance
+    - ragas:context_precision_without_reference
+    - custom:answer_correctness
+    expected_urls:
+    - https://access.redhat.com/solutions/45950/index.html
+  metadata:
+    pattern_id: INCORRECT_NETWORKING_PROCEDURES
+    confidence: HIGH
+- conversation_group_id: RSPEED-2113
+  turns:
+  - query: How to configure a LACP bond named 'prod' with slave interfaces ens6 and
+      ens8, LACP rate slow, IP address 192.9.8.3/24, and gateway 192.9.8.1 using nmcli
+      commands on RHEL?
+    expected_response: 'To configure a LACP bond using nmcli on RHEL, use the following
+      commands:
+
+
+      1. Create the bond interface:
+
+      ```
+
+      nmcli con add type bond ifname prod con-name prod bond.options "mode=802.3ad,lacp_rate=slow"
+      ipv4.method manual ipv4.addresses 192.9.8.3/24 ipv4.gateway 192.9.8.1
+
+      ```
+
+
+      2. Add slave interfaces:
+
+      ```
+
+      nmcli con add type bond-slave ifname ens6 con-name prod-slave-ens6 master prod
+
+      nmcli con add type bond-slave ifname ens8 con-name prod-slave-ens8 master prod
+
+      ```
+
+
+      3. Activate the bond:
+
+      ```
+
+      nmcli con up prod
+
+      ```
+
+
+      Key points verified from RHEL documentation:
+
+      - Mode 4 is equivalent to 802.3ad (LACP): "Bonding Mode 4 ( 802.3ad ) also known
+      as LACP (Link Aggregation Control Protocol)" (source: https://access.redhat.com/solutions/666853)
+
+      - LACP rate slow is a valid parameter, as shown in bonding proc output: "LACP
+      rate: slow" (source: https://access.redhat.com/solutions/160283)
+
+      - Mode 4/802.3ad requires switch configuration to establish an "EtherChannel"
+      or similar port grouping (source: https://access.redhat.com/solutions/67546)
+
+      - All switch ports connected to the bonded interfaces must be assigned to the
+      same static/active trunk for proper aggregator ID negotiation (source: https://access.redhat.com/solutions/30469)
+
+
+      Note: The bond mode must be specified as either ''mode=802.3ad'' or ''mode=4'',
+      not ''mode=active-lacp'' which is invalid. Bond options are comma-separated
+      within the bond.options parameter.'
+    turn_metrics:
+    - custom:url_retrieval_eval
+    - ragas:context_relevance
+    - ragas:context_precision_without_reference
+    - custom:answer_correctness
+    expected_urls:
+    - https://access.redhat.com/solutions/160283
+    - https://access.redhat.com/solutions/666853
+    - https://access.redhat.com/solutions/67546
+    - https://access.redhat.com/solutions/30469
+  metadata:
+    pattern_id: INCORRECT_NETWORKING_PROCEDURES
+    confidence: MEDIUM
+- conversation_group_id: RSPEED-1902
+  turns:
+  - query: How to mount a Kerberos-authenticated CIFS share at boot time on RHEL using
+      a keytab file?
+    expected_response: ''
+    turn_metrics:
+    - custom:url_retrieval_eval
+    - ragas:context_relevance
+    - ragas:context_precision_without_reference
+    - custom:answer_correctness
+  metadata:
+    pattern_id: INCORRECT_NETWORKING_PROCEDURES
+    confidence: LOW
+    notes: 'TODO: Retrieved documentation confirms CIFS mounts support Kerberos authentication
+      via sec=krb5 mount option across RHEL 6, 7, and 8, but lacks detailed procedural
+      guidance on keytab configuration, request-key.d setup, and boot-time mounting
+      specifics needed to provide a complete verified answer. Retrieved sources are
+      troubleshooting articles addressing specific kernel bugs (credential expiration,
+      session setup errors) rather than how-to guides for initial configuration.'

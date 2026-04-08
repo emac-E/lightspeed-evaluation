@@ -1,0 +1,464 @@
+{
+  "generated_at": "2026-04-08T00:49:35.145515",
+  "summary": {
+    "total_tickets": 91,
+    "patterns_found": 11,
+    "tickets_grouped": 43,
+    "tickets_ungrouped": 48,
+    "grouping_rate": "47.3%",
+    "min_pattern_size": 3
+  },
+  "patterns": [
+    {
+      "pattern_id": "EOL_UNSUPPORTED_LEGACY_RHEL",
+      "description": "EOL RHEL versions (6, 7) causing support and compatibility issues",
+      "ticket_count": 3,
+      "representative_tickets": [
+        "RSPEED-2745",
+        "RSPEED-2482",
+        "RSPEED-1648"
+      ],
+      "matched_tickets": [
+        "RSPEED-2745",
+        "RSPEED-2482",
+        "RSPEED-1648"
+      ],
+      "common_problem_type": "EOL_UNSUPPORTED",
+      "common_components": [
+        "lifecycle",
+        "support",
+        "containers",
+        "compatibility"
+      ],
+      "version_pattern": "RHEL 6 or 7 (EOL versions)",
+      "verification_queries": [
+        {
+          "query": "RHEL 7 end of life date and extended support options",
+          "context": "Verify EOL status and available support phases",
+          "expected_doc_type": "documentation"
+        },
+        {
+          "query": "RHEL 6 container compatibility on RHEL 9",
+          "context": "Check container runtime compatibility between EOL and current versions",
+          "expected_doc_type": "documentation"
+        }
+      ]
+    },
+    {
+      "pattern_id": "RHEL10_DEPRECATED_FEATURES",
+      "description": "Features deprecated in RHEL 10 requiring migration",
+      "ticket_count": 3,
+      "representative_tickets": [
+        "RSPEED-2794",
+        "RSPEED-1998",
+        "RSPEED-1584"
+      ],
+      "matched_tickets": [
+        "RSPEED-2794",
+        "RSPEED-1998",
+        "RSPEED-1584"
+      ],
+      "common_problem_type": "DEPRECATED_FEATURE",
+      "common_components": [
+        "storage",
+        "GFS2",
+        "networking",
+        "DHCP",
+        "filesystem",
+        "btrfs"
+      ],
+      "version_pattern": "RHEL 10",
+      "verification_queries": [
+        {
+          "query": "RHEL 10 deprecated features list and alternatives",
+          "context": "Find official list of deprecated features and migration paths",
+          "expected_doc_type": "documentation"
+        },
+        {
+          "query": "btrfs filesystem support status in RHEL 10",
+          "context": "Verify btrfs deprecation and recommended alternatives like XFS",
+          "expected_doc_type": "documentation"
+        },
+        {
+          "query": "GFS2 Resilient Storage deprecation in RHEL 10",
+          "context": "Check cluster storage alternatives",
+          "expected_doc_type": "documentation"
+        }
+      ]
+    },
+    {
+      "pattern_id": "UNSUPPORTED_CONTAINER_CONFIG",
+      "description": "Unsupported container configurations across RHEL versions",
+      "ticket_count": 3,
+      "representative_tickets": [
+        "RSPEED-2754",
+        "RSPEED-2536",
+        "RSPEED-2218"
+      ],
+      "matched_tickets": [
+        "RSPEED-2754",
+        "RSPEED-2536",
+        "RSPEED-2218"
+      ],
+      "common_problem_type": "UNSUPPORTED_CONFIG",
+      "common_components": [
+        "containers",
+        "openshift",
+        "security",
+        "scc",
+        "packages"
+      ],
+      "version_pattern": "RHEL 6, 9, 10",
+      "verification_queries": [
+        {
+          "query": "supported container configurations RHEL {version}",
+          "context": "Verify container runtime and security context constraints",
+          "expected_doc_type": "documentation"
+        },
+        {
+          "query": "OpenShift SCC requirements and supported configurations",
+          "context": "Check security context constraint compatibility",
+          "expected_doc_type": "documentation"
+        }
+      ]
+    },
+    {
+      "pattern_id": "RPM_OSTREE_EDGE_PROCEDURES",
+      "description": "Incorrect procedures for rpm-ostree and RHEL for Edge operations",
+      "ticket_count": 4,
+      "representative_tickets": [
+        "RSPEED-1931",
+        "RSPEED-1930",
+        "RSPEED-1929"
+      ],
+      "matched_tickets": [
+        "RSPEED-1931",
+        "RSPEED-1930",
+        "RSPEED-1929",
+        "RSPEED-1859"
+      ],
+      "common_problem_type": "INCORRECT_PROCEDURE",
+      "common_components": [
+        "rpm-ostree",
+        "ostree",
+        "rhel-for-edge",
+        "packages",
+        "kernel",
+        "system-management"
+      ],
+      "version_pattern": "Any RHEL version with rpm-ostree",
+      "verification_queries": [
+        {
+          "query": "rpm-ostree package management procedures and best practices",
+          "context": "Find correct procedures for managing packages in ostree-based systems",
+          "expected_doc_type": "documentation"
+        },
+        {
+          "query": "RHEL for Edge system management and updates",
+          "context": "Verify edge device management procedures",
+          "expected_doc_type": "documentation"
+        },
+        {
+          "query": "kernel updates on rpm-ostree systems",
+          "context": "Check kernel upgrade procedures for ostree",
+          "expected_doc_type": "documentation"
+        }
+      ]
+    },
+    {
+      "pattern_id": "CENTOS_RHEL_CONVERSION",
+      "description": "Incorrect procedures during CentOS to RHEL conversion process",
+      "ticket_count": 4,
+      "representative_tickets": [
+        "RSPEED-1775",
+        "RSPEED-1774",
+        "RSPEED-1773"
+      ],
+      "matched_tickets": [
+        "RSPEED-1775",
+        "RSPEED-1774",
+        "RSPEED-1773",
+        "RSPEED-1772"
+      ],
+      "common_problem_type": "INCORRECT_PROCEDURE",
+      "common_components": [
+        "conversion",
+        "centos",
+        "packages",
+        "repositories",
+        "insights"
+      ],
+      "version_pattern": "RHEL 7, 8",
+      "verification_queries": [
+        {
+          "query": "CentOS to RHEL conversion procedure using Convert2RHEL",
+          "context": "Find official conversion process and common pitfalls",
+          "expected_doc_type": "documentation"
+        },
+        {
+          "query": "package repository configuration after CentOS conversion",
+          "context": "Verify correct repository setup post-conversion",
+          "expected_doc_type": "documentation"
+        },
+        {
+          "query": "Red Hat Insights registration during conversion",
+          "context": "Check Insights integration during migration",
+          "expected_doc_type": "documentation"
+        }
+      ]
+    },
+    {
+      "pattern_id": "BOOTLOADER_UEFI_FIRMWARE",
+      "description": "Incorrect bootloader, UEFI, and firmware configuration procedures",
+      "ticket_count": 6,
+      "representative_tickets": [
+        "RSPEED-1726",
+        "RSPEED-1724",
+        "RSPEED-1723"
+      ],
+      "matched_tickets": [
+        "RSPEED-1726",
+        "RSPEED-1724",
+        "RSPEED-1723",
+        "RSPEED-1722",
+        "RSPEED-1721",
+        "RSPEED-1720"
+      ],
+      "common_problem_type": "INCORRECT_PROCEDURE",
+      "common_components": [
+        "bootloader",
+        "grub2",
+        "UEFI",
+        "firmware",
+        "security",
+        "mokutil",
+        "packages"
+      ],
+      "version_pattern": "RHEL 7, 8, 9, 10",
+      "verification_queries": [
+        {
+          "query": "GRUB2 bootloader configuration RHEL {version}",
+          "context": "Find correct GRUB2 configuration procedures",
+          "expected_doc_type": "documentation"
+        },
+        {
+          "query": "UEFI Secure Boot and MOK management on RHEL",
+          "context": "Verify secure boot key management with mokutil",
+          "expected_doc_type": "documentation"
+        },
+        {
+          "query": "firmware updates and UEFI settings RHEL",
+          "context": "Check firmware update procedures and UEFI configuration",
+          "expected_doc_type": "documentation"
+        }
+      ]
+    },
+    {
+      "pattern_id": "BOOTC_IMAGE_PROCEDURES",
+      "description": "Issues with bootc container-based OS image procedures and documentation",
+      "ticket_count": 4,
+      "representative_tickets": [
+        "RSPEED-1719",
+        "RSPEED-1718",
+        "RSPEED-1717"
+      ],
+      "matched_tickets": [
+        "RSPEED-1719",
+        "RSPEED-1718",
+        "RSPEED-1717",
+        "RSPEED-1650"
+      ],
+      "common_problem_type": "INCORRECT_PROCEDURE / OTHER",
+      "common_components": [
+        "bootc",
+        "containers",
+        "virtualization",
+        "image-builder",
+        "documentation"
+      ],
+      "version_pattern": "RHEL 9",
+      "verification_queries": [
+        {
+          "query": "bootc container-based OS installation and configuration RHEL 9",
+          "context": "Find bootc image building and deployment procedures",
+          "expected_doc_type": "documentation"
+        },
+        {
+          "query": "image-builder bootc workflow and best practices",
+          "context": "Verify image-builder integration with bootc",
+          "expected_doc_type": "documentation"
+        },
+        {
+          "query": "bootc virtualization and container integration",
+          "context": "Check bootc deployment in virtualized environments",
+          "expected_doc_type": "documentation"
+        }
+      ]
+    },
+    {
+      "pattern_id": "PACEMAKER_CLUSTERING",
+      "description": "Incorrect pacemaker clustering procedures",
+      "ticket_count": 3,
+      "representative_tickets": [
+        "RSPEED-1711",
+        "RSPEED-1710",
+        "RSPEED-1709"
+      ],
+      "matched_tickets": [
+        "RSPEED-1711",
+        "RSPEED-1710",
+        "RSPEED-1709"
+      ],
+      "common_problem_type": "INCORRECT_PROCEDURE",
+      "common_components": [
+        "pacemaker",
+        "clustering"
+      ],
+      "version_pattern": "RHEL 9 and other versions",
+      "verification_queries": [
+        {
+          "query": "pacemaker cluster configuration and management RHEL {version}",
+          "context": "Find correct pacemaker setup and maintenance procedures",
+          "expected_doc_type": "documentation"
+        },
+        {
+          "query": "high availability clustering best practices RHEL",
+          "context": "Verify HA cluster configuration guidelines",
+          "expected_doc_type": "documentation"
+        }
+      ]
+    },
+    {
+      "pattern_id": "AUTHENTICATION_IDENTITY_MGMT",
+      "description": "Authentication and identity management questions across various components",
+      "ticket_count": 6,
+      "representative_tickets": [
+        "RSPEED-2657",
+        "RSPEED-2654",
+        "RSPEED-2653"
+      ],
+      "matched_tickets": [
+        "RSPEED-2657",
+        "RSPEED-2656",
+        "RSPEED-2654",
+        "RSPEED-2653",
+        "RSPEED-2652",
+        "RSPEED-2651"
+      ],
+      "common_problem_type": "OTHER",
+      "common_components": [
+        "authentication",
+        "identity-management",
+        "rbac",
+        "security",
+        "monitoring",
+        "cloud-console"
+      ],
+      "version_pattern": "Generic RHEL",
+      "verification_queries": [
+        {
+          "query": "RHEL identity management and RBAC configuration",
+          "context": "Find IDM setup and role-based access control",
+          "expected_doc_type": "documentation"
+        },
+        {
+          "query": "authentication integration with cloud console RHEL",
+          "context": "Check cloud console authentication mechanisms",
+          "expected_doc_type": "documentation"
+        },
+        {
+          "query": "identity management monitoring and security best practices",
+          "context": "Verify IDM security and monitoring configurations",
+          "expected_doc_type": "documentation"
+        }
+      ]
+    },
+    {
+      "pattern_id": "CLI_COMMANDS_INTERFACE",
+      "description": "CLI commands, assistant, and command-line interface questions",
+      "ticket_count": 4,
+      "representative_tickets": [
+        "RSPEED-1736",
+        "RSPEED-1735",
+        "RSPEED-1614"
+      ],
+      "matched_tickets": [
+        "RSPEED-1736",
+        "RSPEED-1735",
+        "RSPEED-1614",
+        "RSPEED-1573"
+      ],
+      "common_problem_type": "OTHER",
+      "common_components": [
+        "CLI",
+        "commands",
+        "assistant",
+        "lightspeed",
+        "roxctl",
+        "insights-client",
+        "rhc",
+        "locale",
+        "CLA",
+        "documentation"
+      ],
+      "version_pattern": "Generic RHEL",
+      "verification_queries": [
+        {
+          "query": "RHEL command line assistant and lightspeed CLI usage",
+          "context": "Find CLI assistant features and capabilities",
+          "expected_doc_type": "documentation"
+        },
+        {
+          "query": "rhc and insights-client command reference",
+          "context": "Check remote host configuration and insights CLI tools",
+          "expected_doc_type": "documentation"
+        },
+        {
+          "query": "roxctl CLI commands and documentation",
+          "context": "Verify roxctl (RHACS) command-line interface",
+          "expected_doc_type": "documentation"
+        }
+      ]
+    },
+    {
+      "pattern_id": "XFS_FILESYSTEM_ISSUES",
+      "description": "XFS filesystem configuration and support issues across multiple RHEL versions",
+      "ticket_count": 3,
+      "representative_tickets": [
+        "RSPEED-1585",
+        "RSPEED-1583",
+        "RSPEED-1582"
+      ],
+      "matched_tickets": [
+        "RSPEED-1585",
+        "RSPEED-1583",
+        "RSPEED-1582"
+      ],
+      "common_problem_type": "INCORRECT_PROCEDURE / UNSUPPORTED_CONFIG / OTHER",
+      "common_components": [
+        "filesystem",
+        "xfs",
+        "storage",
+        "lvm"
+      ],
+      "version_pattern": "RHEL 6, 7, 8, 9",
+      "verification_queries": [
+        {
+          "query": "XFS filesystem configuration and limits RHEL {version}",
+          "context": "Find XFS setup procedures and supported configurations",
+          "expected_doc_type": "documentation"
+        },
+        {
+          "query": "XFS on LVM configuration best practices",
+          "context": "Verify XFS and LVM integration guidelines",
+          "expected_doc_type": "documentation"
+        },
+        {
+          "query": "XFS filesystem version support across RHEL versions",
+          "context": "Check XFS compatibility matrix",
+          "expected_doc_type": "documentation"
+        }
+      ]
+    }
+  ]
+}

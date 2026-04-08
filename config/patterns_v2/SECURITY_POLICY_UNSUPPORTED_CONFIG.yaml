@@ -1,0 +1,93 @@
+# Pattern: SECURITY_POLICY_UNSUPPORTED_CONFIG
+# Description: Unsupported security policy and configuration settings across cloud, container, and OS-level security mechanisms
+# Total tickets: 3
+# Problem Type: UNSUPPORTED_CONFIG
+# Components: security
+
+- conversation_group_id: RSPEED-2536
+  turns:
+  - query: 'Why does tar fail with ''Cannot utime: Operation not permitted'' and ''Cannot
+      change mode'' errors when extracting archives as a non-root user under OpenShift''s
+      restricted-v2 Security Context Constraint, and how can this be resolved?'
+    expected_response: 'Under OpenShift''s restricted-v2 SCC (introduced as default
+      in OCP 4.11+), containers run with randomly assigned high-numbered UIDs from
+      namespace-specific ranges and operate with severely restricted capabilities.
+      Official documentation confirms that restricted-v2 ''drops all capabilities''
+      and is ''the most restrictive policy that matches the current pod security standards''
+      (KCS 6975936, KCS 6973044). While the documentation does not specifically address
+      tar extraction failures, the root cause follows from standard RHEL permission
+      models: tar''s default behavior attempts to preserve original file ownership
+      (chown), permissions (chmod), and timestamps (utime) from the archive. These
+      operations require elevated privileges that randomly-assigned unprivileged UIDs
+      lack under restricted-v2. When these syscalls fail with EPERM (Operation not
+      permitted), tar exits with errors. The solution is to use tar extraction flags
+      --no-same-owner and --no-same-permissions, which instruct tar to skip preservation
+      of original ownership and permissions, instead using the extracting user''s
+      UID/GID and applying umask-based permissions.'
+    turn_metrics:
+    - custom:url_retrieval_eval
+    - ragas:context_relevance
+    - ragas:context_precision_without_reference
+    - custom:answer_correctness
+    expected_urls:
+    - https://access.redhat.com/solutions/6975936/index.html
+    - https://access.redhat.com/articles/6973044/index.html
+    - https://access.redhat.com/articles/6844071/index.html
+  metadata:
+    pattern_id: SECURITY_POLICY_UNSUPPORTED_CONFIG
+    confidence: MEDIUM
+- conversation_group_id: RSPEED-2201
+  turns:
+  - query: How to configure RHEL on AWS with Secure Boot mechanism for Nitro instances?
+    expected_response: ''
+    turn_metrics:
+    - custom:url_retrieval_eval
+    - ragas:context_relevance
+    - ragas:context_precision_without_reference
+    - custom:answer_correctness
+  metadata:
+    pattern_id: SECURITY_POLICY_UNSUPPORTED_CONFIG
+    confidence: LOW
+    notes: 'TODO: No Red Hat documentation found confirming AWS Secure Boot support
+      for RHEL instances. Retrieved articles discuss AWS Nitro instances (kernel panic/NMI
+      only) and Secure Boot in other contexts (RHEL AI, signing third-party drivers,
+      KVM/QEMU VMs), but none confirm or provide configuration steps for Secure Boot
+      on RHEL running on AWS EC2. This capability may exist on AWS side but lacks
+      official Red Hat documentation or support guidance.'
+- conversation_group_id: RSPEED-2136
+  turns:
+  - query: How to prepare a custom SELinux policy based on AVC messages?
+    expected_response: "Creating custom SELinux policy modules based on AVC messages\
+      \ is a documented procedure in RHEL, though Red Hat officially states that 'Red\
+      \ Hat doesn't support creating custom SELinux policy modules, because this falls\
+      \ outside of the Production Support Scope of Coverage' (https://access.redhat.com/articles/5494701).\
+      \ Despite this support policy caveat, Red Hat provides comprehensive documentation\
+      \ and tools for this procedure, and Red Hat solutions frequently use this approach\
+      \ as verified workarounds.\n\nThe standard procedure involves:\n\n1. **Collect\
+      \ AVC denials**: Use ausearch to gather recent denials:\n   ```\n   ausearch\
+      \ -m avc -ts recent\n   ```\n\n2. **Generate policy module**: Use audit2allow\
+      \ to create a policy module:\n   ```\n   ausearch -m avc -ts recent | audit2allow\
+      \ -M <module_name>\n   ```\n\n3. **Review generated policy**: Examine the .te\
+      \ file to understand security implications:\n   ```\n   cat <module_name>.te\n\
+      \   ```\n\n4. **Install the policy module**: Apply the compiled policy:\n  \
+      \ ```\n   semodule -i <module_name>.pp\n   ```\n\n5. **Verify**: Re-test the\
+      \ application to confirm the policy resolves the denials.\n\nRed Hat provides\
+      \ the required tools (policycoreutils-python-utils package) and extensive documentation\
+      \ on creating custom policy modules wisely (https://access.redhat.com/articles/5494701).\
+      \ Multiple verified Red Hat solutions demonstrate this procedure, including\
+      \ solutions 7126448, 4400471, and 5030621. While Red Hat recommends consulting\
+      \ experts and understanding security implications before creating custom policies,\
+      \ the procedure itself is well-documented and the tools are officially provided."
+    turn_metrics:
+    - custom:url_retrieval_eval
+    - ragas:context_relevance
+    - ragas:context_precision_without_reference
+    - custom:answer_correctness
+    expected_urls:
+    - https://access.redhat.com/articles/5494701
+    - https://access.redhat.com/solutions/7126448
+    - https://access.redhat.com/solutions/4400471
+    - https://access.redhat.com/solutions/5030621
+  metadata:
+    pattern_id: SECURITY_POLICY_UNSUPPORTED_CONFIG
+    confidence: HIGH

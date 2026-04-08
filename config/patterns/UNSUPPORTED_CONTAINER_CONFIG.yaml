@@ -1,0 +1,107 @@
+# Pattern: UNSUPPORTED_CONTAINER_CONFIG
+# Description: Unsupported container configurations across RHEL versions
+# Total tickets: 3
+# Problem Type: UNSUPPORTED_CONFIG
+# Components: containers, openshift, security, scc, packages
+
+- conversation_group_id: RSPEED-2754
+  metadata:
+    jira_ticket: RSPEED-2754
+    jira_url: https://redhat.atlassian.net/browse/RSPEED-2754
+    confidence: HIGH
+    pattern_id: UNSUPPORTED_CONTAINER_CONFIG
+  turns:
+  - query: Can I run a RHEL 6 container on RHEL 9?
+    expected_response: 'No, RHEL 6 container images are unsupported on RHEL 9 hosts
+      according to the official Red Hat Enterprise Linux Container Compatibility Matrix.
+      The matrix explicitly shows that RHEL 6 images are only supported on RHEL 8
+      hosts and are marked as "Unsupported" for RHEL 9 and RHEL 10 hosts. While containers
+      may technically run using Podman or other OCI-compliant runtimes, Red Hat''s
+      documentation states that "containers directly depend on the underlying Linux
+      host and kernel for critical interfaces" and there are "known limitations with
+      mixing and matching versions of the operating system in the container image
+      and the container host." Red Hat does not support this configuration, and customers
+      should not expect commercial support. For production environments, use supported
+      combinations: RHEL 7, 8, 9, or 10 container images on RHEL 9 hosts are all supported
+      according to the compatibility matrix.'
+    expected_urls:
+    - https://access.redhat.com/support/policy/rhel-container-compatibility/index.html
+    expected_keywords: []
+    forbidden_claims: []
+    turn_metrics:
+    - ragas:context_relevance
+    - ragas:context_precision_without_reference
+    - custom:answer_correctness
+- conversation_group_id: RSPEED-2536
+  metadata:
+    jira_ticket: RSPEED-2536
+    jira_url: https://redhat.atlassian.net/browse/RSPEED-2536
+    confidence: MEDIUM
+    pattern_id: UNSUPPORTED_CONTAINER_CONFIG
+  turns:
+  - query: 'Why does tar fail with ''Cannot utime: Operation not permitted'' and ''Cannot
+      change mode'' errors when extracting archives as a non-root user under OpenShift''s
+      restricted-v2 Security Context Constraint, and how can this be resolved?'
+    expected_response: 'Under OpenShift''s restricted-v2 SCC (introduced as default
+      in OCP 4.11+), containers run with randomly assigned high-numbered UIDs from
+      namespace-specific ranges and operate with severely restricted capabilities.
+      Official documentation confirms that restricted-v2 ''drops all capabilities''
+      and is ''the most restrictive policy that matches the current pod security standards''
+      (KCS 6975936, KCS 6973044). While the documentation does not specifically address
+      tar extraction failures, the root cause follows from standard RHEL permission
+      models: tar''s default behavior attempts to preserve original file ownership
+      (chown), permissions (chmod), and timestamps (utime) from the archive. These
+      operations require elevated privileges that randomly-assigned unprivileged UIDs
+      lack under restricted-v2. When these syscalls fail with EPERM (Operation not
+      permitted), tar exits with errors. The solution is to use tar extraction flags
+      --no-same-owner and --no-same-permissions, which instruct tar to skip preservation
+      of original ownership and permissions, instead using the extracting user''s
+      UID/GID and applying umask-based permissions.'
+    expected_urls:
+    - https://access.redhat.com/solutions/6975936/index.html
+    - https://access.redhat.com/articles/6973044/index.html
+    - https://access.redhat.com/articles/6844071/index.html
+    expected_keywords: []
+    forbidden_claims: []
+    turn_metrics:
+    - ragas:context_relevance
+    - ragas:context_precision_without_reference
+    - custom:answer_correctness
+- conversation_group_id: RSPEED-2218
+  metadata:
+    jira_ticket: RSPEED-2218
+    jira_url: https://redhat.atlassian.net/browse/RSPEED-2218
+    confidence: HIGH
+    pattern_id: UNSUPPORTED_CONTAINER_CONFIG
+  turns:
+  - query: Why does 'rhel-cla start' fail with error 'executable file ramalama not
+      found in $PATH' on RHEL 10.1 with podman 5.6.0?
+    expected_response: 'This is a known issue (bug RSPEED-2218) in the RHEL command-line
+      assistant offline developer preview release available with RHEL 10.1. The error
+      ''runtime stderr: executable file ramalama not found in $PATH'' occurs when
+      starting rhel-cla.
+
+
+      Workaround:
+
+      1. For CPU-only systems: Edit ~/.config/rhel-cla/.env and update LLAMACPP_IMAGE
+      to: LLAMACPP_IMAGE="quay.io/ramalama/ramalama:6ae863e9f552797b45d0fd8632c4f7ec9b78c430"
+
+      2. For NVIDIA GPU systems: Edit ~/.config/rhel-cla/.env and update LLAMACPP_IMAGE
+      to: LLAMACPP_IMAGE="quay.io/ramalama/cuda:0.14"
+
+      3. Start rhel-cla using: rhel-cla start
+
+
+      Note: RHEL CLA for offline use is in Developer Preview and not intended for
+      production use. The system must be registered via RHEL Satellite, RHSM, or RHC
+      to use this feature.'
+    expected_urls:
+    - https://access.redhat.com/solutions/7134825/index.html
+    - https://access.redhat.com/solutions/7136542/index.html
+    expected_keywords: []
+    forbidden_claims: []
+    turn_metrics:
+    - ragas:context_relevance
+    - ragas:context_precision_without_reference
+    - custom:answer_correctness

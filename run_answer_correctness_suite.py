@@ -58,6 +58,7 @@ def run_evaluation(
         eval_data,
         "--output-dir",
         str(run_dir),
+        "--cache-warmup",
     ]
 
     print(f"\n{'='*60}")

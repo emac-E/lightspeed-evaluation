@@ -1,0 +1,106 @@
+# Pattern: CLI_TOOL_ISSUES
+# Description: CLI tool functionality and usability issues across various command-line utilities
+# Total tickets: 4
+# Problem Type: CLI_FUNCTIONALITY
+# Components: CLI, cli, commands
+
+- conversation_group_id: RSPEED-1736
+  turns:
+  - query: What are the standard formatting conventions for CLI help output section
+      headers in RHEL/Red Hat tools, specifically regarding consistent casing (e.g.,
+      'options:' vs 'Filtering Options:')?
+    expected_response: ''
+    turn_metrics:
+    - custom:url_retrieval_eval
+    - ragas:context_relevance
+    - ragas:context_precision_without_reference
+    - custom:answer_correctness
+  metadata:
+    pattern_id: CLI_TOOL_ISSUES
+    confidence: LOW
+    notes: 'TODO: Retrieved documentation about roxctl CLI does not contain information
+      about help output formatting conventions or section header casing standards.
+      The search results only show installation and usage guides without actual help
+      text examples. No official Red Hat style guide for CLI help formatting was found.
+      Need to either: 1) Search for Red Hat developer documentation or CLI style guides,
+      2) Examine actual roxctl help output to identify current conventions, or 3)
+      Review Python argparse/Click library documentation that Red Hat tools commonly
+      use.'
+- conversation_group_id: RSPEED-1735
+  turns:
+  - query: How to make the CLI command 'c' respect LC_TIME locale settings for date
+      formatting in its output
+    expected_response: ''
+    turn_metrics:
+    - custom:url_retrieval_eval
+    - ragas:context_relevance
+    - ragas:context_precision_without_reference
+    - custom:answer_correctness
+  metadata:
+    pattern_id: CLI_TOOL_ISSUES
+    confidence: LOW
+    notes: 'TODO: Retrieved documentation covers Red Hat Lightspeed service (insights-client,
+      rhc client) but contains no information about a CLI command named ''c'' or its
+      locale handling. The documentation discusses insights-client configuration,
+      remote host configuration (rhc), and OpenShift Lightspeed Advisor, none of which
+      address locale-aware date formatting for a ''c'' command. Additional investigation
+      needed to identify what the ''c'' command refers to and locate relevant documentation
+      or source code.'
+- conversation_group_id: RSPEED-1614
+  turns:
+  - query: What single-letter commands (one character only) exist in a standard RHEL/Linux
+      installation, excluding aliases?
+    expected_response: 'The system response was incorrect - it listed multi-character
+      commands (cd, ls, pwd, cp, mv, rm, cat, touch, echo, clear, grep, find, ps,
+      kill) instead of single-letter commands.
+
+
+      In a standard RHEL installation, true single-letter built-in commands are rare:
+
+
+      1. **''w''** - Displays who is currently logged in and what they are doing.
+      Shows user, TTY, login time, idle time, and current process. (Source: Red Hat
+      KB 1907, 1849)
+
+
+      2. **''[''** - The test command (equivalent to the ''test'' built-in), used
+      for conditional expressions in shell scripts.
+
+
+      Most single-letter commands users encounter (like ''c'', ''l'', ''h'', etc.)
+      are typically user-defined aliases, not built-in system commands. The correct
+      answer should acknowledge that genuine single-letter commands in RHEL are extremely
+      limited, with ''w'' being the primary example for general use.'
+    turn_metrics:
+    - custom:url_retrieval_eval
+    - ragas:context_relevance
+    - ragas:context_precision_without_reference
+    - custom:answer_correctness
+    expected_urls:
+    - https://access.redhat.com/articles/1907/index.html
+    - https://access.redhat.com/articles/1849/index.html
+    - https://access.redhat.com/solutions/119773/index.html
+    - https://access.redhat.com/solutions/303693/index.html
+  metadata:
+    pattern_id: CLI_TOOL_ISSUES
+    confidence: MEDIUM
+- conversation_group_id: RSPEED-1573
+  turns:
+  - query: RHEL Lightspeed CLI --plain option default behavior and expected output
+      formatting
+    expected_response: ''
+    turn_metrics:
+    - custom:url_retrieval_eval
+    - ragas:context_relevance
+    - ragas:context_precision_without_reference
+    - custom:answer_correctness
+  metadata:
+    pattern_id: CLI_TOOL_ISSUES
+    confidence: LOW
+    notes: 'TODO: This is a CLI implementation bug, not a documentation question.
+      The retrieved documentation covers Red Hat Lightspeed general features, proxy
+      configuration, and MCP integration, but contains no information about the --plain
+      command-line option, its expected behavior, or CLI output formatting specifications.
+      This ticket requires code inspection and debugging of the RHEL Lightspeed CLI
+      tool to determine why the --plain flag appears to be enabled by default, rather
+      than documentation verification.'

@@ -1,0 +1,137 @@
+# Pattern: BOOTC_IMAGE_PROCEDURES
+# Description: Issues with bootc container-based OS image procedures and documentation
+# Total tickets: 4
+# Problem Type: INCORRECT_PROCEDURE / OTHER
+# Components: bootc, containers, virtualization, image-builder, documentation
+
+- conversation_group_id: RSPEED-1719
+  metadata:
+    jira_ticket: RSPEED-1719
+    jira_url: https://redhat.atlassian.net/browse/RSPEED-1719
+    confidence: HIGH
+    pattern_id: BOOTC_IMAGE_PROCEDURES
+  turns:
+  - query: How do I create a VMware VMDK disk image from a RHEL Image Mode bootable
+      container?
+    expected_response: "To create a VMware VMDK disk image from a RHEL Image Mode\
+      \ bootable container, use the official bootc-image-builder container image available\
+      \ in RHEL 9. According to Red Hat errata RHEA-2025:4415, the rhel9/bootc-image-builder\
+      \ is a Technology Preview tool that \"converts bootable container images, for\
+      \ example rhel-bootc, to different disk image formats, such as qcow2, ami, vmdk,\
+      \ ISO, and other.\"\n\nThe process involves:\n\n1. Pull the bootc-image-builder\
+      \ container:\n   podman pull registry.redhat.io/rhel9/bootc-image-builder\n\n\
+      2. Run the builder with the --type vmdk parameter to specify VMDK output format:\n\
+      \   sudo podman run --rm -it --privileged --pull=newer \\\n     --security-opt\
+      \ label=type:unconfined_t \\\n     -v /var/lib/containers/storage:/var/lib/containers/storage\
+      \ \\\n     -v ./output:/output \\\n     registry.redhat.io/rhel9/bootc-image-builder:latest\
+      \ \\\n     --type vmdk \\\n     <your-bootable-container-image>\n\n3. The resulting\
+      \ VMDK file will be in the ./output directory and can be imported into VMware\
+      \ vSphere, ESXi, or other VMware platforms.\n\nNote: bootc-image-builder requires\
+      \ privileged access and unconfined SELinux context. This is the official and\
+      \ supported method for creating disk images from RHEL Image Mode bootable containers.\
+      \ Traditional RHEL image builder tools (composer-cli, osbuild-composer) are\
+      \ NOT compatible with Image Mode bootable containers.\n\nFor complete documentation,\
+      \ refer to: https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/9/html/using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems"
+    expected_urls:
+    - https://access.redhat.com/errata/RHEA-2025:4415/index.html
+    - https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/9/html/using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems
+    expected_keywords: []
+    forbidden_claims: []
+    turn_metrics:
+    - ragas:context_relevance
+    - ragas:context_precision_without_reference
+    - custom:answer_correctness
+- conversation_group_id: RSPEED-1718
+  metadata:
+    jira_ticket: RSPEED-1718
+    jira_url: https://redhat.atlassian.net/browse/RSPEED-1718
+    confidence: MEDIUM
+    pattern_id: BOOTC_IMAGE_PROCEDURES
+  turns:
+  - query: How do I create a disk image from a bootable container image in RHEL Image
+      Mode?
+    expected_response: Image mode for RHEL uses bootable containers (bootc) as a deployment
+      method for RHEL systems. According to Red Hat documentation, 'Image mode for
+      RHEL is a deployment method that uses a container-native approach to build,
+      deploy, and manage the operating system as a rhel-bootc image. This container
+      image uses standard OCI or Docker containers as a transport and delivery format
+      for base operating system updates. A bootc image includes a Linux kernel that
+      is used to start the operating system.' The process involves building a bootc
+      image and then creating a virtual machine from it, as documented in the official
+      Red Hat build of MicroShift guides (versions 4.17-4.21). The bootc-image-builder
+      tool from registry.redhat.io/rhel9/bootc-image-builder is the recommended approach
+      for converting bootable container images to disk images with support for multiple
+      output formats (qcow2, raw, vmdk, ami, gce). Traditional tools like Image Builder
+      (osbuild-composer) or lorax are not compatible with bootc-based container images.
+    expected_urls:
+    - https://access.redhat.com/documentation/en-us/red_hat_build_of_microshift/4.17/html-single/installing_with_image_mode_for_rhel/index/index.html
+    - https://access.redhat.com/documentation/en-us/red_hat_build_of_microshift/4.19/html-single/installing_with_image_mode_for_rhel/index/index.html
+    - https://access.redhat.com/documentation/en-us/red_hat_build_of_microshift/4.20/html-single/installing_with_image_mode_for_rhel/index/index.html
+    - https://access.redhat.com/documentation/en-us/red_hat_build_of_microshift/4.21/html-single/installing_with_image_mode_for_rhel/index/index.html
+    expected_keywords: []
+    forbidden_claims: []
+    turn_metrics:
+    - ragas:context_relevance
+    - ragas:context_precision_without_reference
+    - custom:answer_correctness
+- conversation_group_id: RSPEED-1717
+  metadata:
+    jira_ticket: RSPEED-1717
+    jira_url: https://redhat.atlassian.net/browse/RSPEED-1717
+    confidence: LOW
+    pattern_id: BOOTC_IMAGE_PROCEDURES
+  turns:
+  - query: How do I create a QCOW2 image from a bootable container image using bootc-image-builder?
+    expected_response: 'TODO: No RHEL documentation found for bootc-image-builder.
+      The retrieved search results only discuss osbuild-composer (aka Image Builder),
+      which is a different image building tool. Unable to verify the bootc-image-builder
+      workflow, container registry location (registry.redhat.io/rhel9/bootc-image-builder),
+      required podman commands, or QCOW2 creation process without official documentation.'
+    expected_urls: []
+    expected_keywords: []
+    forbidden_claims: []
+    turn_metrics:
+    - ragas:context_relevance
+    - ragas:context_precision_without_reference
+    - custom:answer_correctness
+- conversation_group_id: RSPEED-1650
+  metadata:
+    jira_ticket: RSPEED-1650
+    jira_url: https://redhat.atlassian.net/browse/RSPEED-1650
+    confidence: MEDIUM
+    pattern_id: BOOTC_IMAGE_PROCEDURES
+  turns:
+  - query: Can you provide an example Containerfile for RHEL Image Mode with proper
+      shell command syntax (without HTML entity encoding)?
+    expected_response: 'RHEL Image Mode uses bootc images (rhel-bootc) that are customized
+      via Containerfiles. Based on official RHEL documentation covering ''Composing,
+      installing, and managing RHEL for Edge images'' (RHEL 9.6+, RHEL 10) and MicroShift
+      bootc image building, a proper Containerfile uses standard shell syntax:
+
+
+      FROM registry.redhat.io/rhel9/rhel-bootc:latest
+
+      RUN dnf -y install httpd && dnf clean all
+
+      RUN systemctl enable httpd
+
+      CMD ["/sbin/init"]
+
+
+      The issue described in RSPEED-1650 is that the RAG content extraction process
+      incorrectly converts shell operators to HTML entities: ''&&'' becomes ''&amp;&amp;'',
+      ''<'' becomes ''&lt;'', and ''>'' becomes ''&gt;''. This makes the code examples
+      non-functional when copied. The original RHEL documentation contains correct
+      shell syntax; the HTML entity encoding problem occurs during the content extraction/processing
+      phase for the RAG system, not in the source documentation itself.'
+    expected_urls:
+    - https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/10/html-single/composing_installing_and_managing_rhel_for_edge_images/index/index.html
+    - https://access.redhat.com/documentation/en-us/red_hat_build_of_microshift/4.19/html-single/installing_with_image_mode_for_rhel/index/index.html
+    - https://access.redhat.com/documentation/en-us/red_hat_build_of_microshift/4.20/html-single/installing_with_image_mode_for_rhel/index/index.html
+    - https://access.redhat.com/documentation/en-us/red_hat_build_of_microshift/4.21/html-single/installing_with_image_mode_for_rhel/index/index.html
+    expected_keywords: []
+    forbidden_claims: []
+    turn_metrics:
+    - ragas:context_relevance
+    - ragas:context_precision_without_reference
+    - custom:answer_correctness

@@ -1,0 +1,31 @@
+{
+  "generated_at": "2026-04-07T21:22:18.774662",
+  "input_file": "config/bootstrap_20260407/extracted_tickets.yaml",
+  "total_tickets": 91,
+  "categories": {
+    "verified": {
+      "count": 70,
+      "percentage": 76.9,
+      "description": "Tickets with verified ground truth from documentation"
+    },
+    "no_ground_truth": {
+      "count": 21,
+      "percentage": 23.1,
+      "description": "Tickets without ground truth - missing documentation or out of scope",
+      "reasons": {
+        "no_sources": 21,
+        "has_ground_truth": 70
+      }
+    },
+    "failed": {
+      "count": 0,
+      "percentage": 0.0,
+      "description": "Tickets with extraction errors or malformed entries"
+    }
+  },
+  "next_steps": {
+    "pattern_discovery": "Run on verified_tickets.yaml (70 tickets)",
+    "documentation_gaps": "Review no_ground_truth_tickets.yaml (21 tickets)",
+    "investigate_failures": "Review failed_tickets.yaml (0 tickets)"
+  }
+}

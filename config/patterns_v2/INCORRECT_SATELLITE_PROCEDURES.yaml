@@ -1,0 +1,128 @@
+# Pattern: INCORRECT_SATELLITE_PROCEDURES
+# Description: Incorrect procedures for Satellite server operations including authentication, registration, and capsule management
+# Total tickets: 3
+# Problem Type: INCORRECT_PROCEDURE
+# Components: satellite, authentication, registration, capsule, hammer, rhc, subscription-manager
+
+- conversation_group_id: RSPEED-2004
+  turns:
+  - query: How do I resolve CLA authentication failures when RHEL is registered to
+      Red Hat Satellite 6.17+ instead of the cloud service?
+    expected_response: "To resolve CLA authentication failures when using Red Hat\
+      \ Satellite as the Lightspeed backend, perform the following steps:\n\n1. **Update\
+      \ the Lightspeed endpoint configuration** (Primary fix):\n   - Edit `/etc/xdg/command-line-assistant/config.toml`\n\
+      \   - Set: `endpoint = \"https://satellite.example.com/api/lightspeed/v1\"`\
+      \ (replace with your actual Satellite FQDN)\n   - Restart the clad service:\
+      \ `systemctl restart clad`\n   - This is required because Satellite 6.17+ proxies\
+      \ Lightspeed API requests through the Satellite server\n\n2. **If Satellite\
+      \ uses self-signed certificates** (Additional step when applicable):\n   - Copy\
+      \ the Satellite CA certificate to the system trust store: `cp /path/to/satellite_ca.crt\
+      \ /etc/pki/ca-trust/source/anchors/`\n   - Update the system trust bundles:\
+      \ `update-ca-trust`\n   - The CLA relies on the system-wide trust store to validate\
+      \ HTTPS connections; without the Satellite CA certificate, authentication will\
+      \ fail even with correct endpoint configuration\n\n**Prerequisites**: Red Hat\
+      \ Satellite 6.17 or later (issue SAT-32475 was fixed in this version)\n\n**Troubleshooting**:\
+      \ Enable debug logging by setting `level = \"DEBUG\"` under `[logging]` in config.toml\
+      \ and check logs with `journalctl -u clad --no-pager`\n\nSource: Red Hat Solutions\
+      \ 7121796, 7132350"
+    turn_metrics:
+    - custom:url_retrieval_eval
+    - ragas:context_relevance
+    - ragas:context_precision_without_reference
+    - custom:answer_correctness
+    expected_urls:
+    - https://access.redhat.com/solutions/7121796/index.html
+    - https://access.redhat.com/solutions/7132350/index.html
+    - https://access.redhat.com/solutions/7129813/index.html
+    - https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/10/html-single/interacting_with_the_command-line_assistant_powered_by_rhel_lightspeed/index/index.html
+    - https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/9/html-single/interacting_with_the_command-line_assistant_powered_by_rhel_lightspeed/index/index.html
+  metadata:
+    pattern_id: INCORRECT_SATELLITE_PROCEDURES
+    confidence: HIGH
+- conversation_group_id: RSPEED-1743
+  turns:
+  - query: Can the hammer command be used to upgrade a Red Hat Satellite Capsule Server?
+    expected_response: 'No, the hammer command cannot be used to upgrade Capsule Servers.
+      Capsule upgrades are performed using satellite-installer or satellite-maintain
+      tools, not hammer CLI.
+
+
+      The documented upgrade methods are:
+
+      1. Using satellite-installer: `satellite-installer --scenario capsule --upgrade`
+      (as shown in solutions 2688931, 7137198, and 4321811)
+
+      2. Using satellite-maintain: `satellite-maintain upgrade run --target-version
+      6.Y` (as shown in solution 7087453)
+
+
+      The hammer CLI is used for Capsule content management and administrative tasks
+      such as:
+
+      - Managing lifecycle environments: `hammer capsule content available-lifecycle-environments`,
+      `hammer capsule content add-lifecycle-environment`
+
+      - Synchronization operations: `hammer capsule content synchronize`, `hammer
+      capsule content synchronization-status`
+
+      - Content management: `hammer capsule content lifecycle-environments`
+
+
+      There is no `hammer capsule upgrade` command. Attempting to use hammer for upgrades
+      would be incorrect.'
+    turn_metrics:
+    - custom:url_retrieval_eval
+    - ragas:context_relevance
+    - ragas:context_precision_without_reference
+    - custom:answer_correctness
+    expected_urls:
+    - https://access.redhat.com/solutions/2688931/index.html
+    - https://access.redhat.com/solutions/7137198/index.html
+    - https://access.redhat.com/solutions/4321811/index.html
+    - https://access.redhat.com/solutions/7087453/index.html
+    - https://access.redhat.com/solutions/3097911/index.html
+  metadata:
+    pattern_id: INCORRECT_SATELLITE_PROCEDURES
+    confidence: HIGH
+- conversation_group_id: RSPEED-1634
+  turns:
+  - query: Can I use the rhc command to register a RHEL system to Red Hat Satellite?
+    expected_response: 'No, the rhc command cannot be used to register a RHEL system
+      to Red Hat Satellite. According to Red Hat documentation, "RHC client is not
+      a replacement for insights-client or subscription-manager, it is an additional
+      utility that complements the user experience around hosted Red Hat Insights
+      services provided by Red Hat Hybrid Cloud Console." The rhc tool is specifically
+      designed for connecting RHEL systems directly to Red Hat Hybrid Cloud Console
+      and Red Hat Insights services, not for Satellite registration.
+
+
+      Furthermore, the official documentation explicitly states that "The rhcd service
+      only works when the client is directly registered to RHSM or Red Hat Hybrid
+      Cloud console" and "the clients registered through the Satellite server should
+      not have the rhcd service running on them." For systems managed by Red Hat Satellite,
+      the documentation recommends configuring Cloud Connector on the Satellite server
+      itself, not using rhc on client systems.
+
+
+      To register a RHEL system to Red Hat Satellite, use one of these correct methods:
+
+      1. subscription-manager with bootstrap scripts or manual registration commands
+
+      2. Global Registration method (available in Satellite 6.11+) which generates
+      a curl-based registration script
+
+
+      The rhc command is intended only for systems that are NOT managed by Satellite
+      and need direct connection to Red Hat Hybrid Cloud Console for features like
+      Insights remediations.'
+    turn_metrics:
+    - custom:url_retrieval_eval
+    - ragas:context_relevance
+    - ragas:context_precision_without_reference
+    - custom:answer_correctness
+    expected_urls:
+    - https://access.redhat.com/articles/rhc/index.html
+    - https://access.redhat.com/solutions/7018570/index.html
+  metadata:
+    pattern_id: INCORRECT_SATELLITE_PROCEDURES
+    confidence: HIGH

@@ -1,0 +1,100 @@
+# Pattern: PACEMAKER_CLUSTERING
+# Description: Incorrect pacemaker clustering procedures
+# Total tickets: 3
+# Problem Type: INCORRECT_PROCEDURE
+# Components: pacemaker, clustering
+
+- conversation_group_id: RSPEED-1711
+  metadata:
+    jira_ticket: RSPEED-1711
+    jira_url: https://redhat.atlassian.net/browse/RSPEED-1711
+    confidence: LOW
+    pattern_id: PACEMAKER_CLUSTERING
+  turns:
+  - query: How can I speed up the creation of a large number of pacemaker cluster
+      resources using pcs commands in RHEL?
+    expected_response: 'TODO: Retrieved documentation does not contain information
+      about batch operations with pcs commands or the `-f` flag for offline CIB manipulation.
+      Need to search for: ''pcs -f flag offline cib'', ''pcs cluster cib export'',
+      ''batch resource creation pacemaker'', or ''pcs cib-push diff-against''. Retrieved
+      docs only confirm that pcs cib-push exists and that non-atomic cluster changes
+      can be problematic, but do not provide the specific workflow or command syntax
+      for batch operations.'
+    expected_urls: []
+    expected_keywords: []
+    forbidden_claims: []
+    turn_metrics:
+    - ragas:context_relevance
+    - ragas:context_precision_without_reference
+    - custom:answer_correctness
+- conversation_group_id: RSPEED-1710
+  metadata:
+    jira_ticket: RSPEED-1710
+    jira_url: https://redhat.atlassian.net/browse/RSPEED-1710
+    confidence: HIGH
+    pattern_id: PACEMAKER_CLUSTERING
+  turns:
+  - query: What is the correct pcs command to make resources r1 and r2 start in sequence
+      and run on the same node in a RHEL Pacemaker cluster?
+    expected_response: 'The correct command is ''pcs resource group add my-group r1
+      r2''. This single command ensures both requirements: sequential startup (r1
+      before r2) and colocation (both resources run on the same node). Resource groups
+      in Pacemaker automatically provide these behaviors - resources start sequentially
+      in the order specified, run together on the same node, and stop in reverse order.
+      As documented in Red Hat''s official solutions, the syntax is ''pcs resource
+      group add <group-name> <resource1> <resource2> ...'' where the position of resources
+      in the command determines their start order. If resource groups are unsuitable
+      for the specific use case, the alternative is to use separate constraints: ''pcs
+      constraint order r1 then r2'' for ordering and ''pcs constraint colocation add
+      r2 with r1'' for colocation. The command syntax ''pcs constraint order set r1
+      then r2 node r1-r2-node sequential=true'' does not appear in any official Red
+      Hat documentation and mixes ordering, node placement, and non-existent parameters
+      incorrectly.'
+    expected_urls:
+    - https://access.redhat.com/solutions/1201833
+    - https://access.redhat.com/solutions/5357971
+    - https://access.redhat.com/solutions/2883801
+    - https://access.redhat.com/solutions/3589751
+    expected_keywords: []
+    forbidden_claims: []
+    turn_metrics:
+    - ragas:context_relevance
+    - ragas:context_precision_without_reference
+    - custom:answer_correctness
+- conversation_group_id: RSPEED-1709
+  metadata:
+    jira_ticket: RSPEED-1709
+    jira_url: https://redhat.atlassian.net/browse/RSPEED-1709
+    confidence: HIGH
+    pattern_id: PACEMAKER_CLUSTERING
+  turns:
+  - query: What is the correct command and behavior for moving a cluster resource
+      r1 to node n2 using pcs in RHEL 9, and how does it differ from RHEL 8 and earlier
+      versions?
+    expected_response: 'In RHEL 9, the command ''pcs resource move r1 n2'' creates
+      an INFINITY location constraint to move the resource to node n2, and by default,
+      this constraint is automatically deleted once the resource has been moved. According
+      to Red Hat documentation: "By default in RHEL 9, the location constraint which
+      the command creates is automatically removed once the resource has been moved."
+      This is a significant behavioral change from RHEL 8 and earlier versions, where
+      the constraint would persist and had to be manually removed using ''pcs resource
+      clear'' or by using the ''lifetime'' parameter. The automatic removal behavior
+      was introduced as an option (--autodelete) in RHEL 8.5 (Tech Preview) and RHEL
+      8.6 (fully supported), and became the default behavior in RHEL 9. If you need
+      the legacy behavior (persistent constraint) in RHEL 9, use ''pcs resource move-with-constraint
+      r1 n2'' instead, which "will ensure that the location constraint which the command
+      creates, doesn''t get automatically removed once the resource has been moved."
+      The --promoted option (formerly --master in RHEL 8) is unrelated to constraint
+      persistence; it is specifically used for moving promotable clone resources to
+      promote them on a specific node.'
+    expected_urls:
+    - https://access.redhat.com/solutions/7088214
+    - https://access.redhat.com/solutions/6169652
+    - https://access.redhat.com/solutions/1325593
+    - https://access.redhat.com/solutions/5369551
+    expected_keywords: []
+    forbidden_claims: []
+    turn_metrics:
+    - ragas:context_relevance
+    - ragas:context_precision_without_reference
+    - custom:answer_correctness

@@ -1,0 +1,1047 @@
+# JIRA Open Tickets - SME Input Required
+# Total tickets needing SME input: 79
+
+- conversation_group_id: RSPEED_2794
+  metadata:
+    jira_ticket: RSPEED-2794
+    jira_url: https://redhat.atlassian.net/browse/RSPEED-2794
+    extraction_reasoning: 'Used summary as query. Ticket: RSPEED-2794'
+  turns:
+  - query: 'Incorrect answer: Is GFS2 available in RHEL 10?'
+    expected_urls: []
+    expected_response: 'TODO: Expected response not specified in ticket - requires
+      SME input'
+    turn_metrics: &id001
+    - custom:url_retrieval_eval
+    - custom:keywords_eval
+    - ragas:context_precision_without_reference
+    - ragas:context_relevance
+    - custom:forbidden_claims_eval
+    - custom:answer_correctness
+    expected_keywords: []
+    forbidden_claims: []
+- conversation_group_id: RSPEED_2786
+  metadata:
+    jira_ticket: RSPEED-2786
+    jira_url: https://redhat.atlassian.net/browse/RSPEED-2786
+    extraction_reasoning: 'Used summary as query. Ticket: RSPEED-2786'
+  turns:
+  - query: 'okp-mcp: request_id logs show JSON-RPC message counter instead of HTTP
+      correlation UUID'
+    expected_urls: []
+    expected_response: 'TODO: Expected response not specified in ticket - requires
+      SME input'
+    turn_metrics: *id001
+    expected_keywords: []
+    forbidden_claims: []
+- conversation_group_id: RSPEED_2745
+  metadata:
+    jira_ticket: RSPEED-2745
+    jira_url: https://redhat.atlassian.net/browse/RSPEED-2745
+    extraction_reasoning: 'Used summary as query. Ticket: RSPEED-2745'
+  turns:
+  - query: 'Incorrect answer: When does maintenance support phase end for RHEL 7'
+    expected_urls: []
+    expected_response: 'TODO: Expected response not specified in ticket - requires
+      SME input'
+    turn_metrics: *id001
+    expected_keywords: []
+    forbidden_claims: []
+- conversation_group_id: RSPEED_2701
+  metadata:
+    jira_ticket: RSPEED-2701
+    jira_url: https://redhat.atlassian.net/browse/RSPEED-2701
+    extraction_reasoning: 'Used summary as query. Ticket: RSPEED-2701'
+  turns:
+  - query: OKP Solr index missing RHEL lifecycle dates table - returns EUS minor release
+      dates instead of overall lifecycle
+    expected_urls: []
+    expected_response: 'TODO: Expected response not specified in ticket - requires
+      SME input'
+    turn_metrics: *id001
+    expected_keywords: []
+    forbidden_claims: []
+- conversation_group_id: RSPEED_2698
+  metadata:
+    jira_ticket: RSPEED-2698
+    jira_url: https://redhat.atlassian.net/browse/RSPEED-2698
+    extraction_reasoning: 'Used summary as query. Ticket: RSPEED-2698'
+  turns:
+  - query: CLA fails to provide RHEL 10 support lifecycle details
+    expected_urls: []
+    expected_response: 'TODO: Expected response not specified in ticket - requires
+      SME input'
+    turn_metrics: *id001
+    expected_keywords: []
+    forbidden_claims: []
+- conversation_group_id: RSPEED_2697
+  metadata:
+    jira_ticket: RSPEED-2697
+    jira_url: https://redhat.atlassian.net/browse/RSPEED-2697
+    extraction_reasoning: 'Used summary as query. Ticket: RSPEED-2697'
+  turns:
+  - query: CLA incorrectly states RHEL 10 has not been released
+    expected_urls: []
+    expected_response: 'TODO: Expected response not specified in ticket - requires
+      SME input'
+    turn_metrics: *id001
+    expected_keywords: []
+    forbidden_claims: []
+- conversation_group_id: RSPEED_2657
+  metadata:
+    jira_ticket: RSPEED-2657
+    jira_url: https://redhat.atlassian.net/browse/RSPEED-2657
+    extraction_reasoning: 'Used summary as query. Ticket: RSPEED-2657'
+  turns:
+  - query: 'rh-identity auth: no role extraction from identity header, all users get
+      wildcard role'
+    expected_urls: []
+    expected_response: 'TODO: Expected response not specified in ticket - requires
+      SME input'
+    turn_metrics: *id001
+    expected_keywords: []
+    forbidden_claims: []
+- conversation_group_id: RSPEED_2656
+  metadata:
+    jira_ticket: RSPEED-2656
+    jira_url: https://redhat.atlassian.net/browse/RSPEED-2656
+    extraction_reasoning: 'Used summary as query. Ticket: RSPEED-2656'
+  turns:
+  - query: 'rh-identity auth: no Prometheus metrics for authentication events'
+    expected_urls: []
+    expected_response: 'TODO: Expected response not specified in ticket - requires
+      SME input'
+    turn_metrics: *id001
+    expected_keywords: []
+    forbidden_claims: []
+- conversation_group_id: RSPEED_2501
+  metadata:
+    jira_ticket: RSPEED-2501
+    jira_url: https://redhat.atlassian.net/browse/RSPEED-2501
+    extraction_reasoning: 'Used summary as query. Ticket: RSPEED-2501'
+  turns:
+  - query: lightspeed-stack burns 90%+ CPU idle after first MCP tool call
+    expected_urls: []
+    expected_response: 'TODO: Expected response not specified in ticket - requires
+      SME input'
+    turn_metrics: *id001
+    expected_keywords: []
+    forbidden_claims: []
+- conversation_group_id: RSPEED_2482
+  metadata:
+    jira_ticket: RSPEED-2482
+    jira_url: https://redhat.atlassian.net/browse/RSPEED-2482
+    extraction_reasoning: 'Used summary as query. Ticket: RSPEED-2482'
+  turns:
+  - query: 'Incorrect answer: Can I run a RHEL 6 container on RHEL 9?'
+    expected_urls: []
+    expected_response: 'TODO: Expected response not specified in ticket - requires
+      SME input'
+    turn_metrics: *id001
+    expected_keywords: []
+    forbidden_claims: []
+- conversation_group_id: RSPEED_2481
+  metadata:
+    jira_ticket: RSPEED-2481
+    jira_url: https://redhat.atlassian.net/browse/RSPEED-2481
+    extraction_reasoning: 'Used summary as query. Ticket: RSPEED-2481'
+  turns:
+  - query: 'Incorrect answer: Is SPICE available to help with RHEL VMs?'
+    expected_urls: []
+    expected_response: 'TODO: Expected response not specified in ticket - requires
+      SME input'
+    turn_metrics: *id001
+    expected_keywords: []
+    forbidden_claims: []
+- conversation_group_id: RSPEED_2480
+  metadata:
+    jira_ticket: RSPEED-2480
+    jira_url: https://redhat.atlassian.net/browse/RSPEED-2480
+    extraction_reasoning: 'Used summary as query. Ticket: RSPEED-2480'
+  turns:
+  - query: 'Incorrect answer: What is the recommended tool for managing VMs in RHEL?'
+    expected_urls: []
+    expected_response: 'TODO: Expected response not specified in ticket - requires
+      SME input'
+    turn_metrics: *id001
+    expected_keywords: []
+    forbidden_claims: []
+- conversation_group_id: RSPEED_2479
+  metadata:
+    jira_ticket: RSPEED-2479
+    jira_url: https://redhat.atlassian.net/browse/RSPEED-2479
+    extraction_reasoning: 'Used summary as query. Ticket: RSPEED-2479'
+  turns:
+  - query: 'Incorrect answer: How long is an EUS release supported for?'
+    expected_urls: []
+    expected_response: 'TODO: Expected response not specified in ticket - requires
+      SME input'
+    turn_metrics: *id001
+    expected_keywords: []
+    forbidden_claims: []
+- conversation_group_id: RSPEED_2478
+  metadata:
+    jira_ticket: RSPEED-2478
+    jira_url: https://redhat.atlassian.net/browse/RSPEED-2478
+    extraction_reasoning: 'Used summary as query. Ticket: RSPEED-2478'
+  turns:
+  - query: 'Incorrect answer: Which RHEL 9 releases have EUS available?'
+    expected_urls: []
+    expected_response: 'TODO: Expected response not specified in ticket - requires
+      SME input'
+    turn_metrics: *id001
+    expected_keywords: []
+    forbidden_claims: []
+- conversation_group_id: RSPEED_2294
+  metadata:
+    jira_ticket: RSPEED-2294
+    jira_url: https://redhat.atlassian.net/browse/RSPEED-2294
+    extraction_reasoning: 'Used summary as query. Ticket: RSPEED-2294'
+  turns:
+  - query: 'cla-incorrect-answer: RHEL 10 release date'
+    expected_urls: []
+    expected_response: 'TODO: Expected response not specified in ticket - requires
+      SME input'
+    turn_metrics: *id001
+    expected_keywords: []
+    forbidden_claims: []
+- conversation_group_id: RSPEED_2124
+  metadata:
+    jira_ticket: RSPEED-2124
+    jira_url: https://redhat.atlassian.net/browse/RSPEED-2124
+    extraction_reasoning: 'Used summary as query. Ticket: RSPEED-2124'
+  turns:
+  - query: 'Incorrect answer: How can Install windows server?'
+    expected_urls: []
+    expected_response: 'TODO: Expected response not specified in ticket - requires
+      SME input'
+    turn_metrics: *id001
+    expected_keywords: []
+    forbidden_claims: []
+- conversation_group_id: RSPEED_2123
+  metadata:
+    jira_ticket: RSPEED-2123
+    jira_url: https://redhat.atlassian.net/browse/RSPEED-2123
+    extraction_reasoning: 'Used summary as query. Ticket: RSPEED-2123'
+  turns:
+  - query: '[Networking] : Incorrect answer | Steps to enable specific NIC driver
+      debugging,'
+    expected_urls: []
+    expected_response: 'TODO: Expected response not specified in ticket - requires
+      SME input'
+    turn_metrics: *id001
+    expected_keywords: []
+    forbidden_claims: []
+- conversation_group_id: RSPEED_2113
+  metadata:
+    jira_ticket: RSPEED-2113
+    jira_url: https://redhat.atlassian.net/browse/RSPEED-2113
+    extraction_reasoning: 'Used summary as query. Ticket: RSPEED-2113'
+  turns:
+  - query: 'Incorrect answer: [Networking] Steps for creating the bond was incorrect '
+    expected_urls: []
+    expected_response: 'TODO: Expected response not specified in ticket - requires
+      SME input'
+    turn_metrics: *id001
+    expected_keywords: []
+    forbidden_claims: []
+- conversation_group_id: RSPEED_2004
+  metadata:
+    jira_ticket: RSPEED-2004
+    jira_url: https://redhat.atlassian.net/browse/RSPEED-2004
+    extraction_reasoning: 'Used summary as query. Ticket: RSPEED-2004'
+  turns:
+  - query: cla authentication failed when registered to Satellite
+    expected_urls: []
+    expected_response: 'TODO: Expected response not specified in ticket - requires
+      SME input'
+    turn_metrics: *id001
+    expected_keywords: []
+    forbidden_claims: []
+- conversation_group_id: RSPEED_1998
+  metadata:
+    jira_ticket: RSPEED-1998
+    jira_url: https://redhat.atlassian.net/browse/RSPEED-1998
+    extraction_reasoning: 'Used summary as query. Ticket: RSPEED-1998'
+  turns:
+  - query: ' c ''how to set up kea'''
+    expected_urls: []
+    expected_response: 'TODO: Expected response not specified in ticket - requires
+      SME input'
+    turn_metrics: *id001
+    expected_keywords: []
+    forbidden_claims: []
+- conversation_group_id: RSPEED_1931
+  metadata:
+    jira_ticket: RSPEED-1931
+    jira_url: https://redhat.atlassian.net/browse/RSPEED-1931
+    extraction_reasoning: 'Used summary as query. Ticket: RSPEED-1931'
+  turns:
+  - query: 'Incorrect answer: manage kernel arguments with rpm-ostree'
+    expected_urls: []
+    expected_response: 'TODO: Expected response not specified in ticket - requires
+      SME input'
+    turn_metrics: *id001
+    expected_keywords: []
+    forbidden_claims: []
+- conversation_group_id: RSPEED_1912
+  metadata:
+    jira_ticket: RSPEED-1912
+    jira_url: https://redhat.atlassian.net/browse/RSPEED-1912
+    extraction_reasoning: 'Used summary as query. Ticket: RSPEED-1912'
+  turns:
+  - query: Restarting clad in RHEL 10.0 on ppc64le produces "could not allocate closure"
+      error
+    expected_urls: []
+    expected_response: 'TODO: Expected response not specified in ticket - requires
+      SME input'
+    turn_metrics: *id001
+    expected_keywords: []
+    forbidden_claims: []
+- conversation_group_id: RSPEED_1902
+  metadata:
+    jira_ticket: RSPEED-1902
+    jira_url: https://redhat.atlassian.net/browse/RSPEED-1902
+    extraction_reasoning: 'Used summary as query. Ticket: RSPEED-1902'
+  turns:
+  - query: Wrong answer WRT CIFS and kerberos
+    expected_urls: []
+    expected_response: 'TODO: Expected response not specified in ticket - requires
+      SME input'
+    turn_metrics: *id001
+    expected_keywords: []
+    forbidden_claims: []
+- conversation_group_id: RSPEED_1866
+  metadata:
+    jira_ticket: RSPEED-1866
+    jira_url: https://redhat.atlassian.net/browse/RSPEED-1866
+    extraction_reasoning: 'Used summary as query. Ticket: RSPEED-1866'
+  turns:
+  - query: Fix alerting for rlsapi in AppSRE
+    expected_urls: []
+    expected_response: 'TODO: Expected response not specified in ticket - requires
+      SME input'
+    turn_metrics: *id001
+    expected_keywords: []
+    forbidden_claims: []
+- conversation_group_id: RSPEED_1859
+  metadata:
+    jira_ticket: RSPEED-1859
+    jira_url: https://redhat.atlassian.net/browse/RSPEED-1859
+    extraction_reasoning: 'Used summary as query. Ticket: RSPEED-1859'
+  turns:
+  - query: 'Incorrect answer: show deployments with rpm-ostree'
+    expected_urls: []
+    expected_response: 'TODO: Expected response not specified in ticket - requires
+      SME input'
+    turn_metrics: *id001
+    expected_keywords: []
+    forbidden_claims: []
+- conversation_group_id: RSPEED_1811
+  metadata:
+    jira_ticket: RSPEED-1811
+    jira_url: https://redhat.atlassian.net/browse/RSPEED-1811
+    extraction_reasoning: 'Used summary as query. Ticket: RSPEED-1811'
+  turns:
+  - query: 'Incorrect answer: Asking about RHEL versions supported by RHEL System
+      Roles'
+    expected_urls: []
+    expected_response: 'TODO: Expected response not specified in ticket - requires
+      SME input'
+    turn_metrics: *id001
+    expected_keywords: []
+    forbidden_claims: []
+- conversation_group_id: RSPEED_1775
+  metadata:
+    jira_ticket: RSPEED-1775
+    jira_url: https://redhat.atlassian.net/browse/RSPEED-1775
+    extraction_reasoning: 'Used summary as query. Ticket: RSPEED-1775'
+  turns:
+  - query: 'Incorrect answer: What distro is convertable through Insights'
+    expected_urls: []
+    expected_response: 'TODO: Expected response not specified in ticket - requires
+      SME input'
+    turn_metrics: *id001
+    expected_keywords: []
+    forbidden_claims: []
+- conversation_group_id: RSPEED_1774
+  metadata:
+    jira_ticket: RSPEED-1774
+    jira_url: https://redhat.atlassian.net/browse/RSPEED-1774
+    extraction_reasoning: 'Used summary as query. Ticket: RSPEED-1774'
+  turns:
+  - query: 'Incorrect answer: Convert2RHEL repository'
+    expected_urls: []
+    expected_response: 'TODO: Expected response not specified in ticket - requires
+      SME input'
+    turn_metrics: *id001
+    expected_keywords: []
+    forbidden_claims: []
+- conversation_group_id: RSPEED_1773
+  metadata:
+    jira_ticket: RSPEED-1773
+    jira_url: https://redhat.atlassian.net/browse/RSPEED-1773
+    extraction_reasoning: 'Used summary as query. Ticket: RSPEED-1773'
+  turns:
+  - query: 'Incorrect answer: Name of RHEL conversion utility'
+    expected_urls: []
+    expected_response: 'TODO: Expected response not specified in ticket - requires
+      SME input'
+    turn_metrics: *id001
+    expected_keywords: []
+    forbidden_claims: []
+- conversation_group_id: RSPEED_1764
+  metadata:
+    jira_ticket: RSPEED-1764
+    jira_url: https://redhat.atlassian.net/browse/RSPEED-1764
+    extraction_reasoning: 'Used summary as query. Ticket: RSPEED-1764'
+  turns:
+  - query: 'Incorrect answer: Podman GUI availability'
+    expected_urls: []
+    expected_response: 'TODO: Expected response not specified in ticket - requires
+      SME input'
+    turn_metrics: *id001
+    expected_keywords: []
+    forbidden_claims: []
+- conversation_group_id: RSPEED_1744
+  metadata:
+    jira_ticket: RSPEED-1744
+    jira_url: https://redhat.atlassian.net/browse/RSPEED-1744
+    extraction_reasoning: 'Used summary as query. Ticket: RSPEED-1744'
+  turns:
+  - query: 'Incorrect answer: sos package is in BaseOS, not AppStream repo'
+    expected_urls: []
+    expected_response: 'TODO: Expected response not specified in ticket - requires
+      SME input'
+    turn_metrics: *id001
+    expected_keywords: []
+    forbidden_claims: []
+- conversation_group_id: RSPEED_1741
+  metadata:
+    jira_ticket: RSPEED-1741
+    jira_url: https://redhat.atlassian.net/browse/RSPEED-1741
+    extraction_reasoning: 'Used summary as query. Ticket: RSPEED-1741'
+  turns:
+  - query: 'Incorrect answer: How to uninstall Satellite'
+    expected_urls: []
+    expected_response: 'TODO: Expected response not specified in ticket - requires
+      SME input'
+    turn_metrics: *id001
+    expected_keywords: []
+    forbidden_claims: []
+- conversation_group_id: RSPEED_1736
+  metadata:
+    jira_ticket: RSPEED-1736
+    jira_url: https://redhat.atlassian.net/browse/RSPEED-1736
+    extraction_reasoning: 'Used summary as query. Ticket: RSPEED-1736'
+  turns:
+  - query: Inconsistent help output
+    expected_urls: []
+    expected_response: 'TODO: Expected response not specified in ticket - requires
+      SME input'
+    turn_metrics: *id001
+    expected_keywords: []
+    forbidden_claims: []
+- conversation_group_id: RSPEED_1735
+  metadata:
+    jira_ticket: RSPEED-1735
+    jira_url: https://redhat.atlassian.net/browse/RSPEED-1735
+    extraction_reasoning: 'Used summary as query. Ticket: RSPEED-1735'
+  turns:
+  - query: c does not respect locale setting
+    expected_urls: []
+    expected_response: 'TODO: Expected response not specified in ticket - requires
+      SME input'
+    turn_metrics: *id001
+    expected_keywords: []
+    forbidden_claims: []
+- conversation_group_id: RSPEED_1726
+  metadata:
+    jira_ticket: RSPEED-1726
+    jira_url: https://redhat.atlassian.net/browse/RSPEED-1726
+    extraction_reasoning: 'Used summary as query. Ticket: RSPEED-1726'
+  turns:
+  - query: 'incorrect answer: how to recreate the grub configuration file'
+    expected_urls: []
+    expected_response: 'TODO: Expected response not specified in ticket - requires
+      SME input'
+    turn_metrics: *id001
+    expected_keywords: []
+    forbidden_claims: []
+- conversation_group_id: RSPEED_1725
+  metadata:
+    jira_ticket: RSPEED-1725
+    jira_url: https://redhat.atlassian.net/browse/RSPEED-1725
+    extraction_reasoning: 'Used summary as query. Ticket: RSPEED-1725'
+  turns:
+  - query: 'incorrect answer: how to edit kernel command line'
+    expected_urls: []
+    expected_response: 'TODO: Expected response not specified in ticket - requires
+      SME input'
+    turn_metrics: *id001
+    expected_keywords: []
+    forbidden_claims: []
+- conversation_group_id: RSPEED_1724
+  metadata:
+    jira_ticket: RSPEED-1724
+    jira_url: https://redhat.atlassian.net/browse/RSPEED-1724
+    extraction_reasoning: 'Used summary as query. Ticket: RSPEED-1724'
+  turns:
+  - query: 'incorrect answer: how do I change the EFI boot order'
+    expected_urls: []
+    expected_response: 'TODO: Expected response not specified in ticket - requires
+      SME input'
+    turn_metrics: *id001
+    expected_keywords: []
+    forbidden_claims: []
+- conversation_group_id: RSPEED_1723
+  metadata:
+    jira_ticket: RSPEED-1723
+    jira_url: https://redhat.atlassian.net/browse/RSPEED-1723
+    extraction_reasoning: 'Used summary as query. Ticket: RSPEED-1723'
+  turns:
+  - query: 'incorrect answer: how to update grub'
+    expected_urls: []
+    expected_response: 'TODO: Expected response not specified in ticket - requires
+      SME input'
+    turn_metrics: *id001
+    expected_keywords: []
+    forbidden_claims: []
+- conversation_group_id: RSPEED_1722
+  metadata:
+    jira_ticket: RSPEED-1722
+    jira_url: https://redhat.atlassian.net/browse/RSPEED-1722
+    extraction_reasoning: 'Used summary as query. Ticket: RSPEED-1722'
+  turns:
+  - query: 'incorrect answer: how to disable secure boot'
+    expected_urls: []
+    expected_response: 'TODO: Expected response not specified in ticket - requires
+      SME input'
+    turn_metrics: *id001
+    expected_keywords: []
+    forbidden_claims: []
+- conversation_group_id: RSPEED_1721
+  metadata:
+    jira_ticket: RSPEED-1721
+    jira_url: https://redhat.atlassian.net/browse/RSPEED-1721
+    extraction_reasoning: 'Used summary as query. Ticket: RSPEED-1721'
+  turns:
+  - query: 'incorrect answer: whether Secure Boot is enabled'
+    expected_urls: []
+    expected_response: 'TODO: Expected response not specified in ticket - requires
+      SME input'
+    turn_metrics: *id001
+    expected_keywords: []
+    forbidden_claims: []
+- conversation_group_id: RSPEED_1720
+  metadata:
+    jira_ticket: RSPEED-1720
+    jira_url: https://redhat.atlassian.net/browse/RSPEED-1720
+    extraction_reasoning: 'Used summary as query. Ticket: RSPEED-1720'
+  turns:
+  - query: 'incorrect answer: is system bios of uefi'
+    expected_urls: []
+    expected_response: 'TODO: Expected response not specified in ticket - requires
+      SME input'
+    turn_metrics: *id001
+    expected_keywords: []
+    forbidden_claims: []
+- conversation_group_id: RSPEED_1711
+  metadata:
+    jira_ticket: RSPEED-1711
+    jira_url: https://redhat.atlassian.net/browse/RSPEED-1711
+    extraction_reasoning: 'Used summary as query. Ticket: RSPEED-1711'
+  turns:
+  - query: 'Incorrect answer: how to speed up execution of large number of pcs commands'
+    expected_urls: []
+    expected_response: 'TODO: Expected response not specified in ticket - requires
+      SME input'
+    turn_metrics: *id001
+    expected_keywords: []
+    forbidden_claims: []
+- conversation_group_id: RSPEED_1710
+  metadata:
+    jira_ticket: RSPEED-1710
+    jira_url: https://redhat.atlassian.net/browse/RSPEED-1710
+    extraction_reasoning: 'Used summary as query. Ticket: RSPEED-1710'
+  turns:
+  - query: 'Incorrect answer: Indirectly asking to create a resource group'
+    expected_urls: []
+    expected_response: 'TODO: Expected response not specified in ticket - requires
+      SME input'
+    turn_metrics: *id001
+    expected_keywords: []
+    forbidden_claims: []
+- conversation_group_id: RSPEED_1709
+  metadata:
+    jira_ticket: RSPEED-1709
+    jira_url: https://redhat.atlassian.net/browse/RSPEED-1709
+    extraction_reasoning: 'Used summary as query. Ticket: RSPEED-1709'
+  turns:
+  - query: 'Incorrect answer: Move cluster resource r1 to node n2'
+    expected_urls: []
+    expected_response: 'TODO: Expected response not specified in ticket - requires
+      SME input'
+    turn_metrics: *id001
+    expected_keywords: []
+    forbidden_claims: []
+- conversation_group_id: RSPEED_1673
+  metadata:
+    jira_ticket: RSPEED-1673
+    jira_url: https://redhat.atlassian.net/browse/RSPEED-1673
+    extraction_reasoning: 'Used summary as query. Ticket: RSPEED-1673'
+  turns:
+  - query: 'Incorrect answer: number of CPU cores'
+    expected_urls: []
+    expected_response: 'TODO: Expected response not specified in ticket - requires
+      SME input'
+    turn_metrics: *id001
+    expected_keywords: []
+    forbidden_claims: []
+- conversation_group_id: RSPEED_1653
+  metadata:
+    jira_ticket: RSPEED-1653
+    jira_url: https://redhat.atlassian.net/browse/RSPEED-1653
+    extraction_reasoning: 'Used summary as query. Ticket: RSPEED-1653'
+  turns:
+  - query: nmstate evals failing after moving to granite 3.3
+    expected_urls: []
+    expected_response: 'TODO: Expected response not specified in ticket - requires
+      SME input'
+    turn_metrics: *id001
+    expected_keywords: []
+    forbidden_claims: []
+- conversation_group_id: RSPEED_1650
+  metadata:
+    jira_ticket: RSPEED-1650
+    jira_url: https://redhat.atlassian.net/browse/RSPEED-1650
+    extraction_reasoning: 'Used summary as query. Ticket: RSPEED-1650'
+  turns:
+  - query: '[RAG-content] Extracted docs use &amp; instead of ''&'' (and <, >, etc.)'
+    expected_urls: []
+    expected_response: 'TODO: Expected response not specified in ticket - requires
+      SME input'
+    turn_metrics: *id001
+    expected_keywords: []
+    forbidden_claims: []
+- conversation_group_id: RSPEED_1648
+  metadata:
+    jira_ticket: RSPEED-1648
+    jira_url: https://redhat.atlassian.net/browse/RSPEED-1648
+    extraction_reasoning: 'Used summary as query. Ticket: RSPEED-1648'
+  turns:
+  - query: 'Incorrect answer: Date is in the future'
+    expected_urls: []
+    expected_response: 'TODO: Expected response not specified in ticket - requires
+      SME input'
+    turn_metrics: *id001
+    expected_keywords: []
+    forbidden_claims: []
+- conversation_group_id: RSPEED_1643
+  metadata:
+    jira_ticket: RSPEED-1643
+    jira_url: https://redhat.atlassian.net/browse/RSPEED-1643
+    extraction_reasoning: 'Used summary as query. Ticket: RSPEED-1643'
+  turns:
+  - query: 'Incorrect answer: libvirt command to pin VCPUs to physical cores'
+    expected_urls: []
+    expected_response: 'TODO: Expected response not specified in ticket - requires
+      SME input'
+    turn_metrics: *id001
+    expected_keywords: []
+    forbidden_claims: []
+- conversation_group_id: RSPEED_1634
+  metadata:
+    jira_ticket: RSPEED-1634
+    jira_url: https://redhat.atlassian.net/browse/RSPEED-1634
+    extraction_reasoning: 'Used summary as query. Ticket: RSPEED-1634'
+  turns:
+  - query: CLA gives incorrect answer to question how to use rhc to register to satellite
+    expected_urls: []
+    expected_response: 'TODO: Expected response not specified in ticket - requires
+      SME input'
+    turn_metrics: *id001
+    expected_keywords: []
+    forbidden_claims: []
+- conversation_group_id: RSPEED_1614
+  metadata:
+    jira_ticket: RSPEED-1614
+    jira_url: https://redhat.atlassian.net/browse/RSPEED-1614
+    extraction_reasoning: 'Used summary as query. Ticket: RSPEED-1614'
+  turns:
+  - query: 'Unusual/Incorrect response to query '
+    expected_urls: []
+    expected_response: 'TODO: Expected response not specified in ticket - requires
+      SME input'
+    turn_metrics: *id001
+    expected_keywords: []
+    forbidden_claims: []
+- conversation_group_id: RSPEED_1608
+  metadata:
+    jira_ticket: RSPEED-1608
+    jira_url: https://redhat.atlassian.net/browse/RSPEED-1608
+    extraction_reasoning: 'Used summary as query. Ticket: RSPEED-1608'
+  turns:
+  - query: CLA Answer on Insights subscriptions is incorrect
+    expected_urls: []
+    expected_response: 'TODO: Expected response not specified in ticket - requires
+      SME input'
+    turn_metrics: *id001
+    expected_keywords: []
+    forbidden_claims: []
+- conversation_group_id: RSPEED_1584
+  metadata:
+    jira_ticket: RSPEED-1584
+    jira_url: https://redhat.atlassian.net/browse/RSPEED-1584
+    extraction_reasoning: 'Used summary as query. Ticket: RSPEED-1584'
+  turns:
+  - query: 'Incorrect Answer: "how do I use the btrfs filesystem in RHEL10"'
+    expected_urls: []
+    expected_response: 'TODO: Expected response not specified in ticket - requires
+      SME input'
+    turn_metrics: *id001
+    expected_keywords: []
+    forbidden_claims: []
+- conversation_group_id: RSPEED_1583
+  metadata:
+    jira_ticket: RSPEED-1583
+    jira_url: https://redhat.atlassian.net/browse/RSPEED-1583
+    extraction_reasoning: 'Used summary as query. Ticket: RSPEED-1583'
+  turns:
+  - query: 'Incorrect Answer: "why does xfs null files on a crash for safety"'
+    expected_urls: []
+    expected_response: 'TODO: Expected response not specified in ticket - requires
+      SME input'
+    turn_metrics: *id001
+    expected_keywords: []
+    forbidden_claims: []
+- conversation_group_id: RSPEED_1582
+  metadata:
+    jira_ticket: RSPEED-1582
+    jira_url: https://redhat.atlassian.net/browse/RSPEED-1582
+    extraction_reasoning: 'Used summary as query. Ticket: RSPEED-1582'
+  turns:
+  - query: 'Incorrect Answer: "how do I shrink an LVM volume with XFS on it"'
+    expected_urls: []
+    expected_response: 'TODO: Expected response not specified in ticket - requires
+      SME input'
+    turn_metrics: *id001
+    expected_keywords: []
+    forbidden_claims: []
+- conversation_group_id: RSPEED_1581
+  metadata:
+    jira_ticket: RSPEED-1581
+    jira_url: https://redhat.atlassian.net/browse/RSPEED-1581
+    extraction_reasoning: 'Used summary as query. Ticket: RSPEED-1581'
+  turns:
+  - query: 'Incorrect answer: Can root SSH into my system?'
+    expected_urls: []
+    expected_response: 'TODO: Expected response not specified in ticket - requires
+      SME input'
+    turn_metrics: *id001
+    expected_keywords: []
+    forbidden_claims: []
+- conversation_group_id: RSPEED_1580
+  metadata:
+    jira_ticket: RSPEED-1580
+    jira_url: https://redhat.atlassian.net/browse/RSPEED-1580
+    extraction_reasoning: 'Used summary as query. Ticket: RSPEED-1580'
+  turns:
+  - query: 'Incorrect answer: What is LLM?'
+    expected_urls: []
+    expected_response: 'TODO: Expected response not specified in ticket - requires
+      SME input'
+    turn_metrics: *id001
+    expected_keywords: []
+    forbidden_claims: []
+- conversation_group_id: RSPEED_1573
+  metadata:
+    jira_ticket: RSPEED-1573
+    jira_url: https://redhat.atlassian.net/browse/RSPEED-1573
+    extraction_reasoning: 'Used summary as query. Ticket: RSPEED-1573'
+  turns:
+  - query: 'Turn off default for "--plain" option in CLA '
+    expected_urls: []
+    expected_response: 'TODO: Expected response not specified in ticket - requires
+      SME input'
+    turn_metrics: *id001
+    expected_keywords: []
+    forbidden_claims: []
+- conversation_group_id: RSPEED_1570
+  metadata:
+    jira_ticket: RSPEED-1570
+    jira_url: https://redhat.atlassian.net/browse/RSPEED-1570
+    extraction_reasoning: 'Used summary as query. Ticket: RSPEED-1570'
+  turns:
+  - query: Update product doc RHEL lightspeed does not work with on-premise Insights
+    expected_urls: []
+    expected_response: 'TODO: Expected response not specified in ticket - requires
+      SME input'
+    turn_metrics: *id001
+    expected_keywords: []
+    forbidden_claims: []
+- conversation_group_id: RSPEED_1559
+  metadata:
+    jira_ticket: RSPEED-1559
+    jira_url: https://redhat.atlassian.net/browse/RSPEED-1559
+    extraction_reasoning: 'Used summary as query. Ticket: RSPEED-1559'
+  turns:
+  - query: 'Incorrect answer: ordering systemd services via cpu usage'
+    expected_urls: []
+    expected_response: 'TODO: Expected response not specified in ticket - requires
+      SME input'
+    turn_metrics: *id001
+    expected_keywords: []
+    forbidden_claims: []
+- conversation_group_id: RSPEED_1539
+  metadata:
+    jira_ticket: RSPEED-1539
+    jira_url: https://redhat.atlassian.net/browse/RSPEED-1539
+    extraction_reasoning: 'Used summary as query. Ticket: RSPEED-1539'
+  turns:
+  - query: 'Incorrect answer: rsync options to recursively upload to a server'
+    expected_urls: []
+    expected_response: 'TODO: Expected response not specified in ticket - requires
+      SME input'
+    turn_metrics: *id001
+    expected_keywords: []
+    forbidden_claims: []
+- conversation_group_id: RSPEED_1534
+  metadata:
+    jira_ticket: RSPEED-1534
+    jira_url: https://redhat.atlassian.net/browse/RSPEED-1534
+    extraction_reasoning: 'Used summary as query. Ticket: RSPEED-1534'
+  turns:
+  - query: incorrect answer about building an OS using image mode
+    expected_urls: []
+    expected_response: 'TODO: Expected response not specified in ticket - requires
+      SME input'
+    turn_metrics: *id001
+    expected_keywords: []
+    forbidden_claims: []
+- conversation_group_id: RSPEED_1532
+  metadata:
+    jira_ticket: RSPEED-1532
+    jira_url: https://redhat.atlassian.net/browse/RSPEED-1532
+    extraction_reasoning: 'Used summary as query. Ticket: RSPEED-1532'
+  turns:
+  - query: two incorrect methods for mounting a directory into a container
+    expected_urls: []
+    expected_response: 'TODO: Expected response not specified in ticket - requires
+      SME input'
+    turn_metrics: *id001
+    expected_keywords: []
+    forbidden_claims: []
+- conversation_group_id: RSPEED_1531
+  metadata:
+    jira_ticket: RSPEED-1531
+    jira_url: https://redhat.atlassian.net/browse/RSPEED-1531
+    extraction_reasoning: 'Used summary as query. Ticket: RSPEED-1531'
+  turns:
+  - query: incorrect answer when asking about mounting directories into containers
+    expected_urls: []
+    expected_response: 'TODO: Expected response not specified in ticket - requires
+      SME input'
+    turn_metrics: *id001
+    expected_keywords: []
+    forbidden_claims: []
+- conversation_group_id: RSPEED_1530
+  metadata:
+    jira_ticket: RSPEED-1530
+    jira_url: https://redhat.atlassian.net/browse/RSPEED-1530
+    extraction_reasoning: 'Used summary as query. Ticket: RSPEED-1530'
+  turns:
+  - query: example prompt from redhat.com produces an incorrect answer
+    expected_urls: []
+    expected_response: 'TODO: Expected response not specified in ticket - requires
+      SME input'
+    turn_metrics: *id001
+    expected_keywords: []
+    forbidden_claims: []
+- conversation_group_id: RSPEED_1527
+  metadata:
+    jira_ticket: RSPEED-1527
+    jira_url: https://redhat.atlassian.net/browse/RSPEED-1527
+    extraction_reasoning: 'Used summary as query. Ticket: RSPEED-1527'
+  turns:
+  - query: Sending "file (5)" as a query trips a gateway attack prevention rule
+    expected_urls: []
+    expected_response: 'TODO: Expected response not specified in ticket - requires
+      SME input'
+    turn_metrics: *id001
+    expected_keywords: []
+    forbidden_claims: []
+- conversation_group_id: RSPEED_1524
+  metadata:
+    jira_ticket: RSPEED-1524
+    jira_url: https://redhat.atlassian.net/browse/RSPEED-1524
+    extraction_reasoning: 'Used summary as query. Ticket: RSPEED-1524'
+  turns:
+  - query: 'Incorrect answer: RHEL10 codename'
+    expected_urls: []
+    expected_response: 'TODO: Expected response not specified in ticket - requires
+      SME input'
+    turn_metrics: *id001
+    expected_keywords: []
+    forbidden_claims: []
+- conversation_group_id: RSPEED_1516
+  metadata:
+    jira_ticket: RSPEED-1516
+    jira_url: https://redhat.atlassian.net/browse/RSPEED-1516
+    extraction_reasoning: 'Used summary as query. Ticket: RSPEED-1516'
+  turns:
+  - query: Failing answers after LLM model switch from granite-3-3 to granite-3-2
+    expected_urls: []
+    expected_response: 'TODO: Expected response not specified in ticket - requires
+      SME input'
+    turn_metrics: *id001
+    expected_keywords: []
+    forbidden_claims: []
+- conversation_group_id: RSPEED_1236
+  metadata:
+    jira_ticket: RSPEED-1236
+    jira_url: https://redhat.atlassian.net/browse/RSPEED-1236
+    extraction_reasoning: 'Used summary as query. Ticket: RSPEED-1236'
+  turns:
+  - query: The response by  the RHEL lightspeed   for  "How to determine Firmware
+      type BIOS or UEFI ?"  is incorrect .
+    expected_urls: []
+    expected_response: 'TODO: Expected response not specified in ticket - requires
+      SME input'
+    turn_metrics: *id001
+    expected_keywords: []
+    forbidden_claims: []
+- conversation_group_id: RSPEED_1229
+  metadata:
+    jira_ticket: RSPEED-1229
+    jira_url: https://redhat.atlassian.net/browse/RSPEED-1229
+    extraction_reasoning: 'Used summary as query. Ticket: RSPEED-1229'
+  turns:
+  - query: '[CLA] AVC denials for write in tmpfs in s390x and ppc64'
+    expected_urls: []
+    expected_response: 'TODO: Expected response not specified in ticket - requires
+      SME input'
+    turn_metrics: *id001
+    expected_keywords: []
+    forbidden_claims: []
+- conversation_group_id: RSPEED_1227
+  metadata:
+    jira_ticket: RSPEED-1227
+    jira_url: https://redhat.atlassian.net/browse/RSPEED-1227
+    extraction_reasoning: 'Used summary as query. Ticket: RSPEED-1227'
+  turns:
+  - query: 'Incorrect answer: Prepending string overrides restriction'
+    expected_urls: []
+    expected_response: 'TODO: Expected response not specified in ticket - requires
+      SME input'
+    turn_metrics: *id001
+    expected_keywords: []
+    forbidden_claims: []
+- conversation_group_id: RSPEED_1173
+  metadata:
+    jira_ticket: RSPEED-1173
+    jira_url: https://redhat.atlassian.net/browse/RSPEED-1173
+    extraction_reasoning: 'Used summary as query. Ticket: RSPEED-1173'
+  turns:
+  - query: 'Incorrect answer: c ''how to configure VPN in terminal'''
+    expected_urls: []
+    expected_response: 'TODO: Expected response not specified in ticket - requires
+      SME input'
+    turn_metrics: *id001
+    expected_keywords: []
+    forbidden_claims: []
+- conversation_group_id: RSPEED_1171
+  metadata:
+    jira_ticket: RSPEED-1171
+    jira_url: https://redhat.atlassian.net/browse/RSPEED-1171
+    extraction_reasoning: 'Used summary as query. Ticket: RSPEED-1171'
+  turns:
+  - query: 'Incorrect answer: c ''What is Dnsconfd?'''
+    expected_urls: []
+    expected_response: 'TODO: Expected response not specified in ticket - requires
+      SME input'
+    turn_metrics: *id001
+    expected_keywords: []
+    forbidden_claims: []
+- conversation_group_id: RSPEED_1168
+  metadata:
+    jira_ticket: RSPEED-1168
+    jira_url: https://redhat.atlassian.net/browse/RSPEED-1168
+    extraction_reasoning: 'Used summary as query. Ticket: RSPEED-1168'
+  turns:
+  - query: '[CLA OffSec Pen-testing] - Fabricated Encoding Output and Potential Leakage
+      of Embedded Data'
+    expected_urls: []
+    expected_response: 'TODO: Expected response not specified in ticket - requires
+      SME input'
+    turn_metrics: *id001
+    expected_keywords: []
+    forbidden_claims: []
+- conversation_group_id: RSPEED_1167
+  metadata:
+    jira_ticket: RSPEED-1167
+    jira_url: https://redhat.atlassian.net/browse/RSPEED-1167
+    extraction_reasoning: 'Used summary as query. Ticket: RSPEED-1167'
+  turns:
+  - query: '[CLA OffSec Pen-testing] - Fictional Context Leakage in Stateless CLI
+      Interface'
+    expected_urls: []
+    expected_response: 'TODO: Expected response not specified in ticket - requires
+      SME input'
+    turn_metrics: *id001
+    expected_keywords: []
+    forbidden_claims: []
+- conversation_group_id: RSPEED_1166
+  metadata:
+    jira_ticket: RSPEED-1166
+    jira_url: https://redhat.atlassian.net/browse/RSPEED-1166
+    extraction_reasoning: 'Used summary as query. Ticket: RSPEED-1166'
+  turns:
+  - query: '[CLA OffSec Pen-testing] - Inference Endpoint Leaks Embedded Secrets Despite
+      Confidentiality Prompt'
+    expected_urls: []
+    expected_response: 'TODO: Expected response not specified in ticket - requires
+      SME input'
+    turn_metrics: *id001
+    expected_keywords: []
+    forbidden_claims: []
+- conversation_group_id: RSPEED_1165
+  metadata:
+    jira_ticket: RSPEED-1165
+    jira_url: https://redhat.atlassian.net/browse/RSPEED-1165
+    extraction_reasoning: 'Used summary as query. Ticket: RSPEED-1165'
+  turns:
+  - query: '[CLA OffSec Pen-testing] - Safety Filter Evasion via Indirect Prompt Obfuscation'
+    expected_urls: []
+    expected_response: 'TODO: Expected response not specified in ticket - requires
+      SME input'
+    turn_metrics: *id001
+    expected_keywords: []
+    forbidden_claims: []
+- conversation_group_id: RSPEED_1164
+  metadata:
+    jira_ticket: RSPEED-1164
+    jira_url: https://redhat.atlassian.net/browse/RSPEED-1164
+    extraction_reasoning: 'Used summary as query. Ticket: RSPEED-1164'
+  turns:
+  - query: '[CLA OffSec Pen-testing] - Improper Handling of Control Characters in
+      Prompt Input'
+    expected_urls: []
+    expected_response: 'TODO: Expected response not specified in ticket - requires
+      SME input'
+    turn_metrics: *id001
+    expected_keywords: []
+    forbidden_claims: []
+- conversation_group_id: RSPEED_1163
+  metadata:
+    jira_ticket: RSPEED-1163
+    jira_url: https://redhat.atlassian.net/browse/RSPEED-1163
+    extraction_reasoning: 'Used summary as query. Ticket: RSPEED-1163'
+  turns:
+  - query: '[CLA OffSec Pen-testing] - Adversarial Instruction Overriding '
+    expected_urls: []
+    expected_response: 'TODO: Expected response not specified in ticket - requires
+      SME input'
+    turn_metrics: *id001
+    expected_keywords: []
+    forbidden_claims: []

@@ -1,0 +1,164 @@
+# Pattern: CENTOS_RHEL_CONVERSION
+# Description: Incorrect procedures during CentOS to RHEL conversion process
+# Total tickets: 4
+# Problem Type: INCORRECT_PROCEDURE
+# Components: conversion, centos, packages, repositories, insights
+
+- conversation_group_id: RSPEED-1775
+  metadata:
+    jira_ticket: RSPEED-1775
+    jira_url: https://redhat.atlassian.net/browse/RSPEED-1775
+    confidence: HIGH
+    pattern_id: CENTOS_RHEL_CONVERSION
+  turns:
+  - query: What Linux distributions and versions can I convert to RHEL using Red Hat
+      Insights web console?
+    expected_response: Red Hat Insights supports converting CentOS Linux to RHEL through
+      its web-based interface in the Red Hat Hybrid Cloud Console. The documentation
+      explicitly confirms that 'the pre-conversion analysis task can be run on CentOS
+      Linux 7 systems that are connected to Insights.' This Insights-based conversion
+      'extends the Convert2RHEL tool's experience to the web-based Red Hat Hybrid
+      Cloud Console to help convert many systems at scale from a web browser.' While
+      the broader Convert2RHEL utility supports multiple distributions via command-line
+      (CentOS Linux 7/8, Oracle Linux 7/8/9, AlmaLinux 8/9, Rocky 8/9), the documentation
+      specifically identifies CentOS Linux 7 as the supported distribution for Insights
+      web console conversion. Other supported conversion paths require using Convert2RHEL
+      via command-line or Red Hat Satellite.
+    expected_urls:
+    - https://access.redhat.com/articles/how-to-convert-to-rhel-from-centos/index.html
+    - https://access.redhat.com/articles/5941531/index.html
+    - https://access.redhat.com/articles/migrate_centos_to_rhel_on_amazon/index.html
+    expected_keywords: []
+    forbidden_claims: []
+    turn_metrics:
+    - ragas:context_relevance
+    - ragas:context_precision_without_reference
+    - custom:answer_correctness
+- conversation_group_id: RSPEED-1774
+  metadata:
+    jira_ticket: RSPEED-1774
+    jira_url: https://redhat.atlassian.net/browse/RSPEED-1774
+    confidence: HIGH
+    pattern_id: CENTOS_RHEL_CONVERSION
+  turns:
+  - query: What yum repository is the convert2rhel utility available in?
+    expected_response: 'The convert2rhel utility is available in publicly accessible
+      repositories hosted on cdn.redhat.com, NOT in standard RHEL repositories like
+      BaseOS or AppStream. The repository configuration is version-specific:
+
+
+      For RHEL 7:
+
+      - Repository ID: convert2rhel-for-rhel-7-rpms
+
+      - Base URL: https://cdn.redhat.com/content/public/convert2rhel/7/x86_64/os/
+
+
+      For RHEL 8:
+
+      - Repository ID: convert2rhel-for-rhel-8-rpms
+
+      - Base URL: https://cdn.redhat.com/content/public/convert2rhel/8/x86_64/os/
+
+
+      Users must configure this repository by downloading the appropriate .repo file:
+
+      ```
+
+      curl -o /etc/yum.repos.d/convert2rhel.repo https://ftp.redhat.com/redhat/convert2rhel/VERSION/convert2rhel.repo
+
+      ```
+
+
+      This design is intentional because convert2rhel is used to convert non-RHEL
+      systems (CentOS, Oracle Linux, Rocky Linux, etc.) to RHEL, so it must be publicly
+      accessible without requiring an active RHEL subscription.'
+    expected_urls:
+    - https://access.redhat.com/solutions/6290431/index.html
+    expected_keywords: []
+    forbidden_claims: []
+    turn_metrics:
+    - ragas:context_relevance
+    - ragas:context_precision_without_reference
+    - custom:answer_correctness
+- conversation_group_id: RSPEED-1773
+  metadata:
+    jira_ticket: RSPEED-1773
+    jira_url: https://redhat.atlassian.net/browse/RSPEED-1773
+    confidence: HIGH
+    pattern_id: CENTOS_RHEL_CONVERSION
+  turns:
+  - query: What is the name of the command line utility Red Hat customers can use
+      to convert their other Linux distributions to RHEL?
+    expected_response: The command-line utility is called Convert2RHEL. It is Red
+      Hat's officially supported tool for converting from Alma Linux, CentOS Linux,
+      Oracle Linux, or Rocky Linux to Red Hat Enterprise Linux 7, 8, and 9. According
+      to the official documentation, Convert2RHEL performs in-place conversions and
+      can be used either directly via the command-line or through Red Hat Lightspeed
+      for orchestrated conversions. The utility is documented in official Red Hat
+      product documentation for both RHEL 8 and Red Hat Lightspeed.
+    expected_urls:
+    - https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/8/html-single/converting_from_a_linux_distribution_to_rhel_using_the_convert2rhel_utility/index/index.html
+    - https://access.redhat.com/documentation/en-us/red_hat_lightspeed/1-latest/html-single/converting_from_a_linux_distribution_to_rhel_using_the_convert2rhel_utility_in_red_hat_lightspeed/index/index.html
+    expected_keywords: []
+    forbidden_claims: []
+    turn_metrics:
+    - ragas:context_relevance
+    - ragas:context_precision_without_reference
+    - custom:answer_correctness
+- conversation_group_id: RSPEED-1772
+  metadata:
+    jira_ticket: RSPEED-1772
+    jira_url: https://redhat.atlassian.net/browse/RSPEED-1772
+    confidence: HIGH
+    pattern_id: CENTOS_RHEL_CONVERSION
+  turns:
+  - query: What are the currently supported conversion paths when converting from
+      other Linux distributions to RHEL using Convert2RHEL?
+    expected_response: 'Red Hat officially supports the following Convert2RHEL conversion
+      paths (per the authoritative list in the Convert2RHEL documentation, updated
+      June 2025):
+
+
+      **RHEL 7 conversions:**
+
+      - CentOS Linux 7 → RHEL 7 (x86_64)
+
+      - Oracle Linux 7 → RHEL 7 (x86_64)
+
+
+      **RHEL 8 conversions:**
+
+      - CentOS Linux 8 → RHEL 8 (x86_64)
+
+      - Oracle Linux 8 → RHEL 8 (x86_64)
+
+      - AlmaLinux OS 8 → RHEL 8 (x86_64)
+
+      - Rocky Linux 8 → RHEL 8 (x86_64)
+
+
+      **RHEL 9 conversions:**
+
+      - Oracle Linux 9 → RHEL 9 (x86_64)
+
+      - AlmaLinux OS 9 → RHEL 9 (x86_64)
+
+      - Rocky Linux 9 → RHEL 9 (x86_64)
+
+
+      All supported conversions use 64-bit Intel (x86_64) architecture. The current
+      answer is incomplete and outdated - it is missing AlmaLinux and Rocky Linux
+      support entirely, and missing all RHEL 9 conversion paths. These are major version
+      conversions; specific minor version requirements and restrictions are detailed
+      in the full documentation.'
+    expected_urls:
+    - https://access.redhat.com/articles/5941531/index.html
+    - https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/8/html-single/converting_from_a_linux_distribution_to_rhel_using_the_convert2rhel_utility/index/index.html
+    - https://access.redhat.com/solutions/7018377/index.html
+    expected_keywords: []
+    forbidden_claims: []
+    turn_metrics:
+    - ragas:context_relevance
+    - ragas:context_precision_without_reference
+    - custom:answer_correctness

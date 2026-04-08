@@ -38,6 +38,70 @@
   - `ADVERSARIAL_CONTEXT_INJECTION_TESTS.md`
   - `JUDGE_LLM_CONSISTENCY_TESTS.md`
 
+## High Priority - Pattern Fix Loop Extensions
+
+### Scaling to Production (Multi-Agent Architecture)
+
+**Summary:** Scale pattern fix loop from POC (3-5 tickets, single agent) to production (20+ tickets, multi-agent with dynamic loading). See `docs/PATTERN_FIX_LOOP_SCALING.md` for full details.
+
+**Roadmap:**
+- **Phase 1 (POC):** ✅ Single agent, 3-5 tickets, sequential (current)
+- **Phase 2 (Specialists):** Coordinator + specialist agents (Solr, Prompt, Validator), improves iteration quality
+- **Phase 3 (Parallel):** Add parallel ticket validation, scale to 10-15 tickets, 5-10x speedup
+- **Phase 4 (Learning):** Cross-pattern learning, scale to 20+ tickets, learn from past successes
+
+**Key Techniques:**
+- **Multi-agent decomposition:** Baseline → Specialist → Validator → Aggregator (each fresh context)
+- **Dynamic loading:** Agents read from `.diagnostics/` files instead of accumulating context
+- **Parallel validation:** Validate N tickets simultaneously (N validators in background)
+- **External storage:** Iteration history, pattern metadata stored externally (not in context)
+- **Specialist agents:** SolrExpert (4K context), PromptExpert (4K), VarianceAnalyzer (3K)
+
+**Benefits:**
+- Context per agent stays ~3-5K tokens (vs single agent growing to 12K+)
+- Parallel validation: 10 tickets in 60s instead of 600s
+- Specialist expertise improves suggestion quality
+- Cross-pattern learning reduces iterations needed
+
+**Implementation Priority:** Medium (after POC proves concept)
+
+### Variance Detection and Auto-Fix (Future Enhancement)
+
+- [ ] **Add Variance-Aware Agent** - High Impact, Medium Effort
+  - [ ] Implement `VarianceAnalyzer` class in `scripts/okp_mcp_variance_analyzer.py`
+    - Analyze variance across multiple stability runs
+    - Diagnose root cause (bad ground truth vs retrieval variance vs prompt ambiguity)
+    - Suggest specific fixes based on diagnosis
+  - [ ] Add variance analysis to pattern fix loop Phase 4
+    - Currently: Calculates variance and reports if > 0.05
+    - Enhancement: Auto-diagnose cause and suggest fix
+  - [ ] Implement variance detection capabilities:
+    - ✅ Compare responses for semantic similarity (bad ground truth detection)
+    - ✅ Compare retrieved URLs for order variance (retrieval variance detection)
+    - ✅ Detect response style variance (prompt ambiguity detection)
+    - ✅ Apply appropriate fix based on diagnosis
+  - [ ] See: `docs/VARIANCE_SOLUTIONS.md` for diagnostic framework
+  - **Impact:** Agents can automatically detect and fix unstable answers
+  - **Current State:** Agents can only see single-run metrics, cannot detect variance
+  - **Priority:** Medium (useful but not critical for POC)
+
+- [ ] **Add Semantic Answer Correctness (If High Variance)** - Medium Impact, Low Effort
+  - [ ] Implement hybrid answer_correctness metric in `src/lightspeed_evaluation/core/metrics/custom/semantic_answer.py`
+    - Use sentence transformers for semantic similarity (fast, deterministic, no wording bias)
+    - Combine with LLM judge for borderline cases (semantic similarity 0.50-0.85)
+    - Weighted scoring: `0.6 * llm_score + 0.4 * semantic_score`
+  - [ ] Add to VarianceAnalyzer for detecting wording-based variance:
+    - If semantic_similarity > 0.90 but answer_correctness variance > 0.02 → bad ground truth
+    - Auto-generate more specific expected_response using LLM
+  - [ ] Add configuration option to switch between:
+    - `answer_correctness_mode: "llm"` (current, good for absolute scoring)
+    - `answer_correctness_mode: "semantic"` (embedding-based, no wording bias)
+    - `answer_correctness_mode: "hybrid"` (best of both)
+  - **When to use:** If stability checks show high variance (>0.05) due to wording differences
+  - **Benefits:** Reduces variance from semantically identical but differently worded answers
+  - **Tradeoff:** Pure semantic similarity less precise on factual correctness
+  - **Priority:** Low (only implement if variance becomes major issue)
+
 ## High Priority - RAG Testing Improvements for RHEL 10
 
 ### Do These First (This Week)

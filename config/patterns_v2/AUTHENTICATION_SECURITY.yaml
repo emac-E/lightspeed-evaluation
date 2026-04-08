@@ -1,0 +1,113 @@
+# Pattern: AUTHENTICATION_SECURITY
+# Description: Authentication and security configuration issues across IdM, RBAC, and identity management
+# Total tickets: 4
+# Problem Type: AUTHENTICATION_AUTHORIZATION
+# Components: authentication, security
+
+- conversation_group_id: RSPEED-2657
+  turns:
+  - query: Is ticket RSPEED-2657 about rh-identity authentication header role extraction
+      a RHEL support question or an application development task?
+    expected_response: 'This ticket is NOT a Red Hat Enterprise Linux support question.
+      While ''Red Hat Identity Management'' (IdM/FreeIPA) is a legitimate RHEL feature
+      for enterprise authentication and authorization with RBAC support (documented
+      at https://access.redhat.com/articles/1586893), this ticket refers to ''rh-identity''
+      HTTP authentication headers, which are custom headers used in Red Hat''s cloud/SaaS
+      applications for passing authenticated user context between microservices. The
+      ticket describes a software development task: implementing middleware logic
+      in a Python application to extract role information (is_org_admin, entitlements)
+      from these custom HTTP headers instead of assigning all users a wildcard role.
+      This is application-level code implementation, not RHEL system administration,
+      IdM configuration, or any RHEL operating system feature.'
+    turn_metrics:
+    - custom:url_retrieval_eval
+    - ragas:context_relevance
+    - ragas:context_precision_without_reference
+    - custom:answer_correctness
+    expected_urls:
+    - https://access.redhat.com/articles/1586893
+    - https://access.redhat.com/solutions/2133001
+    - https://access.redhat.com/solutions/3823622
+  metadata:
+    pattern_id: AUTHENTICATION_SECURITY
+    confidence: HIGH
+- conversation_group_id: RSPEED-2653
+  turns:
+  - query: What identity types should be supported in Red Hat Hybrid Cloud Console's
+      rh-identity authentication module, and how should ServiceAccount, Associate,
+      and X509 identity types be properly authenticated?
+    expected_response: 'This is a Red Hat Hybrid Cloud Console platform development
+      issue, not a RHEL operating system question. Based on retrieved documentation,
+      ServiceAccount is a confirmed identity type used for authenticating applications
+      and services on console.redhat.com. According to Red Hat''s official guidance
+      (Article 7036194): ''Service accounts are used to authenticate applications
+      and services, whereas user accounts are used to authenticate human users.''
+      The Hybrid Cloud Console has transitioned from basic authentication to token-based
+      authentication via service accounts for enhanced security. While the documentation
+      confirms ServiceAccount as a critical identity type for service-to-service authentication
+      and automation, specific implementation details about the identity-schemas specification
+      defining all 5 identity types (User, System, ServiceAccount, Associate, X509)
+      are not found in customer-facing documentation. The rh-identity module should
+      support ServiceAccount authentication by extracting client_id and username from
+      the identity.service_account block. For Associate and X509 identity types, implementation
+      details require access to internal Red Hat development specifications not available
+      in public documentation.'
+    turn_metrics:
+    - custom:url_retrieval_eval
+    - ragas:context_relevance
+    - ragas:context_precision_without_reference
+    - custom:answer_correctness
+    expected_urls:
+    - https://access.redhat.com/articles/7036194
+    - https://access.redhat.com/articles/6977699
+  metadata:
+    pattern_id: AUTHENTICATION_SECURITY
+    confidence: MEDIUM
+- conversation_group_id: RSPEED-2652
+  turns:
+  - query: What are the security best practices for validating identity fields (user_id,
+      username, org_id, account_number) extracted from authentication headers to prevent
+      log injection and ensure type safety before using them in database queries and
+      application logs?
+    expected_response: ''
+    turn_metrics:
+    - custom:url_retrieval_eval
+    - ragas:context_relevance
+    - ragas:context_precision_without_reference
+    - custom:answer_correctness
+  metadata:
+    pattern_id: AUTHENTICATION_SECURITY
+    confidence: LOW
+    notes: 'TODO: This is an application-level security concern, not a RHEL operating
+      system configuration issue. RHEL documentation does not provide specific guidance
+      on validating authentication header fields. The retrieved documentation on ''Hardening
+      Apache web server (httpd)'' references OWASP as ''an industry leader in web
+      server/application security'' for securing web applications and modules beyond
+      the base server. For input validation best practices for authentication modules,
+      consult OWASP Input Validation Cheat Sheet and application-specific security
+      guidelines rather than RHEL documentation. The validation requirements (type
+      checking, length limits, control character filtering, log injection prevention)
+      are application security patterns not covered in RHEL system administration
+      guides.'
+- conversation_group_id: RSPEED-2651
+  turns:
+  - query: What security measures should be implemented for x-rh-identity header validation
+      to prevent denial-of-service attacks in Red Hat authentication services?
+    expected_response: ''
+    turn_metrics:
+    - custom:url_retrieval_eval
+    - ragas:context_relevance
+    - ragas:context_precision_without_reference
+    - custom:answer_correctness
+  metadata:
+    pattern_id: AUTHENTICATION_SECURITY
+    confidence: LOW
+    notes: 'TODO: Retrieved documentation does not contain specific guidance on x-rh-identity
+      header validation or header size limits for Red Hat authentication services.
+      While general security best practices emphasize input validation (as noted in
+      CVE-2018-15869 regarding improper input validation), no RHEL documentation was
+      found that specifically addresses DoS prevention measures for the x-rh-identity
+      authentication header, recommended header size limits, or base64 decode protection
+      strategies. This appears to be an implementation-specific security concern that
+      may require consulting Red Hat product security documentation, service-specific
+      security guides, or filing a support case for authoritative guidance.'

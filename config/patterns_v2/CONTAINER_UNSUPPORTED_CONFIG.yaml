@@ -1,0 +1,58 @@
+# Pattern: CONTAINER_UNSUPPORTED_CONFIG
+# Description: Unsupported container platform configurations including OpenShift, container images, and containerization technologies
+# Total tickets: 2
+# Problem Type: UNSUPPORTED_CONFIG
+# Components: containers
+
+- conversation_group_id: RSPEED-2218
+  turns:
+  - query: Why does 'rhel-cla start' fail with error 'executable file ramalama not
+      found in $PATH' on RHEL 10.1 with podman 5.6.0?
+    expected_response: 'This is a known issue (bug RSPEED-2218) in the RHEL command-line
+      assistant offline developer preview release available with RHEL 10.1. The error
+      ''runtime stderr: executable file ramalama not found in $PATH'' occurs when
+      starting rhel-cla.
+
+
+      Workaround:
+
+      1. For CPU-only systems: Edit ~/.config/rhel-cla/.env and update LLAMACPP_IMAGE
+      to: LLAMACPP_IMAGE="quay.io/ramalama/ramalama:6ae863e9f552797b45d0fd8632c4f7ec9b78c430"
+
+      2. For NVIDIA GPU systems: Edit ~/.config/rhel-cla/.env and update LLAMACPP_IMAGE
+      to: LLAMACPP_IMAGE="quay.io/ramalama/cuda:0.14"
+
+      3. Start rhel-cla using: rhel-cla start
+
+
+      Note: RHEL CLA for offline use is in Developer Preview and not intended for
+      production use. The system must be registered via RHEL Satellite, RHSM, or RHC
+      to use this feature.'
+    turn_metrics:
+    - custom:url_retrieval_eval
+    - ragas:context_relevance
+    - ragas:context_precision_without_reference
+    - custom:answer_correctness
+    expected_urls:
+    - https://access.redhat.com/solutions/7134825/index.html
+    - https://access.redhat.com/solutions/7136542/index.html
+  metadata:
+    pattern_id: CONTAINER_UNSUPPORTED_CONFIG
+    confidence: HIGH
+- conversation_group_id: RSPEED-1717
+  turns:
+  - query: How do I create a QCOW2 image from a bootable container image using bootc-image-builder?
+    expected_response: ''
+    turn_metrics:
+    - custom:url_retrieval_eval
+    - ragas:context_relevance
+    - ragas:context_precision_without_reference
+    - custom:answer_correctness
+  metadata:
+    pattern_id: CONTAINER_UNSUPPORTED_CONFIG
+    confidence: LOW
+    notes: 'TODO: No RHEL documentation found for bootc-image-builder. The retrieved
+      search results only discuss osbuild-composer (aka Image Builder), which is a
+      different image building tool. Unable to verify the bootc-image-builder workflow,
+      container registry location (registry.redhat.io/rhel9/bootc-image-builder),
+      required podman commands, or QCOW2 creation process without official documentation.'
