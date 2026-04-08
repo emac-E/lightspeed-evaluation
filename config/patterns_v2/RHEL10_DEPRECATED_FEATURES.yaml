@@ -1,0 +1,92 @@
+# Pattern: RHEL10_DEPRECATED_FEATURES
+# Description: Features deprecated or removed in RHEL 10 across multiple subsystems (storage, networking, filesystem)
+# Total tickets: 3
+# Problem Type: DEPRECATED_FEATURE
+# Components: storage, networking, filesystem, GFS2, Resilient Storage, dhcp
+
+- conversation_group_id: RSPEED-2794
+  turns:
+  - query: Is GFS2 (Global File System 2) available in RHEL 10?
+    expected_response: 'No, GFS2 is NOT available in RHEL 10. Red Hat has discontinued
+      the Resilient Storage Add-On with RHEL 10 or later. According to Red Hat''s
+      official support policies: "With RHEL 10 or later the packages (ctdb, gfs2-utils,
+      dlm) that were included with Resilient Storage Add-On will be discontinued.
+      In addition, the gfs2 and dlm modules will be removed from the kernel for RHEL
+      10 or later." Organizations using GFS2 filesystems in previous RHEL versions
+      (RHEL 6, 7, 8, or 9) must migrate to alternative clustered storage solutions
+      before upgrading to RHEL 10. While the leapp upgrade process from RHEL 9 to
+      RHEL 10 may complete successfully with GFS2 filesystems configured, any Pacemaker
+      resource agents using fstype=gfs2 will fail to start on RHEL 10 cluster nodes.'
+    turn_metrics:
+    - custom:url_retrieval_eval
+    - ragas:context_relevance
+    - ragas:context_precision_without_reference
+    - custom:answer_correctness
+    expected_urls:
+    - https://access.redhat.com/articles/3290201/index.html
+    - https://access.redhat.com/solutions/7134031/index.html
+    - https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/10/html-single/considerations_in_adopting_rhel_10/index/index.html
+  metadata:
+    pattern_id: RHEL10_DEPRECATED_FEATURES
+    confidence: HIGH
+- conversation_group_id: RSPEED-1998
+  turns:
+  - query: How to install and configure the Kea DHCP server on RHEL 10?
+    expected_response: 'Kea is the official DHCP server solution in RHEL 10, replacing
+      the deprecated ISC DHCP server. As stated in Red Hat documentation: ''The Kea
+      DHCP server replaces ISC DHCP'' and ''RHEL 10 uses kea for DHCP.''
+
+
+      Installation:
+
+      - Install via: dnf install kea
+
+      - For DHCPv4 and DHCPv6 support, install the kea package from RHEL 10 repositories
+
+
+      Configuration:
+
+      - Configuration files are located in /etc/kea/ directory
+
+      - Uses JSON format (e.g., /etc/kea/kea-dhcp4.conf for DHCPv4)
+
+      - Supports both DHCPv4 and DHCPv6 services
+
+      - Includes features like lease database management, logger configuration, client
+      classification, and static host assignments
+
+
+      Detailed setup instructions are available in the official RHEL 10 documentation
+      under ''Managing networking infrastructure services'' > ''Providing DHCP services''
+      > ''Setting up a Kea DHCP server''. A practical PXE server configuration example
+      demonstrating Kea DHCP setup is also available in Red Hat solution articles.'
+    turn_metrics:
+    - custom:url_retrieval_eval
+    - ragas:context_relevance
+    - ragas:context_precision_without_reference
+    - custom:answer_correctness
+    expected_urls:
+    - https://access.redhat.com/solutions/435003/index.html
+    - https://access.redhat.com/solutions/7126352/index.html
+    - https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/10/html-single/managing_networking_infrastructure_services/index/index.html
+  metadata:
+    pattern_id: RHEL10_DEPRECATED_FEATURES
+    confidence: HIGH
+- conversation_group_id: RSPEED-1584
+  turns:
+  - query: Is Btrfs filesystem supported in RHEL 10, and if so, how do I use it?
+    expected_response: ''
+    turn_metrics:
+    - custom:url_retrieval_eval
+    - ragas:context_relevance
+    - ragas:context_precision_without_reference
+    - custom:answer_correctness
+  metadata:
+    pattern_id: RHEL10_DEPRECATED_FEATURES
+    confidence: LOW
+    notes: 'TODO: No relevant RHEL documentation about Btrfs support status in RHEL
+      10 was found during verification. Need to search specifically for Btrfs deprecation/removal
+      notices, filesystem support documentation for RHEL 10, or release notes that
+      explicitly address Btrfs availability. The absence of Btrfs in general RHEL
+      10 documentation is suggestive of non-support, but explicit confirmation is
+      needed.'

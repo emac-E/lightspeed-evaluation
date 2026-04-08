@@ -110,12 +110,25 @@ If you want to install Ragas NLP metrics like ROUGE or Bleu install additional d
 ```bash
 # Using pip
 pip install 'lightspeed-evaluation[nlp-metrics]'
-```
-or 
-```bash
+
 # Using uv (from already cloned repo for local development)
 uv sync --extra nlp-metrics
 ```
+
+#### Optional: All Metrics (NLP + Local Embeddings)
+To install **both** NLP metrics and local embeddings together:
+```bash
+# Using pip
+pip install 'lightspeed-evaluation[all-metrics]'
+
+# Using uv (from already cloned repo for local development)
+uv sync --extra all-metrics
+
+# Or specify multiple extras individually (same result)
+uv sync --extra nlp-metrics --extra local-embeddings
+```
+
+> **⚠️ Important `uv` Behavior**: Each `uv sync --extra X` command syncs ONLY that extra. If you run `uv sync --extra nlp-metrics` followed by `uv sync --extra local-embeddings`, the second command will **remove** nlp-metrics dependencies! Always specify all extras you need in one command, or use `--extra all-metrics` for everything.
 
 ### Basic Usage
 

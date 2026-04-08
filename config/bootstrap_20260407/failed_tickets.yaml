@@ -1,0 +1,7 @@
+metadata:
+  generated_at: '2026-04-07T21:22:18.774349'
+  total_tickets: 0
+  source_file: config/bootstrap_20260407/extracted_tickets.yaml
+  category: failed
+  description: Tickets with extraction errors or malformed entries
+tickets: []

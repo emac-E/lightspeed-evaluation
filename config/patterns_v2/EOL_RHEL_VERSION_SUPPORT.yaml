@@ -1,0 +1,113 @@
+# Pattern: EOL_RHEL_VERSION_SUPPORT
+# Description: Support questions related to end-of-life RHEL versions (6, 7) including lifecycle queries and upgrade compatibility concerns
+# Total tickets: 4
+# Problem Type: EOL_UNSUPPORTED
+# Components: lifecycle, support, containers
+
+- conversation_group_id: RSPEED-2754
+  turns:
+  - query: Can I run a RHEL 6 container on RHEL 9?
+    expected_response: 'No, RHEL 6 container images are unsupported on RHEL 9 hosts
+      according to the official Red Hat Enterprise Linux Container Compatibility Matrix.
+      The matrix explicitly shows that RHEL 6 images are only supported on RHEL 8
+      hosts and are marked as "Unsupported" for RHEL 9 and RHEL 10 hosts. While containers
+      may technically run using Podman or other OCI-compliant runtimes, Red Hat''s
+      documentation states that "containers directly depend on the underlying Linux
+      host and kernel for critical interfaces" and there are "known limitations with
+      mixing and matching versions of the operating system in the container image
+      and the container host." Red Hat does not support this configuration, and customers
+      should not expect commercial support. For production environments, use supported
+      combinations: RHEL 7, 8, 9, or 10 container images on RHEL 9 hosts are all supported
+      according to the compatibility matrix.'
+    turn_metrics:
+    - custom:url_retrieval_eval
+    - ragas:context_relevance
+    - ragas:context_precision_without_reference
+    - custom:answer_correctness
+    expected_urls:
+    - https://access.redhat.com/support/policy/rhel-container-compatibility/index.html
+  metadata:
+    pattern_id: EOL_RHEL_VERSION_SUPPORT
+    confidence: HIGH
+- conversation_group_id: RSPEED-2745
+  turns:
+  - query: When does the maintenance support phase end for Red Hat Enterprise Linux
+      7?
+    expected_response: 'The maintenance support phase for Red Hat Enterprise Linux
+      7 ended on June 30, 2024. Specifically, RHEL 7''s Maintenance Support 2 phase
+      concluded on this date, after which RHEL 7 entered the Extended Life Phase.
+      As stated in the final retirement notice (RHBA-2024:4113): "Red Hat Enterprise
+      Linux 7 is retired as of June 30, 2024 and entered Extended Life Phase which
+      means users will receive the below support: Limited technical support for existing
+      Red Hat Enterprise Linux 7 deployments, previously released bug fixes (RHBAs),
+      security errata (RHSAs), and product enhancements (RHEAs)." Since today is April
+      7, 2026, this date is in the past. Customers who require continued maintenance
+      can subscribe to Extended Life Cycle Support (ELS), which is available until
+      June 30, 2028, though this is an add-on subscription and requires migrating
+      to RHEL 7.9.'
+    turn_metrics:
+    - custom:url_retrieval_eval
+    - ragas:context_relevance
+    - ragas:context_precision_without_reference
+    - custom:answer_correctness
+    expected_urls:
+    - https://access.redhat.com/errata/RHBA-2024:4113/index.html
+    - https://access.redhat.com/errata/RHBA-2024:3499/index.html
+    - https://access.redhat.com/errata/RHBA-2024:1658/index.html
+    - https://access.redhat.com/errata/RHBA-2023:7849/index.html
+    - https://access.redhat.com/errata/RHBA-2023:4632/index.html
+  metadata:
+    pattern_id: EOL_RHEL_VERSION_SUPPORT
+    confidence: HIGH
+- conversation_group_id: RSPEED-2482
+  turns:
+  - query: Can I run a RHEL 6 container on RHEL 9?
+    expected_response: 'No, running RHEL 6 containers on RHEL 9 hosts is explicitly
+      unsupported. According to the official Red Hat Enterprise Linux Container Compatibility
+      Matrix, RHEL 6 container images are marked as ''Unsupported'' on RHEL 9 hosts.
+      The compatibility matrix states: ''While containers have strong isolation between
+      other containers, they directly depend on the underlying Linux host and kernel
+      for critical interfaces. There are known limitations with mixing and matching
+      versions of the operating system in the container image and the container host.''
+      The matrix explicitly shows RHEL 6 Image on RHEL 9 Host as ''Unsupported''.
+      Supported alternatives include: (1) Using a RHEL 8 host to run RHEL 6 containers,
+      as the matrix shows this combination is ''Supported'', (2) Migrating the application
+      to a supported container base image (RHEL 7, 8, or 9) on the RHEL 9 host, or
+      (3) Planning migration away from RHEL 6 as it has reached end of support. Red
+      Hat recommends using supported combinations to ensure access to support and
+      avoid potential compatibility issues.'
+    turn_metrics:
+    - custom:url_retrieval_eval
+    - ragas:context_relevance
+    - ragas:context_precision_without_reference
+    - custom:answer_correctness
+    expected_urls:
+    - https://access.redhat.com/support/policy/rhel-container-compatibility/index.html
+  metadata:
+    pattern_id: EOL_RHEL_VERSION_SUPPORT
+    confidence: HIGH
+- conversation_group_id: RSPEED-1648
+  turns:
+  - query: When does the maintenance support phase end for RHEL 7? Is the date in
+      the future?
+    expected_response: The Maintenance Support 2 phase for Red Hat Enterprise Linux
+      7 ended on June 30, 2024. No, this date is not in the future - it is in the
+      past. As of today (April 7, 2026), this date was approximately 1 year and 9
+      months ago. According to Red Hat's official errata advisory RHBA-2024:3499,
+      'Red Hat Enterprise Linux 7 will be retired as of June 30, 2024 and enter Extended
+      Life Phase.' RHEL 7 is currently in the Extended Life-cycle Support (ELS) phase,
+      which provides limited technical support, previously released errata, and access
+      to Red Hat documentation until June 30, 2028.
+    turn_metrics:
+    - custom:url_retrieval_eval
+    - ragas:context_relevance
+    - ragas:context_precision_without_reference
+    - custom:answer_correctness
+    expected_urls:
+    - https://access.redhat.com/errata/RHBA-2024:3499/index.html
+    - https://access.redhat.com/errata/RHBA-2023:7849/index.html
+    - https://access.redhat.com/errata/RHBA-2023:4632/index.html
+    - https://access.redhat.com/articles/4393411/index.html
+  metadata:
+    pattern_id: EOL_RHEL_VERSION_SUPPORT
+    confidence: HIGH

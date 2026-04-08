@@ -1,10 +1,24 @@
-# Analysis Scripts Documentation
+# Scripts Directory
 
-This directory contains analysis scripts for processing evaluation outputs and generating insights about RAG retrieval quality.
+Utility scripts for LightSpeed Evaluation Framework. Organized by functional category.
+
+## Table of Contents
+
+- [Quick Start](#quick-start)
+- [JIRA Ticket Processing (Multi-Agent)](#jira-ticket-processing-multi-agent)
+- [OKP-MCP Agent & Automation](#okp-mcp-agent--automation)
+- [Evaluation Analysis](#evaluation-analysis)
+- [Cost & Resource Management](#cost--resource-management)
+- [Reporting & Visualization](#reporting--visualization)
+- [Test Configuration & Conversion](#test-configuration--conversion)
+- [Regression Testing](#regression-testing)
+- [Common Workflows](#common-workflows)
+
+---
 
 ## Quick Start
 
-**Run everything at once:**
+**Run complete evaluation suite:**
 ```bash
 # From project root
 ./run_full_evaluation_suite.sh
@@ -12,33 +26,237 @@ This directory contains analysis scripts for processing evaluation outputs and g
 
 This runs all evaluations + all analysis scripts + generates the okp-mcp report automatically.
 
+**Process JIRA tickets end-to-end:**
+```bash
+# Extract tickets with multi-agent verification
+python scripts/extract_jira_tickets.py
+
+# Discover patterns
+python scripts/discover_ticket_patterns.py
+
+# Fix tickets using patterns
+python scripts/okp_mcp_agent.py fix RSPEED-2482 --max-iterations 10
+```
+
 ---
 
-## Scripts Overview
+## JIRA Ticket Processing (Multi-Agent)
 
-### 1. `analyze_metric_correlations.py`
+Scripts for fetching and processing JIRA tickets using multi-agent collaboration (Linux Expert + Solr Expert).
 
-Cross-metric correlation analysis tool that validates evaluation framework health and identifies retrieval issues.
+### `extract_jira_tickets.py`
 
-#### Features
+**Stage 1: Fetch & Extract** - Main extraction workflow using multi-agent verification.
 
-- **Correlation Analysis**: Pearson, Spearman, and Kendall correlations
-- **Anomaly Detection**: RAG_BYPASS, UNFAITHFUL_RESPONSE, PARAMETRIC_KNOWLEDGE
-- **Visualization**: Heatmaps, scatter plots, run comparisons
-- **Multi-Run Comparison**: Compare before/after okp-mcp improvements
-- **Threshold Recommendations**: Statistical analysis of metric calibration
-
-#### Usage
-
-**Single evaluation run:**
 ```bash
+# Default: append new tickets to existing YAML
+python scripts/extract_jira_tickets.py
+
+# Force rebuild everything
+python scripts/extract_jira_tickets.py --force-rebuild
+
+# Process specific tickets
+python scripts/extract_jira_tickets.py --tickets RSPEED-2482,RSPEED-2511
+
+# Custom JQL query
+python scripts/extract_jira_tickets.py --jql "project = RSPEED AND status = Open"
+
+# Force re-extract specific tickets (even if already processed)
+python scripts/extract_jira_tickets.py --tickets RSPEED-2482 --force-reextract
+```
+
+**Features:**
+- Incremental append mode (default) - only processes new tickets
+- Multi-agent verification (Linux Expert ↔ Solr Expert)
+- Search intelligence logging for workflow optimization
+- Default JQL for `cla-incorrect-answer` tickets
+
+**Output:** `config/extracted_tickets.yaml`
+
+**Tests:** `tests/agents/test_jira_extraction.py`
+
+---
+
+### `discover_ticket_patterns.py`
+
+**Stage 2: Pattern Discovery** - Identifies common patterns across extracted tickets.
+
+```bash
+# Default: discover patterns in extracted_tickets.yaml
+python scripts/discover_ticket_patterns.py
+
+# Custom input/output
+python scripts/discover_ticket_patterns.py \
+  --input config/extracted_tickets_20260407.yaml \
+  --output-tagged config/tickets_with_patterns.yaml \
+  --output-report patterns_report.json
+
+# Require at least 5 tickets per pattern
+python scripts/discover_ticket_patterns.py --min-pattern-size 5
+```
+
+**Features:**
+- Groups tickets by problem type, components, RHEL versions
+- Clusters similar tickets (≥3 by default)
+- Tags tickets with pattern_id
+- Generates pattern reports for batch fixing
+
+**Outputs:**
+- Tagged YAML with pattern_id annotations
+- JSON pattern report
+
+**Use Case:** Process 15 similar tickets as 1 pattern (15x efficiency)
+
+---
+
+### `multi_agent_jira_extractor.py`
+
+Earlier prototype of multi-agent extraction.
+
+**Status:** Legacy - use `extract_jira_tickets.py` instead
+
+---
+
+### `fetch_jira_open_tickets.py`
+
+Fetch open JIRA tickets using Claude Agent SDK + JIRA MCP.
+
+```bash
+python scripts/fetch_jira_open_tickets.py
+```
+
+**Features:**
+- Uses JIRA MCP for ticket access
+- Intelligent query/answer extraction
+- Generates test configs compatible with `system_okp_mcp_agent.yaml`
+
+**Use Case:** Quick fetch of open tickets without multi-agent verification
+
+---
+
+### `fetch_jira_tickets_direct.py`
+
+Fetch JIRA tickets via REST API (no Claude SDK dependency).
+
+```bash
+python scripts/fetch_jira_tickets_direct.py
+```
+
+**Features:**
+- Direct REST API calls for reliability
+- No MCP or SDK dependencies
+- Fast ticket fetching
+
+**Use Case:** When MCP/SDK unavailable or for simple bulk fetches
+
+---
+
+## OKP-MCP Agent & Automation
+
+Scripts for autonomous ticket fixing and Solr diagnostics.
+
+### `okp_mcp_agent.py`
+
+**Autonomous agent for okp-mcp RSPEED ticket fixing.**
+
+Automates the INCORRECT_ANSWER_LOOP workflow:
+1. **Diagnose** - Run full evaluation to identify problem type
+2. **Analyze** - Determine if retrieval or answer quality issue
+3. **Iterate** - Make targeted changes (boost queries or prompts)
+4. **Validate** - Check for regressions across all test suites
+5. **Commit** - Create commit with detailed metrics
+
+```bash
+# Diagnose a single ticket (runs new evaluation)
+python scripts/okp_mcp_agent.py diagnose RSPEED-2482
+
+# Diagnose using existing results (fast, no re-run)
+python scripts/okp_mcp_agent.py diagnose RSPEED-2482 --use-existing
+
+# Auto-fix with iterations
+python scripts/okp_mcp_agent.py fix RSPEED-2482 --max-iterations 10
+
+# Validate across all suites
+python scripts/okp_mcp_agent.py validate
+```
+
+**Workflow:**
+- Identifies retrieval vs answer quality issues
+- Suggests targeted boost query or prompt changes
+- Validates against regression test suites
+- Creates detailed commit messages with metrics
+
+---
+
+### `okp_mcp_llm_advisor.py`
+
+**LLM-powered advisor for boost query suggestions.**
+
+Uses Claude Agent SDK to analyze metrics and suggest code changes.
+
+**Features:**
+- Tiered model routing (Haiku/Sonnet/Opus) to optimize costs
+- Analyzes evaluation metrics to suggest improvements
+- Generates boost query code snippets
+- Integration with `okp_mcp_agent.py`
+
+**Use Case:** AI-powered suggestions for fixing retrieval issues
+
+---
+
+### `okp_solr_checker.py`
+
+**Solr document checker for diagnostics.**
+
+Validates that expected documents exist in Solr index.
+
+```bash
+python scripts/okp_solr_checker.py
+```
+
+**Features:**
+- Checks if expected URLs exist in Solr
+- Suggests alternative URLs when documents missing
+- Helps debug retrieval failures
+
+**Use Case:** Diagnose why test configs fail (missing docs)
+
+---
+
+### `okp_solr_config_analyzer.py`
+
+**Solr configuration analyzer and explain output parser.**
+
+Diagnoses why Solr ranks documents incorrectly.
+
+```bash
+python scripts/okp_solr_config_analyzer.py
+```
+
+**Features:**
+- Parses current Solr config from `okp-mcp/src/okp_mcp/solr.py`
+- Fetches Solr explain output to see scoring details
+- Analyzes which parameters need tuning (qf, pf, boost values)
+
+**Use Case:** Debug ranking issues and optimize Solr config
+
+---
+
+## Evaluation Analysis
+
+Scripts for analyzing evaluation results and metrics.
+
+### `analyze_metric_correlations.py`
+
+**Cross-Metric Correlation Analysis.**
+
+```bash
+# Single evaluation run
 python scripts/analyze_metric_correlations.py \
     --input eval_output/evaluation_20260317_142455_detailed.csv \
     --output analysis_output/single_run/
-```
 
-**Compare multiple runs:**
-```bash
+# Compare multiple runs
 python scripts/analyze_metric_correlations.py \
     --input eval_output/run1/evaluation_*_detailed.csv \
             eval_output/run2/evaluation_*_detailed.csv \
@@ -46,49 +264,87 @@ python scripts/analyze_metric_correlations.py \
     --compare-runs
 ```
 
-**Analyze all runs:**
-```bash
-python scripts/analyze_metric_correlations.py \
-    --input eval_output/*/evaluation_*_detailed.csv \
-    --output analysis_output/all_runs/ \
-    --compare-runs
-```
+**Analyzes:**
+- Correlations between different Ragas metrics
+- Validates that metrics measure what they claim
+- Identifies redundant metrics
+- Detects anomalies where metrics disagree
 
-#### Outputs
-
+**Outputs:**
 | File | Description |
 |------|-------------|
 | `summary_report.txt` | Human-readable summary with recommendations |
 | `correlation_pearson.csv` | Pearson correlation matrix |
-| `correlation_spearman.csv` | Spearman correlation matrix |
-| `correlation_kendall.csv` | Kendall correlation matrix |
 | `correlation_heatmap.png` | Visual correlation matrix |
-| `scatter_matrix.png` | Pairwise scatter plots |
 | `anomalies.csv` | Detected anomalous cases |
-| `run_comparison.png` | Multi-run comparison (with --compare-runs) |
 
-#### Anomaly Types
+**Anomaly Types:**
+- **RAG_BYPASS**: High answer_correctness + low context_precision (LLM found signal in noise)
+- **UNFAITHFUL_RESPONSE**: High context_relevance + low faithfulness (LLM added info)
+- **PARAMETRIC_KNOWLEDGE**: Zero context scores + correct answer (LLM bypassed RAG)
 
-| Type | Description | Meaning |
-|------|-------------|---------|
-| **RAG_BYPASS** | High answer_correctness + low context_precision | LLM found signal in noise or used parametric knowledge |
-| **UNFAITHFUL_RESPONSE** | High context_relevance + low faithfulness | LLM added info beyond contexts |
-| **PARAMETRIC_KNOWLEDGE** | Zero context scores + correct answer | LLM bypassed RAG entirely |
+**Use Case:** Understand which metrics provide unique signal
 
 ---
 
-### 2. `analyze_version_distribution.py`
+### `analyze_test_failures.py`
 
-Analyzes RHEL version distribution in retrieved contexts to measure okp-mcp version filtering quality.
+**Analyze test failures and regressions.**
 
-#### Features
+```bash
+python scripts/analyze_test_failures.py evaluation_outputs/run_20260407/
+```
 
-- Extracts RHEL version numbers from contexts (supports "RHEL 10", "Red Hat Enterprise Linux 10", etc.)
-- Calculates version accuracy per conversation
-- Overall statistics and trends
-- JSON + text report output
+**Features:**
+- Loads detailed CSV files from run directories
+- Identifies failing tests
+- Tracks regressions between runs
 
-#### Usage
+**Use Case:** Prioritize which failures to fix first
+
+---
+
+### `analyze_token_correlations.py`
+
+**Analyze correlation between token usage and metric scores.**
+
+```bash
+python scripts/analyze_token_correlations.py \
+  evaluation_outputs/okp_mcp_20260407_101520/ragas_metrics/evaluation_ragas_metrics_detailed.csv
+```
+
+**Explores:**
+- Do larger contexts (more input tokens) lead to better scores?
+- Does response length correlate with correctness?
+- Optimal token ranges for different metrics
+
+**Use Case:** Optimize context window vs cost tradeoff
+
+---
+
+### `analyze_url_retrieval_stability.py`
+
+**Analyze URL retrieval stability across multiple runs.**
+
+```bash
+python scripts/analyze_url_retrieval_stability.py \
+  evaluation_outputs/run1/ \
+  evaluation_outputs/run2/ \
+  evaluation_outputs/run3/
+```
+
+**Measures:**
+- Content overlap stability - Do we get the same documents back?
+- Ranking stability - Do documents appear in consistent positions?
+- Expected URL tracking - Where do expected URLs rank?
+
+**Use Case:** Measure RAG retrieval consistency
+
+---
+
+### `analyze_version_distribution.py`
+
+**Analyze RHEL version distribution in retrieved contexts.**
 
 ```bash
 python scripts/analyze_version_distribution.py \
@@ -97,48 +353,115 @@ python scripts/analyze_version_distribution.py \
     --output analysis_output/version_analysis/
 ```
 
-#### Outputs
+**Measures:**
+- Percentage of contexts matching target RHEL version
+- Version distribution across all retrieved contexts
+- Temporal accuracy by conversation
 
-| File | Description |
-|------|-------------|
-| `version_distribution.json` | Detailed per-conversation analysis |
-| `version_distribution_report.txt` | Human-readable summary |
-
-#### Interpretation
-
-**Version Accuracy Levels:**
+**Interpretation:**
 - **>80%**: Good version filtering ✅
 - **50-80%**: Needs improvement 🟡
 - **<50%**: Poor version filtering, urgent fix needed ❌
 
-**Example Report:**
-```
-Total conversations: 15
-Conversations with version strings: 12
-Average version accuracy: 62.5%
-
-TEMPORAL-REMOVED-001 (Target: RHEL 10)
-  Contexts analyzed: 200
-  Version accuracy: 58% (116/200 contexts match RHEL 10)
-  Issues: 42% are RHEL 9 or RHEL 8 docs
-```
+**Use Case:** Validate version-specific retrieval (e.g., RHEL 9 queries get RHEL 9 docs)
 
 ---
 
-### 3. `generate_question_metrics_report.py`
+## Cost & Resource Management
 
-Generates detailed per-question breakdown showing all metric scores for each query.
+Scripts for tracking token usage and costs.
 
-#### Features
+### `calculate_cost_estimate.py`
 
-- Shows each question with all its metric scores
-- Identifies which questions perform poorly
-- Includes pass/fail status with thresholds
-- Optional: Include contexts and responses
-- Summary statistics by metric
-- Top failing questions list
+**Calculate cost estimates for evaluation runs.**
 
-#### Usage
+```bash
+python scripts/calculate_cost_estimate.py \
+  evaluation_outputs/okp_mcp_20260407_101520/ragas_metrics/evaluation_ragas_metrics_detailed.csv
+```
+
+**Provides:**
+- Token usage statistics (input/output/total)
+- Cost estimates for different LLM providers
+- Per-question cost breakdown
+
+**Use Case:** Budget forecasting for large evaluation runs
+
+---
+
+### `calculate_cost_estimate_multi.py`
+
+**Calculate costs for runs with multiple CSV files.**
+
+```bash
+python scripts/calculate_cost_estimate_multi.py \
+  evaluation_outputs/okp_mcp_20260407_101520/
+```
+
+**Features:**
+- Finds all detailed CSV files in directory
+- Aggregates token usage across all test suites
+- Total cost across multiple evaluations
+
+**Use Case:** Cost tracking for multi-suite runs
+
+---
+
+### `show_cost.py`
+
+**Simple cost calculator - show cost of last run.**
+
+```bash
+python scripts/show_cost.py
+```
+
+**Features:**
+- Zero-argument convenience script
+- Shows cost of most recent evaluation
+- Quick cost visibility
+
+**Use Case:** Quick check after running eval
+
+---
+
+## Reporting & Visualization
+
+Scripts for generating reports and plots.
+
+### `generate_okp_mcp_report.py`
+
+**Generate comprehensive RAG quality report for okp-mcp developers.**
+
+```bash
+python scripts/generate_okp_mcp_report.py \
+    --output-base eval_output/full_suite_20260323_100000 \
+    --correlation-analysis analysis_output/full_suite_20260323_100000/correlation_analysis \
+    --version-analysis analysis_output/full_suite_20260323_100000/version_analysis
+```
+
+**Output File:** `RAG_QUALITY_REPORT_FOR_OKP_MCP.md`
+
+**Sections:**
+1. **Executive Summary** - Metric → okp-mcp impact mapping
+2. **Critical Issues** - Performance analysis + version filtering
+3. **Root Cause Analysis** - Over-retrieval, poor ranking, no version filtering, boilerplate pollution
+4. **Specific Examples** - Anomalous cases
+5. **Action Plan** - 3-4 week phased implementation
+6. **Success Metrics** - Before/after targets
+7. **Appendix** - Detailed metric explanations
+
+**Features:**
+- Data-driven report explaining retrieval quality issues
+- Actual examples with metrics
+- Actionable recommendations with code fixes
+
+**Use Case:** Share evaluation insights with okp-mcp team
+
+---
+
+### `generate_question_metrics_report.py`
+
+**Generate detailed per-question metrics report.**
 
 ```bash
 # Basic report
@@ -151,124 +474,178 @@ python scripts/generate_question_metrics_report.py \
     --input eval_output/*/evaluation_*_detailed.csv \
     --output analysis_output/question_report.md \
     --include-responses
-
-# Include contexts (makes report much longer)
-python scripts/generate_question_metrics_report.py \
-    --input eval_output/*/evaluation_*_detailed.csv \
-    --output analysis_output/question_report.md \
-    --include-contexts \
-    --include-responses
 ```
 
-#### Output
-
-**File:** `QUESTION_METRICS_REPORT.md`
-
-**For each question:**
-- Conversation and turn ID
-- Query text
-- All metric scores with pass/fail indicators (✅ ❌)
-- Expected response
-- Token usage (API + judge)
-- Optionally: actual response and contexts
-
-**Summary sections:**
+**Shows:**
+- Each question with all metric scores
+- Easy identification of poorly performing questions
+- Metric comparison across question types
 - Pass rates by metric
 - Questions with most failures
 
-#### Example Entry
-
-```markdown
-### turn1
-
-**Query:** How to install DHCP server in RHEL 10?
-
-**Metrics:**
-
-| Metric | Score | Threshold | Result | Reason |
-|--------|-------|-----------|--------|--------|
-| ragas:context_precision | 0.032 ❌ | 0.70 | FAIL | Only 3.2% relevant |
-| ragas:faithfulness | 1.000 ✅ | 0.80 | PASS | Supported by contexts |
-
-**Expected Response:**
-```
-Kea is the DHCP server in RHEL 10...
-```
-
-**Token Usage:**
-- API Input: 1523
-- API Output: 156
-```
-
-#### Use Cases
-
+**Use Cases:**
 - **Debugging:** Deep-dive into specific failing tests
 - **Pattern Analysis:** Identify question types that fail
 - **Team Sharing:** Show specific examples to stakeholders
-- **Metric Investigation:** Understand why metrics disagree
 
 ---
 
-### 4. `generate_okp_mcp_report.py`
+### `plot_scores_over_time.py`
 
-Generates comprehensive RAG quality report for okp-mcp developers, synthesizing all analysis results.
-
-#### Features
-
-- Explains metrics in terms okp-mcp developers understand
-- Maps metrics to specific retrieval issues
-- Provides code fixes with examples
-- Includes actionable phased implementation plan
-- Synthesizes correlation + version analysis results
-
-#### Usage
+**Plot evaluation scores over time - time series analysis.**
 
 ```bash
-# After running full evaluation suite
-python scripts/generate_okp_mcp_report.py \
-    --output-base eval_output/full_suite_20260323_100000 \
-    --correlation-analysis analysis_output/full_suite_20260323_100000/correlation_analysis \
-    --version-analysis analysis_output/full_suite_20260323_100000/version_analysis
-
-# Custom output location
-python scripts/generate_okp_mcp_report.py \
-    --output-base eval_output/my_run \
-    --correlation-analysis analysis_output/my_run/correlation \
-    --output-file custom_report.md
+python scripts/plot_scores_over_time.py evaluation_outputs/
 ```
 
-#### Output
+**Features:**
+- Finds all evaluation run directories
+- Loads detailed CSV files from all runs
+- Creates time-series plots showing score changes
 
-**File:** `RAG_QUALITY_REPORT_FOR_OKP_MCP.md`
+**Use Case:** Track improvement trends over multiple iterations
 
-**Sections:**
-1. **Executive Summary** - Metric → okp-mcp impact mapping
-2. **Critical Issues** - Performance analysis + version filtering
-3. **Root Cause Analysis** - 4 primary issues:
-   - Over-retrieval (100-250 contexts vs 10-20)
-   - Poor ranking (boilerplate first)
-   - No version filtering
-   - Boilerplate pollution
-4. **Specific Examples** - Anomalous cases
-5. **Action Plan** - 3-4 week phased implementation
-6. **Success Metrics** - Before/after targets
-7. **Appendix** - Detailed metric explanations
+---
 
-**Example Fix from Report:**
-```python
-# Fix over-retrieval
-solr_params = {
-    'rows': 10,  # Instead of unlimited
-    'qf': 'content^5.0 title^2.0',  # Boost content
-    'bq': f'version:{target_version}^10.0',  # Boost target RHEL version
-}
+### `plot_stability.py`
+
+**Generate heatmaps for MCP retrieval suite stability.**
+
+```bash
+python scripts/plot_stability.py evaluation_outputs/mcp_retrieval_suite/
 ```
+
+**Generates:**
+- Average Score Heatmap (green=high, red=low)
+- Stability Heatmap (white=stable, orange=unstable)
+
+**Use Case:** Visualize retrieval consistency across runs
+
+---
+
+## Test Configuration & Conversion
+
+Scripts for managing test configs and formats.
+
+### `convert_functional_cases_to_eval.py`
+
+**Convert okp-mcp functional test cases to evaluation YAML.**
+
+```bash
+python scripts/convert_functional_cases_to_eval.py
+```
+
+**Features:**
+- Reads FunctionalCase definitions from okp-mcp test suite
+- Converts to lightspeed-evaluation YAML format
+- Enables quantitative metrics vs binary pass/fail
+- Multi-run stability analysis
+
+**Use Case:** Leverage existing okp-mcp tests in evaluation framework
+
+---
+
+### `generate_jira_issues_for_failures.py`
+
+**Generate JIRA issue proposals for RAG failures.**
+
+```bash
+python scripts/generate_jira_issues_for_failures.py \
+  evaluation_outputs/okp_mcp_20260407_101520/
+```
+
+**Features:**
+- Categorizes context retrieval failures
+- Identifies boilerplate/irrelevant content
+- Generates JIRA issue templates
+
+**Use Case:** Auto-create tickets for systematic failures
+
+---
+
+### `extract_contexts_for_question.py`
+
+**Extract and display contexts for a specific question.**
+
+```bash
+python scripts/extract_contexts_for_question.py \
+  evaluation_outputs/okp_mcp_20260407_101520/ragas_metrics/evaluation_ragas_metrics_detailed.csv \
+  "How do I install RHEL 9?"
+```
+
+**Features:**
+- Shows retrieved contexts for debugging
+- Displays relevance scores
+- Helps diagnose retrieval issues
+
+**Use Case:** Debug why specific question fails
+
+---
+
+### `compare_error_resolution.py`
+
+**Compare error resolution between two evaluation runs.**
+
+```bash
+python scripts/compare_error_resolution.py \
+  evaluation_outputs/run_before/ \
+  evaluation_outputs/run_after/
+```
+
+**Features:**
+- Tracks which questions had errors
+- Shows whether errors were resolved
+- Progress tracking on fixing failures
+
+**Use Case:** Measure fix effectiveness between iterations
+
+---
+
+## Regression Testing
+
+Scripts for running repeated evaluations and tracking regressions.
+
+### `run_cla_regression.py`
+
+**Run CLA regression testing with heatmap analysis.**
+
+```bash
+# Run 10 evaluations and generate heatmaps
+python scripts/run_cla_regression.py --runs 10
+
+# Use specific config
+python scripts/run_cla_regression.py --config config/system_cla_production.yaml
+```
+
+**Features:**
+- Runs lightspeed-eval N times with CLA test configs
+- Saves each run to timestamped directories (under CLA_REGRESSION)
+- Automatically generates heatmaps showing score changes
+- Tracks score stability and regressions
+
+**Use Case:** Ensure changes don't regress existing functionality
 
 ---
 
 ## Common Workflows
 
-### Workflow 1: Complete Analysis (Recommended)
+### Complete JIRA Ticket Processing
+
+```bash
+# Stage 1: Extract tickets with multi-agent verification
+python scripts/extract_jira_tickets.py
+
+# Stage 2: Discover patterns
+python scripts/discover_ticket_patterns.py
+
+# Review patterns
+cat patterns_report.json | jq '.patterns'
+
+# Stage 3: Fix tickets using patterns
+python scripts/okp_mcp_agent.py fix RSPEED-2482 --max-iterations 10
+```
+
+### Complete Evaluation Analysis
 
 ```bash
 # Run everything
@@ -283,7 +660,7 @@ solr_params = {
 cat eval_output/full_suite_*/RAG_QUALITY_REPORT_FOR_OKP_MCP.md
 ```
 
-### Workflow 2: Single Test Deep Dive
+### Single Test Deep Dive
 
 ```bash
 # Run one test
@@ -308,7 +685,7 @@ cat analysis_output/temporal_only/summary_report.txt
 cat analysis_output/temporal_only/version_distribution_report.txt
 ```
 
-### Workflow 3: Before/After Comparison
+### Before/After Comparison
 
 ```bash
 # Baseline
@@ -332,52 +709,50 @@ python scripts/analyze_metric_correlations.py \
 cat analysis_output/before_after/summary_report.txt
 ```
 
+### Debugging Retrieval Issues
+
+```bash
+# Check if expected docs exist in Solr
+python scripts/okp_solr_checker.py
+
+# Analyze Solr config and ranking
+python scripts/okp_solr_config_analyzer.py
+
+# Extract contexts for specific question
+python scripts/extract_contexts_for_question.py \
+  evaluation_outputs/latest/ragas_metrics/evaluation_ragas_metrics_detailed.csv \
+  "How do I install RHEL 9?"
+
+# Measure retrieval stability
+python scripts/analyze_url_retrieval_stability.py \
+  evaluation_outputs/run1/ \
+  evaluation_outputs/run2/ \
+  evaluation_outputs/run3/
+```
+
 ---
 
-## Understanding Outputs
+## Environment Requirements
 
-### Correlation Analysis
+Most scripts require:
+- Python 3.11+
+- Dependencies from `pyproject.toml`
+- `.env` file with credentials (see main README.md)
 
-**Expected Correlations:**
-- `context_precision ↔ context_relevance`: **+0.7 to +0.9** (both measure context quality)
-- `faithfulness ↔ response_relevancy`: **+0.3 to +0.5** (both measure response quality)
+### Required Environment Variables
 
-**Suspicious Patterns:**
-- Strong negative correlations (<-0.3)
-- Very weak where positive expected
-- Very strong (>0.9) suggests redundancy
+**For JIRA scripts:**
+- JIRA token in secret-tool: `secret-tool store --label="JIRA API Token" application jira`
 
-**Example:**
-```
-CORRELATION SUMMARY (Pearson)
-Strongest Correlations:
-  +0.784  context_precision ↔ context_relevance  ✅ Expected
-  -0.262  context_relevance ↔ faithfulness  ⚠️ Suspicious
-```
+**For LLM-powered scripts:**
+- `ANTHROPIC_VERTEX_PROJECT_ID` - For Claude Agent SDK
+- `GOOGLE_APPLICATION_CREDENTIALS` - For Vertex AI ADC
 
-The negative correlation means: when contexts are relevant, faithfulness is low. This suggests retrieval is finding related docs but LLM isn't using them (possibly because they're buried in boilerplate).
+**For evaluation scripts:**
+- `OPENAI_API_KEY` - For LLM evaluation metrics
+- `API_KEY` - For okp-mcp API access (if testing live API)
 
-### Anomalies
-
-**Anomalies are NOT bugs!** They reveal system behavior:
-
-- **High anomaly rate (>10%)**: Systematic retrieval issues
-- **RAG_BYPASS cluster**: okp-mcp over-retrieval (LLM digs through noise)
-- **PARAMETRIC_KNOWLEDGE**: LLM knows answer without docs (common for basics)
-
-**Action:** Review `anomalies.csv` for patterns, not individual fixes.
-
-### Version Distribution
-
-**Per-conversation accuracy:**
-- Shows which queries get wrong-version docs
-- Helps prioritize okp-mcp fixes
-- Example: DHCP queries consistently get RHEL 9 docs instead of RHEL 10
-
-**Overall accuracy:**
-- System health metric
-- Track over time
-- Expected improvement: 50% → 80% after version boost in Solr
+See main [README.md](../README.md) for complete environment setup.
 
 ---
 
@@ -441,55 +816,21 @@ pip install pandas numpy matplotlib seaborn scipy
 
 ---
 
-## Advanced Usage
+## Contributing
 
-### Filter to Specific Metrics
+When adding new scripts:
+1. Include comprehensive docstring at top of file
+2. Add usage examples in docstring
+3. Update this README.md with script description
+4. Add tests if script has complex logic (see `tests/agents/test_jira_extraction.py`)
+5. Follow code quality standards (black, pylint, pydocstyle)
 
+Run quality checks:
 ```bash
-# Extract only context metrics
-awk -F',' 'NR==1 || $3 ~ /context_precision|context_relevance/' \
-    eval_output/evaluation_*_detailed.csv > filtered.csv
-
-python scripts/analyze_metric_correlations.py \
-    --input filtered.csv \
-    --output analysis_output/context_only/
+make black-format
+make pre-commit
+make test
 ```
-
-### Batch Process Multiple Runs
-
-```bash
-for run_dir in eval_output/full_suite_*/; do
-    run_name=$(basename "$run_dir")
-    python scripts/analyze_metric_correlations.py \
-        --input "${run_dir}"/*/evaluation_*_detailed.csv \
-        --output "analysis_output/${run_name}/"
-done
-```
-
-### Programmatic Access
-
-```python
-from scripts.analyze_metric_correlations import CorrelationAnalyzer
-
-analyzer = CorrelationAnalyzer()
-analyzer.load_data(["eval_output/run1_detailed.csv"])
-df = analyzer.analyze_run("run1")
-
-# Access results
-pearson = analyzer.correlation_results["run1"]["pearson"]
-anomalies = analyzer.anomalies["run1"]
-```
-
----
-
-## Related Tasks
-
-These scripts address RSPEED-2685 investigation:
-
-- **Task #6**: Implement cross-metric correlation analysis ✅
-- **Task #8**: Analyze faithfulness threshold calibration ✅
-- **Task #10**: Design temporal validity tests ✅
-- **Task #12**: Create okp-mcp improvement ticket ✅
 
 ---
 
@@ -501,60 +842,21 @@ All included in `pyproject.toml`:
 - scipy
 - matplotlib
 - seaborn
+- requests
+- pyyaml
+- pydantic
 
 Install with: `uv sync --group dev`
 
 ---
 
-## Contributing
+## Related Documentation
 
-### Add New Anomaly Type
-
-Edit `analyze_metric_correlations.py`:
-```python
-# In detect_anomalies() method
-if your_condition:
-    new_anomaly = pivot[your_filter].copy()
-    new_anomaly["anomaly_type"] = "YOUR_TYPE"
-    anomalies.append(new_anomaly)
-```
-
-### Add Report Section
-
-Edit `generate_okp_mcp_report.py`:
-```python
-report += f"""
-### Your New Section
-{your_analysis}
-"""
-```
+- [../RUN_ALL_EVALS.md](../RUN_ALL_EVALS.md) - Complete workflow guide
+- [../docs/HOW_TO_RUN_TEMPORAL_TESTS.md](../docs/HOW_TO_RUN_TEMPORAL_TESTS.md) - Temporal testing details
+- [../README.md](../README.md) - Main project documentation
+- [../AGENTS.md](../AGENTS.md) - AI agent guidelines
 
 ---
 
-## FAQ
-
-**Q: How long does full suite take?**
-A: 30-60 minutes for ~100 test cases
-
-**Q: Can I run analysis without re-running evals?**
-A: Yes! Scripts work on existing CSVs
-
-**Q: What if some tests fail?**
-A: Partial results are fine, scripts analyze available data
-
-**Q: How to share with okp-mcp team?**
-A: Send `RAG_QUALITY_REPORT_FOR_OKP_MCP.md` + `anomalies.csv`
-
-**Q: How to track improvements?**
-A: Run full suite periodically, use `--compare-runs`
-
----
-
-**See Also:**
-- `../RUN_ALL_EVALS.md` - Complete workflow guide
-- `../docs/HOW_TO_RUN_TEMPORAL_TESTS.md` - Temporal testing details
-- `../RSPEED-2685_COMPLETION_SUMMARY.md` - Investigation background
-
----
-
-*Last updated: 2026-03-23*
+*Last updated: 2026-04-07*

@@ -7,6 +7,8 @@ import traceback
 from pathlib import Path
 from typing import Any, Optional
 
+from dotenv import load_dotenv
+
 from lightspeed_evaluation.core.models.system import SystemConfig
 
 # Import only lightweight modules at top level
@@ -231,6 +233,19 @@ def main() -> int:
     )
 
     eval_args = parser.parse_args()
+
+    # Load .env file if it exists (does NOT override existing env vars)
+    # This enables standalone CLI usage while preserving script-managed credentials
+    env_paths = [
+        Path.cwd() / ".env",  # Current working directory
+        Path(eval_args.system_config).parent / ".env",  # Same dir as config
+    ]
+    for env_path in env_paths:
+        if env_path.exists():
+            # override=False means existing env vars take precedence
+            # This prevents breaking agentic workflows that manage credentials
+            load_dotenv(env_path, override=False)
+            break
 
     summary = run_evaluation(eval_args)
     return 0 if summary is not None else 1

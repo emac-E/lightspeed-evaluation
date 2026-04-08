@@ -20,6 +20,7 @@ dependencies = [
     "seaborn>=0.11.0",
     "numpy>=1.23.0",
     "scipy>=1.10.0",
+    "python-dotenv>=1.0.0",
     # Agent evaluation dependencies (for future integration)
     "httpx>=0.27.2",
     "tqdm>=4.67.1",
@@ -55,6 +56,22 @@ nlp-metrics = [
     "sacrebleu>=2.0.0",      # Required for BLEU score
     "rouge-score>=0.1.2",    # Required for ROUGE score
     "rapidfuzz>=3.0.0",      # Required for semantic_similarity_distance
+]
+
+# Combined extras for convenience - install all optional features together
+# Includes both NLP metrics and local embeddings
+# Install with:
+#   pip install 'lightspeed-evaluation[all-metrics]'
+# or
+#   uv sync --extra all-metrics
+all-metrics = [
+    # NLP metrics
+    "sacrebleu>=2.0.0",
+    "rouge-score>=0.1.2",
+    "rapidfuzz>=3.0.0",
+    # Local embeddings
+    "torch>=2.0.0",
+    "sentence-transformers>=5.1.0",
 ]
 
 [dependency-groups]
