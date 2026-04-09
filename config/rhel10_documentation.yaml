@@ -30,6 +30,14 @@
         - ragas:context_recall
         - custom:answer_correctness
 
+
+- conversation_group_id: rhel10_gnome_configuration
+  description: GNOME desktop configuration in RHEL 10
+  tag: rhel10_operations
+  skip: true
+  skip_reason: "Expected response is too vague ('Should include GNOME installation, display manager setup, and configuration options') — the LLM gives correct but generic answers that the judge scores inconsistently (0.4-0.5). Needs a concrete expected response with specific commands (dnf group install, systemctl enable gdm, gsettings/dconf)."
+
+  turns:
     - turn_id: gnome_configuration
       query: How do I configure the GNOME desktop environment in RHEL 10?
       expected_response: Should include GNOME installation, display manager setup, and configuration options

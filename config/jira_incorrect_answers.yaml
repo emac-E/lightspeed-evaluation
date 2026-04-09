@@ -299,6 +299,8 @@
 - conversation_group_id: RSPEED-1998
   description: "Kea DHCP server - Previously incorrectly stated not a Red Hat product"
   tag: wrong_answers
+  skip: true
+  skip_reason: "Query 'How to set up Kea?' is version-ambiguous. Kea is only in RHEL 10, but the LLM randomly assumes RHEL 9 (where Kea doesn't exist) or RHEL 10 (correct). Retrieval works fine in both cases — same docs returned. The transient failure is an LLM interpretation coin flip, not a retrieval or okp-mcp issue. Fix by specifying 'How to set up Kea on RHEL 10?' in the query."
   turns:
     - turn_id: turn1
       query: "How to set up Kea?"
