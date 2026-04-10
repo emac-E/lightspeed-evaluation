@@ -15,7 +15,7 @@ llm:
   temperature: 0.0                    # Generation temperature
   max_tokens: 16384                   # Maximum tokens in response
   timeout: 300                        # Request timeout in seconds
-  num_retries: 3                      # Retry attempts
+  num_retries: 5                      # Retry attempts
   cache_dir: ".caches/llm_cache"      # Directory with LLM cache
   cache_enabled: true                # Is LLM cache enabled?
 
@@ -49,7 +49,7 @@ api:
   # Authentication via API_KEY environment variable only for MCP server
 
   # Retry configuration for 429 Too Many Requests API errors
-  num_retries: 3  # Number of retry attempts (default 3)
+  num_retries: 5  # Number of retry attempts (default 3)
 
 # Default metrics metadata
 metrics_metadata:
