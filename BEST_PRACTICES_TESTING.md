@@ -193,7 +193,7 @@ done
 vim src/okp_mcp/tools.py
 
 # Build and deploy
-podman build -t localhost/okp-mcp:elle .
+podman build -t localhost/okp-mcp:dev .
 # ... deploy to test environment ...
 
 # Run 3 evals

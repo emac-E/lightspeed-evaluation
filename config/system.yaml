@@ -19,10 +19,12 @@ llm:
   cache_dir: ".caches/llm_cache"      # Directory with LLM cache
   cache_enabled: true                # Is LLM cache enabled?
 
-# Default embedding (for LLM as a judge) configuration:
+# Embedding configuration for Ragas evaluation metrics
+# Used by metrics like context_recall, response_relevancy, context_precision
+# Providers: "huggingface" (local), "openai" (API), "gemini" (API)
 embedding:
-  provider: "huggingface"
-  model: "sentence-transformers/all-MiniLM-L6-v2"  # Fast, lightweight local model
+  provider: "huggingface"  # Local execution (downloads model to ~/.cache/huggingface/ on first use)
+  model: "sentence-transformers/all-MiniLM-L6-v2"  # Fast, lightweight (~90MB download, runs on CPU)
   provider_kwargs: {}
   cache_dir: ".caches/embedding_cache"
   cache_enabled: true

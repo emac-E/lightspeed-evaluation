@@ -54,13 +54,12 @@
 
 
       turn_metrics:
-        #         - ragas:faithfulness
-        #         - ragas:response_relevancy
+        - ragas:faithfulness
+        - ragas:response_relevancy
         - ragas:context_precision_without_reference
         - ragas:context_relevance
-        - custom:url_retrieval_eval
-        #         - ragas:context_recall
-        #         - custom:answer_correctness
+        - ragas:context_recall
+        - custom:answer_correctness
 
 # ==============================================================================
 # RANK 2: TEMPORAL-MIGRATION-001 (33% correct, 15 evaluations)
@@ -95,13 +94,12 @@
 
 
       turn_metrics:
-        #         - ragas:faithfulness
-        #         - ragas:response_relevancy
+        - ragas:faithfulness
+        - ragas:response_relevancy
         - ragas:context_precision_without_reference
         - ragas:context_relevance
-        - custom:url_retrieval_eval
-        #         - ragas:context_recall
-        #         - custom:answer_correctness
+        - ragas:context_recall
+        - custom:answer_correctness
 
 # ==============================================================================
 # RANK 3: TEMPORAL-MIGRATION-002 (38% correct, 16 evaluations)
@@ -133,13 +131,12 @@
 
 
       turn_metrics:
-        #         - ragas:faithfulness
-        #         - ragas:response_relevancy
+        - ragas:faithfulness
+        - ragas:response_relevancy
         - ragas:context_precision_without_reference
         - ragas:context_relevance
-        - custom:url_retrieval_eval
-        #         - ragas:context_recall
-        #         - custom:answer_correctness
+        - ragas:context_recall
+        - custom:answer_correctness
 
 # ==============================================================================
 # RANK 4: RSPEED-1998 (49% correct, 29 evaluations)
@@ -171,13 +168,12 @@
 
 
       turn_metrics:
-        #         - ragas:faithfulness
-        #         - ragas:response_relevancy
+        #- ragas:faithfulness
+        #- ragas:response_relevancy
         - ragas:context_precision_without_reference
         - ragas:context_relevance
-        - custom:url_retrieval_eval
-        #         - ragas:context_recall
-        #         - custom:answer_correctness
+        - ragas:context_recall
+        - custom:answer_correctness
 
 # ==============================================================================
 # RANK 5: RSPEED-1930 (51% correct, 29 evaluations)
@@ -211,13 +207,12 @@
 
 
       turn_metrics:
-        #         - ragas:faithfulness
-        #         - ragas:response_relevancy
+        - ragas:faithfulness
+        - ragas:response_relevancy
         - ragas:context_precision_without_reference
         - ragas:context_relevance
-        - custom:url_retrieval_eval
-        #         - ragas:context_recall
-        #         - custom:answer_correctness
+        - ragas:context_recall
+        - custom:answer_correctness
 
 # ==============================================================================
 # RANK 6: TEMPORAL-IMPLICIT-001 (52% correct, 15 evaluations)
@@ -247,13 +242,12 @@
 
 
       turn_metrics:
-        #         - ragas:faithfulness
-        #         - ragas:response_relevancy
+        - ragas:faithfulness
+        - ragas:response_relevancy
         - ragas:context_precision_without_reference
         - ragas:context_relevance
-        - custom:url_retrieval_eval
-        #         - ragas:context_recall
-        #         - custom:answer_correctness
+        - ragas:context_recall
+        - custom:answer_correctness
 
 # ==============================================================================
 # RANK 7: TEMPORAL-REMOVED-001 (53% correct, 15 evaluations)
@@ -286,13 +280,12 @@
 
 
       turn_metrics:
-        #         - ragas:faithfulness
-        #         - ragas:response_relevancy
+        - ragas:faithfulness
+        - ragas:response_relevancy
         - ragas:context_precision_without_reference
         - ragas:context_relevance
-        - custom:url_retrieval_eval
-        #         - ragas:context_recall
-        #         - custom:answer_correctness
+        - ragas:context_recall
+        - custom:answer_correctness
 
 # ==============================================================================
 # RANK 8: TEMPORAL-ADDED-002 (54% correct, 17 evaluations)
@@ -323,13 +316,12 @@
 
 
       turn_metrics:
-        #         - ragas:faithfulness
-        #         - ragas:response_relevancy
+        - ragas:faithfulness
+        - ragas:response_relevancy
         - ragas:context_precision_without_reference
         - ragas:context_relevance
-        - custom:url_retrieval_eval
-        #         - ragas:context_recall
-        #         - custom:answer_correctness
+        - ragas:context_recall
+        - custom:answer_correctness
 
 # ==============================================================================
 # RANK 9: RSPEED-2294 (55% correct, 28 evaluations)
@@ -362,13 +354,12 @@
 
 
       turn_metrics:
-        #         - ragas:faithfulness
-        #         - ragas:response_relevancy
+        - ragas:faithfulness
+        - ragas:response_relevancy
         - ragas:context_precision_without_reference
         - ragas:context_relevance
-        - custom:url_retrieval_eval
-        #         - ragas:context_recall
-        #         - custom:answer_correctness
+        - ragas:context_recall
+        - custom:answer_correctness
 
 # ==============================================================================
 # RANK 10: RSPEED-1812 (56% correct, 29 evaluations)
@@ -401,13 +392,12 @@
 
 
       turn_metrics:
-        #         - ragas:faithfulness
-        #         - ragas:response_relevancy
+        - ragas:faithfulness
+        - ragas:response_relevancy
         - ragas:context_precision_without_reference
         - ragas:context_relevance
-        - custom:url_retrieval_eval
-        #         - ragas:context_recall
-        #         - custom:answer_correctness
+        - ragas:context_recall
+        - custom:answer_correctness
 
 # ==============================================================================
 # Total: 10 test cases (chronically failing across 15+ runs)

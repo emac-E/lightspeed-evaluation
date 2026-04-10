@@ -296,6 +296,111 @@ Now that you're up and running:
    - Answer-first workflow for customer bugs
    - See [Answer-First Workflow](ANSWER_FIRST_WORKFLOW.md)
 
+## 🤖 Demo: OKP-MCP Agentic Workflows
+
+This fork includes two proof-of-concept agentic workflows for automated JIRA ticket processing and fixing. Choose based on your needs:
+
+### Demo 1: Bootstrap Workflow (Simpler POC)
+
+**What it does:**
+- Extracts JIRA tickets with multi-agent verification (Linux Expert + Solr Expert)
+- Discovers common patterns across tickets
+- Creates knowledge artifacts for downstream automation
+- Logs successful Solr searches for retrieval optimization
+
+**When to use:** Understanding the ticket extraction and pattern discovery process, or preparing data for manual review.
+
+**Run it:**
+```bash
+# Extract 5 tickets (default)
+bash scripts/test_bootstrap_workflow.sh
+
+# Extract more tickets for better pattern discovery
+bash scripts/test_bootstrap_workflow.sh --limit 10
+```
+
+**What you get:**
+- `extracted_tickets.yaml` - Verified query/answer pairs
+- `tickets_with_patterns.yaml` - Tickets tagged with pattern IDs
+- `patterns_report.json` - Pattern analysis and grouping
+- `.claude/search_intelligence/` - Database of successful Solr searches
+
+**Time:** ~2-5 minutes for 5 tickets
+
+**Next step:** Review patterns and manually fix tickets, or proceed to Demo 2 for automated fixing.
+
+---
+
+### Demo 2: Pattern-Based Fixing Workflow (Advanced POC)
+
+**What it does:**
+- Everything from Demo 1 (bootstrap + pattern discovery)
+- PLUS: Automated pattern-based batch fixing
+- Fixes entire patterns (e.g., 15 similar tickets) as one unit
+- Creates git branches per pattern with stacked commits
+- 10-15x more efficient than single-ticket fixing
+
+**When to use:** Automating fixes for clustered tickets with common root causes.
+
+**Run it:**
+```bash
+# Full workflow: extract → discover → analyze patterns
+bash scripts/test_pattern_workflow.sh --limit 10
+
+# Then fix a specific pattern
+python scripts/okp_mcp_pattern_agent.py list-patterns
+python scripts/okp_mcp_pattern_agent.py fix-pattern EOL_CONTAINER_COMPATIBILITY \
+  --max-iterations 10 \
+  --threshold 0.8  # 80% of tickets must pass
+```
+
+**What you get:**
+- All artifacts from Demo 1
+- Pattern-specific git branches (e.g., `fix/pattern-eol-container-compat`)
+- Batch validation across all tickets in the pattern
+- Pass rate metrics showing pattern coverage
+
+**Time:** ~5-10 minutes for bootstrap + pattern analysis, then ~10-30 minutes per pattern fix (depending on complexity)
+
+**Key Difference:** Fixes 15 tickets as 1 pattern instead of 15 separate fix attempts. If the pattern fix works, all tickets pass together.
+
+---
+
+### Understanding the Efficiency Gain
+
+**Traditional approach:** 15 tickets × 5 iterations each = 75 fix attempts
+
+**Pattern-based approach:** 1 pattern × 5 iterations = 5 fix attempts (validates against all 15 tickets each time)
+
+**Efficiency:** 15x fewer iterations, plus fixes are consistent across similar tickets.
+
+---
+
+### Demo Workflow Comparison
+
+| Feature | Bootstrap Workflow | Pattern-Based Workflow |
+|---------|-------------------|------------------------|
+| **Script** | `test_bootstrap_workflow.sh` | `test_pattern_workflow.sh` |
+| **Ticket Extraction** | ✅ Multi-agent verification | ✅ Multi-agent verification |
+| **Pattern Discovery** | ✅ Clustering & analysis | ✅ Clustering & analysis |
+| **Automated Fixing** | ❌ Manual review | ✅ Batch pattern fixing |
+| **Git Branching** | ❌ Not applicable | ✅ Per-pattern branches |
+| **Use Case** | Data prep & exploration | End-to-end automation |
+| **Time** | ~2-5 min | ~20-40 min |
+| **Best For** | Learning the system | Production workflows |
+
+---
+
+### Requirements for Demos
+
+Both demos require:
+- JIRA MCP server configured (see `mcp-servers/atlassian/`)
+- Linux MCP server configured (see MCP setup docs)
+- Environment variables: `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`
+- Access to JIRA project (default: `RSPEED`)
+
+See [scripts/README.md](../scripts/README.md) for detailed script documentation.
+
 ## 🆘 Getting Help
 
 - **Documentation**: Browse the `docs/` directory

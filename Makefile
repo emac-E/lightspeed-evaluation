@@ -66,7 +66,7 @@ e2e_tests_lcore: e2e_tests
 	# May be changed in the future to different test suite
 	echo "LCORE e2e tests done"
 
-pre-commit: black-check docstyle pyright pylint ruff check-types bandit
+pre-commit: black-check docstyle pyright pylint ruff check-types bandit detect-secrets
 	@echo "All checks successful"
 
 help: ## Show this help screen
@@ -93,3 +93,40 @@ ruff:
 
 bandit: ## Security scanning with Bandit
 	uv run bandit -r src/lightspeed_evaluation -ll
+
+detect-secrets: ## Scan for secrets/credentials with detect-secrets
+	@if [ ! -f .secrets.baseline ]; then \
+		echo "Creating initial secrets baseline..."; \
+		uv run detect-secrets scan \
+			--exclude-files 'okp_test_data/.*' \
+			--exclude-files '\.claude/search_intelligence/.*' \
+			--exclude-files '\.venv/.*' \
+			--exclude-files '.*\.lock$$' \
+			--baseline .secrets.baseline; \
+		echo ""; \
+		echo "⚠️  Baseline created. Run 'make detect-secrets-audit' to review flagged secrets."; \
+	fi
+	@echo "Scanning for new secrets..."
+	@uv run detect-secrets scan \
+		--exclude-files 'okp_test_data/.*' \
+		--exclude-files '\.claude/search_intelligence/.*' \
+		--exclude-files '\.venv/.*' \
+		--exclude-files '.*\.lock$$' \
+		--baseline .secrets.baseline
+
+detect-secrets-audit: ## Interactively audit flagged secrets
+	@if [ ! -f .secrets.baseline ]; then \
+		echo "❌ No baseline found. Run 'make detect-secrets' first."; \
+		exit 1; \
+	fi
+	uv run detect-secrets audit .secrets.baseline
+
+detect-secrets-update: ## Update secrets baseline (run after reviewing false positives)
+	@uv run detect-secrets scan \
+		--exclude-files 'okp_test_data/.*' \
+		--exclude-files '\.claude/search_intelligence/.*' \
+		--exclude-files '\.venv/.*' \
+		--exclude-files '.*\.lock$$' \
+		--baseline .secrets.baseline \
+		--update
+	@echo "✅ Baseline updated"

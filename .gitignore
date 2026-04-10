@@ -209,3 +209,11 @@ mcp_retrieval_output/
 okp_test_data/
 docs_draft/
 
+# Claude Code cache and project files
+.claude/
+
+# Demo workflow temporary working files (test_pattern_workflow.sh copies these from /tmp/)
+# Note: Versioned pattern files in config/bootstrap_YYYYMMDD/ are kept
+/patterns_report.json
+/config/tickets_with_patterns.yaml
+

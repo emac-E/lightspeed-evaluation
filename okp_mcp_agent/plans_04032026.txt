@@ -1,0 +1,711 @@
+ Design Plans for This Afternoon
+
+  Plan A: Automated Branch + Gating Tests Workflow
+
+  Goal: When a fix passes, automatically create a feat branch, run regression tests, and prepare
+   a PR-ready commit with full context.
+
+  Workflow:
+  1. Fix passes (composite score >= 0.80)
+     ↓
+  2. Create feat/fix-RSPEED-XXXX branch in worktree
+     ↓
+  3. Run gating tests (CLA + negative)
+     ├─ CLA_tests: Ensure critical tests still pass
+     └─ negative_tests: Ensure we don't break edge cases
+     ↓
+  4. If gating passes:
+     ├─ Commit with enhanced message:
+     │  ├─ What was fixed (ticket ID + description)
+     │  ├─ Agent reasoning (why this change)
+     │  ├─ Code changes applied
+     │  ├─ Primary ticket scores (before/after)
+     │  └─ CLA regression scores (all passing)
+     ├─ Save branch info for manual PR
+     └─ Clean success exit
+     ↓
+  5. If gating fails:
+     ├─ Report which tests failed
+     ├─ Revert change
+     └─ Try alternative approach
+
+  Key Components to Build:
+
+  1. Gating Test Runner (run_gating_tests())
+
+  def run_gating_tests(self, ticket_id: str) -> Dict:
+      """Run CLA + negative tests to check for regressions.
+   
+      Returns:
+          {
+              'cla_passed': bool,
+              'cla_scores': {...},
+              'negative_passed': bool,
+              'negative_scores': {...},
+              'all_passed': bool
+          }
+      """
+
+  2. Branch Manager (create_feature_branch())
+
+  def create_feature_branch(self, ticket_id: str) -> str:
+      """Create feat/fix-RSPEED-XXXX branch in worktree.
+   
+      Returns:
+          branch_name: str
+      """
+
+  3. Enhanced Commit Message Generator (generate_pr_commit_message())
+
+  def generate_pr_commit_message(
+      self,
+      ticket_id: str,
+      suggestion: Suggestion,
+      primary_scores: Dict,
+      gating_scores: Dict
+  ) -> str:
+      """Generate comprehensive commit message for PR.
+   
+      Format:
+          fix(search): Improve VM management doc retrieval for RSPEED-2480
+   
+          Problem:
+          - URL F1: 0.00 (expected docs not retrieved)
+          - Answer Correctness: 0.30 (incorrect answer)
+   
+          Root Cause:
+          <agent reasoning>
+   
+          Solution:
+          <code changes>
+   
+          Results:
+          Primary Ticket (RSPEED-2480):
+          - URL F1: 0.00 → 0.85 (+0.85)
+          - Answer Correctness: 0.30 → 0.92 (+0.62)
+          - Composite Score: 0.35 → 0.89 (+0.54)
+   
+          Regression Testing:
+          CLA Tests: ✅ All passing (15/15)
+          Negative Tests: ✅ All passing (8/8)
+   
+          Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
+      """
+
+  ---
+  Plan B: Enhanced Reporting for Manual PR Creation
+
+  Goal: Generate all the info you need to manually create PRs with full context.
+
+  Output:
+  - Markdown file with PR description template
+  - Summary of changes per ticket
+  - Before/after metrics
+  - Gating test results
+  - Ready to copy-paste into GitHub PR
+
+  ---
+  Plan C: Multi-Ticket Branch Strategy
+
+  Goal: Handle multiple fixes in one session.
+
+  Options:
+  1. One branch per ticket (cleaner, easier to review)
+    - feat/fix-RSPEED-2480
+    - feat/fix-RSPEED-2481
+    - Separate PRs for each
+  2. Combined branch (faster if fixes are related)
+    - feat/fix-vm-retrieval-batch
+    - One PR with multiple tickets
+    - Easier to merge, harder to revert individual fixes
+
+  ---
+  Plan D: Pattern Recognition & Batch Fixing Strategy
+
+  Goal: Maximize agent pattern recognition by grouping similar failures and fixing additively.
+
+  Problem with Sequential Fixing:
+  - Going ticket-by-ticket misses patterns across similar bugs
+  - Each fix tested in isolation - expensive, slow
+  - Doesn't leverage agent's ability to recognize failure types
+  - Risk of conflicting fixes if tickets share root causes
+
+  Pattern-Based Grouping Approach:
+
+  1. Failure Analysis Phase
+     Run diagnostics on ALL open tickets first:
+     ↓
+     Classify failures by type:
+     - Retrieval failures (URL F1 < 0.7)
+       → Group by missing doc patterns
+       → Example: All "lifecycle/EOL" tickets together
+     - Answer quality failures (MRR low, retrieval OK)
+       → Group by LLM issues vs content issues
+     - Mixed failures (both retrieval + answer)
+       → Group by topic/intent (e.g., all networking tickets)
+     ↓
+     Identify root cause patterns:
+     - Same missing document across 5 tickets → boost rule fix
+     - Same query type failing → intent detection fix
+     - Same terminology confusion → synonym fix
+
+  2. Batch Fix Strategy (Additive Merging)
+
+     Instead of: Fix ticket A → Test → Fix ticket B → Test
+
+     Do: Fix tickets [A, B, C] → Merge all fixes → Test once
+
+     Workflow:
+     a) Agent creates fix branch for each ticket:
+        - feat/fix-RSPEED-2480 (boost "lifecycle" queries)
+        - feat/fix-RSPEED-2481 (boost "EOL" intent)
+        - feat/fix-RSPEED-2482 (add "end of life" synonyms)
+
+     b) Merge all fixes into integration branch:
+        - feat/batch-eol-improvements
+        - Contains all 3 fixes combined
+
+     c) Run regression ONCE on combined changes:
+        - Level 1: RHEL 10 + RHEL-specific test sets
+        - Level 2: CLA gating tests
+
+     d) If regression passes:
+        - Create single PR with all fixes
+        - Or: Separate PRs but mention they're part of a batch
+
+     e) If regression fails:
+        - Binary search to find problematic fix
+        - Remove it, keep the good ones
+
+  3. Two-Level Regression Strategy
+
+     Level 1: Development Test Sets (Fast feedback)
+     - RHEL 10 questions (new version coverage)
+     - RHEL-specific questions (domain accuracy)
+     - Purpose: Catch obvious breaks quickly
+     - Run on: Every batch of fixes
+     - Threshold: Must maintain or improve scores
+
+     Level 2: CLA Gating Tests (Quality gate)
+     - Full CLA test suite (critical user scenarios)
+     - Negative tests (edge cases)
+     - Purpose: Production-ready validation
+     - Run on: Before PR creation only
+     - Threshold: Zero regressions allowed
+
+     Efficiency:
+     - Don't run Level 2 until Level 1 passes
+     - Save expensive gating tests for final validation
+     - Iterate faster with smaller test sets
+
+  4. Stability Analysis (Multi-Run Validation)
+
+     Problem: Single-run scores can be misleading
+     - LLM non-determinism causes score variance
+     - One good run doesn't mean stable improvement
+     - Need confidence that fix is robust
+
+     Solution: Multi-run regression (N=3 or N=5)
+
+     Before marking fix as "stable":
+     - Run regression 3 times
+     - Calculate mean ± std dev for each metric
+     - Check for wavering:
+       ✅ Stable:   Mean=0.85, StdDev=0.02 (tight distribution)
+       ⚠️  Unstable: Mean=0.85, StdDev=0.15 (wide variance)
+
+     Decision criteria:
+     - If StdDev > 0.10: Fix is unstable, investigate why
+     - If StdDev < 0.05: Fix is stable, proceed
+     - Compare variance before/after fix:
+       → Fix should reduce variance, not increase it
+
+     When to run:
+     - On final integration branch before PR
+     - Not on every iteration (too expensive)
+     - Use for critical fixes or controversial changes
+
+  5. Pattern Recognition Implementation
+
+     Add ticket clustering step before fix loop:
+
+     def cluster_tickets_by_failure_pattern(tickets: List[str]) -> Dict[str, List[str]]:
+         """Group tickets by failure pattern for batch fixing.
+
+         Returns:
+             {
+                 'retrieval_lifecycle': ['RSPEED-2480', 'RSPEED-2481'],
+                 'retrieval_networking': ['RSPEED-2113', 'RSPEED-2123'],
+                 'answer_quality_eol': ['RSPEED-2482', 'RSPEED-2745'],
+                 ...
+             }
+         """
+
+     For each cluster:
+     - Agent identifies common pattern
+     - Proposes unified fix approach
+     - Creates fixes for all tickets in cluster
+     - Tests additively (merge all, test once)
+
+     Efficiency gains:
+     - 10 tickets, 3 patterns → 3 test runs instead of 10
+     - Agent learns pattern once, applies to all
+     - Better root cause fixes vs. band-aids
+
+  6. Integration with Existing Workflow
+
+     Modified fix_ticket_with_iteration():
+
+     # BEFORE (sequential):
+     for ticket in tickets:
+         fix_ticket(ticket)
+         test_ticket(ticket)
+         if passed: commit_ticket(ticket)
+
+     # AFTER (batch + additive):
+     clusters = cluster_tickets_by_failure_pattern(tickets)
+
+     for pattern, ticket_group in clusters.items():
+         # Fix all tickets in cluster
+         fix_branches = []
+         for ticket in ticket_group:
+             branch = fix_ticket(ticket)
+             fix_branches.append(branch)
+
+         # Merge all fixes additively
+         integration_branch = merge_fixes(fix_branches)
+
+         # Test ONCE on combined changes
+         # Level 1: Fast regression
+         if not test_rhel_sets(integration_branch):
+             # Binary search to find bad fix
+             bad_fix = bisect_failures(fix_branches)
+             remove_fix(bad_fix)
+             continue
+
+         # Level 2: Gating tests (only if Level 1 passed)
+         if not test_cla_gating(integration_branch):
+             bad_fix = bisect_failures(fix_branches)
+             remove_fix(bad_fix)
+             continue
+
+         # Stability check (multi-run)
+         stability = run_stability_check(integration_branch, n_runs=3)
+         if stability['std_dev'] > 0.10:
+             print(f"⚠️  Unstable fix: {stability}")
+             # Investigate or mark for manual review
+
+         # All checks passed - ready for PR
+         create_pr(integration_branch, ticket_group)
+
+  Key Benefits:
+  - Fewer test runs (3 patterns vs 10 tickets)
+  - Better fixes (root cause vs symptoms)
+  - Faster iteration (batch testing)
+  - Confidence in stability (multi-run validation)
+  - Scales better (100 tickets → ~10-20 patterns)
+
+  ---
+  Plan E: Human Escalation Reporting Format
+
+  Goal: When agent cannot solve a ticket, provide comprehensive report for human review.
+
+  Escalation Triggers:
+  - Max iterations reached without improvement (e.g., 5 iterations, no progress)
+  - Plateau detected (no improvement for N iterations)
+  - Regression introduced that can't be fixed
+  - Agent confidence too low (<30%)
+  - Conflicting fix requirements (can't satisfy all constraints)
+
+  Escalation Report Format:
+
+  ===================================================================
+  🚨 ESCALATION REPORT: RSPEED-XXXX
+  ===================================================================
+
+  Ticket: RSPEED-2482
+  Title: Incorrect answer: Can I run a RHEL 6 container on RHEL 9?
+  Status: REQUIRES HUMAN INTERVENTION
+  Escalation Reason: Max iterations reached without reaching target score
+  Attempted: 5 iterations
+  Time Spent: 45 minutes
+  Final Score: 0.62 (Target: 0.80)
+
+  -------------------------------------------------------------------
+  PROBLEM SUMMARY
+  -------------------------------------------------------------------
+
+  Initial State:
+  - URL F1: 0.00 (missing critical documentation)
+  - MRR: 0.15 (wrong docs ranking first)
+  - Answer Correctness: 0.30 (incorrect answer)
+  - Composite Score: 0.35
+
+  Expected Documents Not Retrieved:
+  - access.redhat.com/articles/rhel-container-compatibility
+  - access.redhat.com/support/policy/rhel-app-streams-life-cycle
+
+  Current State (After 5 iterations):
+  - URL F1: 0.50 (partial improvement)
+  - MRR: 0.45 (some improvement)
+  - Answer Correctness: 0.65 (better but not sufficient)
+  - Composite Score: 0.62
+
+  Gap Analysis:
+  ✓ Retrieved 1 of 2 expected docs (50% success)
+  ✗ Still missing: rhel-container-compatibility article
+  ✗ Answer mentions RHEL 6 support but lacks clarity on unsupported status
+  ~ Improvement trajectory: 0.35 → 0.62 (+0.27) but plateaued
+
+  -------------------------------------------------------------------
+  ITERATION HISTORY
+  -------------------------------------------------------------------
+
+  Iteration 1/5 - Model: medium (claude-sonnet-4-5)
+  ─────────────────────────────────────────────────────
+  Strategy: Boost "container" and "RHEL 6" query terms
+
+  Agent Reasoning:
+  The missing doc (container-compatibility) likely doesn't rank high because
+  the query terms "container" and "RHEL 6" aren't weighted enough. The doc
+  contains the exact answer but Solr isn't prioritizing it.
+
+  Changes Applied:
+  File: src/okp_mcp/portal.py
+  - Added intent rule for "container compatibility" queries
+  - Boosted "container" field by ^3
+  - Added "RHEL 6" as high-priority phrase
+
+  Code Diff:
+  ```python
+  # Line 245 - portal.py
+  + if "container" in query_lower and any(v in query_lower for v in ["rhel 6", "rhel6"]):
+  +     boosts["content_title"] = "^5"
+  +     boosts["content"] = "^3"
+  ```
+
+  Results:
+  - URL F1: 0.00 → 0.00 (no improvement)
+  - MRR: 0.15 → 0.20 (+0.05)
+  - Answer Correctness: 0.30 → 0.35 (+0.05)
+  - Composite: 0.35 → 0.38 (+0.03)
+
+  Analysis: Minimal improvement. Boosting alone insufficient.
+
+  ─────────────────────────────────────────────────────
+  Iteration 2/5 - Model: medium (claude-sonnet-4-5)
+  ─────────────────────────────────────────────────────
+  Strategy: Expand query with synonyms and related terms
+
+  Agent Reasoning:
+  The doc might use different terminology. Try expanding query with:
+  "compatibility matrix", "supported versions", "container support"
+
+  Changes Applied:
+  File: src/okp_mcp/solr.py
+  - Modified edismax query to include synonym expansion
+  - Added "compatibility" as synonym for "support"
+
+  Code Diff:
+  ```python
+  # Line 156 - solr.py
+  + synonym_expansion = {
+  +     "container": ["containerization", "podman", "docker"],
+  +     "support": ["compatibility", "compatible"]
+  + }
+  ```
+
+  Results:
+  - URL F1: 0.00 → 0.50 (+0.50) ✓ Found 1 of 2 docs!
+  - MRR: 0.20 → 0.35 (+0.15)
+  - Answer Correctness: 0.35 → 0.55 (+0.20)
+  - Composite: 0.38 → 0.55 (+0.17)
+
+  Analysis: Significant improvement! Synonym expansion helped retrieve
+  rhel-app-streams doc. Still missing container-compatibility article.
+
+  ─────────────────────────────────────────────────────
+  Iteration 3/5 - Model: medium (claude-sonnet-4-5)
+  ─────────────────────────────────────────────────────
+  Strategy: Relax minimum match requirement for container queries
+
+  Agent Reasoning:
+  Container compatibility article might be term-sparse (doesn't contain all
+  query words). Current mm=75% might be filtering it out. Try mm=60%.
+
+  Changes Applied:
+  File: src/okp_mcp/solr.py
+  - Reduced minimum match from 75% to 60% for container queries
+
+  Code Diff:
+  ```python
+  # Line 171 - solr.py
+  - "mm": "2<-1 5<75% 10<50%",
+  + "mm": "2<-1 5<60% 10<50%",
+  ```
+
+  Results:
+  - URL F1: 0.50 → 0.50 (no change)
+  - MRR: 0.35 → 0.40 (+0.05)
+  - Answer Correctness: 0.55 → 0.62 (+0.07)
+  - Composite: 0.55 → 0.60 (+0.05)
+
+  Analysis: Small improvement in answer quality, but still can't retrieve
+  the missing article. Starting to plateau.
+
+  ─────────────────────────────────────────────────────
+  Iteration 4/5 - Model: complex (claude-opus-4-5) [ESCALATED]
+  ─────────────────────────────────────────────────────
+  Strategy: Check if document exists in Solr index
+
+  Agent Reasoning:
+  After 3 iterations of query tuning with no URL retrieval, suspect the
+  document might not be indexed. Need to verify it exists.
+
+  Investigation:
+  Ran: python scripts/okp_solr_checker.py --url "rhel-container-compatibility"
+  Result: ✗ Document NOT FOUND in Solr index
+
+  Root Cause Identified:
+  The expected document (access.redhat.com/articles/rhel-container-compatibility)
+  is not in the Solr index. This is a DATA GAP, not a retrieval problem.
+
+  Changes Applied: None (can't fix with query tuning)
+
+  Results:
+  - No code changes made
+  - Composite: 0.60 (unchanged)
+
+  Analysis: Problem is upstream (missing indexed content), not fixable by
+  agent. Current score of 0.62 is likely ceiling without the missing doc.
+
+  ─────────────────────────────────────────────────────
+  Iteration 5/5 - Model: complex (claude-opus-4-5)
+  ─────────────────────────────────────────────────────
+  Strategy: Optimize answer quality with available docs
+
+  Agent Reasoning:
+  Can't retrieve missing doc (data gap). But can improve answer quality by
+  ensuring LLM extracts the correct "UNSUPPORTED" status from the docs we
+  DO retrieve.
+
+  Changes Applied:
+  File: src/okp_mcp/portal.py
+  - Enhanced snippet extraction for compatibility queries
+  - Added context around "supported" vs "unsupported" mentions
+
+  Code Diff:
+  ```python
+  # Line 178 - portal.py
+  + if "compatibility" in query_lower or "supported" in query_lower:
+  +     # Ensure we extract negative statements (unsupported, not compatible)
+  +     params["hl.fragsize"] = "800"  # Larger snippets for context
+  ```
+
+  Results:
+  - URL F1: 0.50 → 0.50 (data gap, can't improve)
+  - MRR: 0.40 → 0.45 (+0.05)
+  - Answer Correctness: 0.62 → 0.65 (+0.03)
+  - Composite: 0.60 → 0.62 (+0.02)
+
+  Analysis: Minor improvement. Plateaued - cannot reach 0.80 without missing doc.
+
+  -------------------------------------------------------------------
+  AGENT ASSESSMENT
+  -------------------------------------------------------------------
+
+  Root Cause:
+  DATA GAP - Critical document not indexed in Solr
+
+  Why Agent Cannot Solve:
+  1. Missing document is outside agent's control (content ingestion issue)
+  2. Query tuning cannot retrieve what doesn't exist
+  3. Current retrieval is optimal given available data
+  4. Score ceiling is ~0.65 without the missing doc
+
+  What Agent Did Well:
+  ✓ Systematic iteration through retrieval strategies
+  ✓ Correctly diagnosed data gap (not a code issue)
+  ✓ Improved from 0.35 to 0.62 with available data (+77%)
+  ✓ Used escalation to Opus when stuck
+  ✓ Stopped before making unnecessary changes
+
+  What Agent Struggled With:
+  ✗ Took 4 iterations to identify root cause (data gap)
+  ✗ Could have checked index earlier
+  ✗ Made changes in iterations 1-3 that didn't help core issue
+
+  Confidence: Low (35%)
+  Reason: Cannot solve without upstream data fix
+
+  -------------------------------------------------------------------
+  RECOMMENDED HUMAN ACTIONS
+  -------------------------------------------------------------------
+
+  Immediate Actions:
+  1. File RHOKP ticket for missing document:
+     - URL: access.redhat.com/articles/rhel-container-compatibility
+     - Priority: High (affects container support queries)
+     - Impact: Blocking RSPEED-2482 fix
+
+  2. Verify if document exists:
+     - Check if article was unpublished or moved
+     - Check if URL pattern changed
+     - Check Solr ingestion logs for errors
+
+  3. Decide on ticket disposition:
+     - Option A: Block until data gap fixed
+     - Option B: Accept 0.62 score as "best effort"
+     - Option C: Find alternative document with same content
+
+  Workarounds (If urgent):
+  - Update expected_urls in test to remove missing doc
+  - Lower threshold to 0.60 for this ticket only
+  - Add fallback content to system prompt
+
+  Knowledge Base Update:
+  - Document this pattern: "Container compatibility queries need X article"
+  - Add to agent's known data gaps list
+  - Create runbook for checking index before iterating
+
+  Files for Review:
+  - Agent changes: /tmp/agent-iteration-logs/RSPEED-2482/
+  - Solr check results: /tmp/solr-checks/RSPEED-2482-missing-docs.json
+  - Full iteration history: /tmp/escalations/RSPEED-2482-report.md
+
+  -------------------------------------------------------------------
+  ARTIFACTS ATTACHED
+  -------------------------------------------------------------------
+
+  1. iteration_log.json
+     - Complete history of all 5 iterations
+     - Scores, reasoning, code changes per iteration
+
+  2. solr_analysis.json
+     - Solr explain output for current query
+     - Document ranking and scores
+     - Missing document confirmation
+
+  3. code_changes.diff
+     - Cumulative diff of all changes made
+     - Each change annotated with iteration number
+
+  4. test_results/
+     - Before/after evaluation CSVs
+     - Metric breakdowns per iteration
+     - Regression test results
+
+  ===================================================================
+  END ESCALATION REPORT
+  ===================================================================
+
+  Implementation:
+
+  def generate_escalation_report(
+      self,
+      ticket_id: str,
+      iterations: List[IterationResult],
+      final_score: float,
+      escalation_reason: str
+  ) -> str:
+      """Generate comprehensive escalation report for human review.
+
+      Args:
+          ticket_id: Ticket being escalated
+          iterations: All iteration results with reasoning, changes, scores
+          final_score: Best score achieved
+          escalation_reason: Why agent gave up
+
+      Returns:
+          Markdown-formatted report with all context
+      """
+
+      report = []
+
+      # Header
+      report.append("=" * 67)
+      report.append(f"🚨 ESCALATION REPORT: {ticket_id}")
+      report.append("=" * 67)
+
+      # Summary
+      report.append(f"\nStatus: REQUIRES HUMAN INTERVENTION")
+      report.append(f"Escalation Reason: {escalation_reason}")
+      report.append(f"Attempted: {len(iterations)} iterations")
+      report.append(f"Final Score: {final_score:.2f}")
+
+      # Iteration history
+      for i, iteration in enumerate(iterations, 1):
+          report.append(f"\nIteration {i}/{len(iterations)} - Model: {iteration.model}")
+          report.append("-" * 53)
+          report.append(f"Strategy: {iteration.strategy}")
+          report.append(f"\nAgent Reasoning:\n{iteration.reasoning}")
+          report.append(f"\nChanges Applied:\n{iteration.changes}")
+          report.append(f"\nResults:")
+          report.append(f"  Composite: {iteration.score_before:.2f} → {iteration.score_after:.2f}")
+          report.append(f"\nAnalysis: {iteration.analysis}")
+
+      # Agent assessment
+      report.append("\nAGENT ASSESSMENT")
+      report.append("-" * 67)
+      report.append(f"Root Cause: {self.diagnose_root_cause(iterations)}")
+      report.append(f"Why Agent Cannot Solve: {self.explain_limitations(iterations)}")
+
+      # Recommendations
+      report.append("\nRECOMMENDED HUMAN ACTIONS")
+      report.append("-" * 67)
+      report.append(self.generate_recommendations(ticket_id, iterations))
+
+      return "\n".join(report)
+
+  When to Generate:
+  - After max iterations without reaching threshold
+  - When plateau detected (3 iterations, no improvement)
+  - When agent detects unsolvable issue (data gap, conflicting requirements)
+  - When regression introduced that cannot be fixed
+
+  Where to Save:
+  - escalations/{ticket_id}-{timestamp}.md
+  - Send notification to Slack/email
+  - Update ticket with "escalated" status
+  - Attach artifacts (logs, diffs, test results)
+
+  ---
+  Immediate Next Steps (This Afternoon)
+
+  Priority 1: Gating Test Integration
+
+  Add gating tests before declaring success:
+  # In fix_ticket_with_iteration(), after composite_score >= 0.80:
+
+  print("\n🚦 Running gating tests (CLA + negative)...")
+  gating_result = self.run_gating_tests(ticket_id)
+
+  if not gating_result['all_passed']:
+      print("❌ Gating tests FAILED - reverting change")
+      # Revert and continue iterating
+  else:
+      print("✅ Gating tests PASSED - safe to commit")
+      # Proceed with branch creation
+
+  Priority 2: Branch Creation
+
+  # Create feature branch
+  branch_name = f"feat/fix-{ticket_id.lower()}"
+  subprocess.run(["git", "checkout", "-b", branch_name], cwd=okp_mcp_root)
+
+  Priority 3: Enhanced Commit Message
+
+  Include reasoning + scores in commit message.
+
+  ---
+  Questions to Clarify:
+
+  1. Gating test thresholds: What composite score do CLA/negative tests need to maintain? (e.g.,
+   >= 0.80?)
+  2. Branch strategy: One branch per ticket, or batched?
+  3. Auto-push: Should we push the branch to remote, or leave it local for manual PR?
+  4. Failure handling: If gating fails, should we try alternative approaches or escalate to
+  human immediately?
+
+---
+session: claude --resume 053c6432-2882-4ebe-965a-6ae9a61bd22a                   
