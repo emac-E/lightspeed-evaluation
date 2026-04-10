@@ -47,7 +47,7 @@ class MockEvaluationResult:
 def test_deescalation_logic():
     """Test the de-escalation decision logic."""
     # Import the agent (this will work since we're in the right directory)
-    from scripts.okp_mcp_agent import OkpMcpAgent
+    from okp_mcp_agent.agents.okp_mcp_agent import OkpMcpAgent
 
     # Create a minimal agent instance (don't need full initialization)
     agent = OkpMcpAgent.__new__(OkpMcpAgent)

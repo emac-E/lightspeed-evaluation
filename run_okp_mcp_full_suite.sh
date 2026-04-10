@@ -10,14 +10,14 @@
 # Usage:
 #   ./run_okp_mcp_full_suite.sh                        # Run 3 times (default)
 #   ./run_okp_mcp_full_suite.sh --runs 5               # Run 5 times
-#   ./run_okp_mcp_full_suite.sh --config config/okp_mcp_test_suites/functional_tests_full.yaml
+#   ./run_okp_mcp_full_suite.sh --config okp_mcp_agent/config/test_suites/functional_tests_full.yaml
 #
 
 set -e  # Exit on error
 
 # Default configuration
 NUM_RUNS=3
-EVAL_CONFIG="config/okp_mcp_test_suites/functional_tests_full.yaml"
+EVAL_CONFIG="okp_mcp_agent/config/test_suites/functional_tests_full.yaml"
 SYSTEM_CONFIG="config/system_okp_mcp_agent.yaml"
 
 # Parse arguments
@@ -40,12 +40,12 @@ while [[ $# -gt 0 ]]; do
             echo ""
             echo "Options:"
             echo "  --runs N                 Number of runs (default: 3)"
-            echo "  --config FILE            Evaluation config (default: config/okp_mcp_test_suites/functional_tests_full.yaml)"
-            echo "  --system-config FILE     System config (default: config/system.yaml)"
+            echo "  --config FILE            Evaluation config (default: okp_mcp_agent/config/test_suites/functional_tests_full.yaml)"
+            echo "  --system-config FILE     System config (default: config/system_okp_mcp_agent.yaml)"
             echo "  --help                   Show this help"
             echo ""
             echo "Example:"
-            echo "  $0 --runs 5 --config config/okp_mcp_test_suites/functional_tests_full.yaml"
+            echo "  $0 --runs 5 --config okp_mcp_agent/config/test_suites/functional_tests_full.yaml"
             exit 0
             ;;
         *)

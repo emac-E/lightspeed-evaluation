@@ -15,7 +15,7 @@ import pytest
 import requests
 import yaml
 
-from scripts.extract_jira_tickets import (
+from okp_mcp_agent.bootstrap.extract_jira_tickets import (
     DEFAULT_JQL,
     fetch_tickets_from_jira,
     get_jira_token,
