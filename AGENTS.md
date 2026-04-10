@@ -49,9 +49,10 @@ Before considering any code change complete, you **MUST** run:
 make black-format
 
 # Run all pre-commit checks at once (same as CI)
-make pre-commit      # Runs: bandit, check-types, pyright, docstyle, ruff, pylint, black-check
+make pre-commit      # Runs: bandit, check-types, pyright, docstyle, ruff, pylint, black-check, detect-secrets
 # or Run each quality checks individually:
 make bandit          # Security scan
+make detect-secrets  # Scan for secrets/credentials
 make check-types     # Type check
 make pyright         # Type check
 make docstyle        # Docstring style
