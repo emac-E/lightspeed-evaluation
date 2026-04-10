@@ -6,10 +6,10 @@ and full retrieval path testing.
 
 Usage:
     # Run POC on small pattern
-    python scripts/run_pattern_fix_poc.py RHEL10_DEPRECATED_FEATURES
+    python okp_mcp_agent/runners/run_pattern_fix_poc.py RHEL10_DEPRECATED_FEATURES
 
     # Custom thresholds
-    python scripts/run_pattern_fix_poc.py CONTAINER_UNSUPPORTED_CONFIG \
+    python okp_mcp_agent/runners/run_pattern_fix_poc.py CONTAINER_UNSUPPORTED_CONFIG \
         --max-iterations 15 \
         --answer-threshold 0.75 \
         --stability-runs 5
@@ -31,12 +31,12 @@ from typing import Dict, List, Optional
 import yaml
 
 # Add repo root to sys.path
-REPO_ROOT = Path(__file__).parent.parent
+REPO_ROOT = Path(__file__).parent.parent.parent
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 # Import base agent
-from scripts.okp_mcp_agent import (
+from okp_mcp_agent.agents.okp_mcp_agent import (
     OkpMcpAgent,
     EvaluationResult,
 )

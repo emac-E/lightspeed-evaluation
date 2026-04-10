@@ -11,12 +11,12 @@ converts them to the evaluation framework's YAML format, enabling:
 Usage:
     python scripts/convert_functional_cases_to_eval.py \
         --input ~/Work/okp-mcp/tests/functional_cases.py \
-        --output config/okp_mcp_test_suites/functional_tests.yaml
+        --output okp_mcp_agent/config/test_suites/functional_tests.yaml
 
     # With specific test IDs
     python scripts/convert_functional_cases_to_eval.py \
         --input ~/Work/okp-mcp/tests/functional_cases.py \
-        --output config/okp_mcp_test_suites/subset.yaml \
+        --output okp_mcp_agent/config/test_suites/subset.yaml \
         --filter "RSPEED_2482,RSPEED_2481"
 """
 
