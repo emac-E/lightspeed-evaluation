@@ -102,17 +102,18 @@ detect-secrets: ## Scan for secrets/credentials with detect-secrets
 			--exclude-files '\.claude/search_intelligence/.*' \
 			--exclude-files '\.venv/.*' \
 			--exclude-files '.*\.lock$$' \
-			--baseline .secrets.baseline; \
+			> .secrets.baseline; \
 		echo ""; \
 		echo "⚠️  Baseline created. Run 'make detect-secrets-audit' to review flagged secrets."; \
+	else \
+		echo "Scanning for new secrets..."; \
+		uv run detect-secrets scan \
+			--exclude-files 'okp_test_data/.*' \
+			--exclude-files '\.claude/search_intelligence/.*' \
+			--exclude-files '\.venv/.*' \
+			--exclude-files '.*\.lock$$' \
+			--baseline .secrets.baseline; \
 	fi
-	@echo "Scanning for new secrets..."
-	@uv run detect-secrets scan \
-		--exclude-files 'okp_test_data/.*' \
-		--exclude-files '\.claude/search_intelligence/.*' \
-		--exclude-files '\.venv/.*' \
-		--exclude-files '.*\.lock$$' \
-		--baseline .secrets.baseline
 
 detect-secrets-audit: ## Interactively audit flagged secrets
 	@if [ ! -f .secrets.baseline ]; then \

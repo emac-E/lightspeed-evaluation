@@ -113,8 +113,11 @@ def analyze_rag_bypass(df: pd.DataFrame) -> Dict[str, Any]:
 
         if qid not in questions:
             # Check if contexts exist (either in contexts or tool_calls field)
-            has_contexts = bool(row.get('contexts', '').strip())
-            if not has_contexts and row.get('tool_calls', '').strip():
+            contexts_val = row.get('contexts', '')
+            has_contexts = bool(pd.notna(contexts_val) and str(contexts_val).strip())
+
+            tool_calls_val = row.get('tool_calls', '')
+            if not has_contexts and pd.notna(tool_calls_val) and str(tool_calls_val).strip():
                 # Check tool_calls structure
                 try:
                     tool_calls = json.loads(row['tool_calls'])
