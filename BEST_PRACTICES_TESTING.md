@@ -195,6 +195,8 @@ vim src/okp_mcp/tools.py
 # Build and deploy
 podman build -t localhost/okp-mcp:dev .
 # ... deploy to test environment ...
+# NOTE: we also must update mount point in lscore-deploy/local/podman-compose
+#   ../../okp-mcp/src:/dev/src:z
 
 # Run 3 evals
 for i in {1..3}; do
