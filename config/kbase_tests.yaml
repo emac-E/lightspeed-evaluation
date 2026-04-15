@@ -1,0 +1,1049 @@
+# LightSpeed Evaluation Data - Kbase Tests
+# 20 questions whose answers come from kbase articles (Solutions + Articles).
+# All source documents are post-January-2025 (after Gemini 2.5 Flash cutoff).
+#
+# Purpose: Demonstrate the value of having kbase content in search_portal.
+# Run with kbase suppressed (no-kbase), then with kbase enabled (with-kbase),
+# and compare correctness scores.
+
+- conversation_group_id: KBASE-001
+  description: "Docker availability on RHEL 8/9/10 - should explain podman replacement"
+  tag: evals_kbase
+  turns:
+    - turn_id: turn1
+      query: "Is the docker package available in Red Hat Enterprise Linux 8, 9, or 10?"
+      response: null
+      contexts: null
+      expected_response: |
+        The docker package is not shipped or supported by Red Hat from Red Hat Enterprise Linux 8 onwards. It has been replaced by podman as the preferred, maintained, and supported container runtime. Podman provides a docker-compatible command line experience. Additionally, buildah replaced docker build for building container images, and skopeo replaced docker push for moving container images between registries and container engines.
+      turn_metrics:
+        - custom:answer_correctness
+
+- conversation_group_id: KBASE-002
+  description: "Podman rootless rlimit error after 4.9.4 update"
+  tag: evals_kbase
+  turns:
+    - turn_id: turn1
+      query: "After updating podman to version 4.9.4, my rootless containers fail to start with 'error setting rlimit type 6: operation not permitted'. How do I fix this?"
+      response: null
+      contexts: null
+      expected_response: |
+        The error rlimit type 6 refers to RLIMIT_NPROC (max number of processes). To fix this permanently, edit /etc/containers/containers.conf (system-wide) or ~/.config/containers/containers.conf (per user) and add under the [containers] section: default_ulimits = ["nproc=4096:4096"]. Alternatively, as a one-off workaround, pass the ulimit directly: podman run --ulimit nproc=4096:4096 <image_name>. The root cause is that recent podman/runc updates attempt to set resource limits that exceed the unprivileged user's hard limits in a rootless namespace.
+      turn_metrics:
+        - custom:answer_correctness
+
+- conversation_group_id: KBASE-003
+  description: "XFS filesystem shrink capability"
+  tag: evals_kbase
+  turns:
+    - turn_id: turn1
+      query: "Can I shrink or reduce the size of an XFS filesystem on RHEL?"
+      response: null
+      contexts: null
+      expected_response: |
+        XFS filesystems cannot be shrunk in a supported manner on RHEL. The ability to shrink XFS has been discussed upstream for over 10 years but is deemed too complex and risky. As a Technology Preview with limitations, RHEL 10 offers XFS shrink functionality. For older versions, workarounds include: using xfsdump and xfsrestore to back up and restore to a smaller filesystem, using xfs_quota for project quotas to limit space in a directory subtree, or choosing ext4 instead of XFS if you anticipate needing to shrink the filesystem later.
+      turn_metrics:
+        - custom:answer_correctness
+
+- conversation_group_id: KBASE-004
+  description: "Post-quantum cryptography enablement on RHEL 9"
+  tag: evals_kbase
+  turns:
+    - turn_id: turn1
+      query: "How do I enable post-quantum cryptography in RHEL 9?"
+      response: null
+      contexts: null
+      expected_response: |
+        Starting with RHEL 9.7, post-quantum cryptography is supported via the PQ subpolicy in the system-wide cryptographic policy settings. To enable it, run: update-crypto-policies --set DEFAULT:PQ. This enables hybrid ML-KEM (Module-Lattice-Based Key-Encapsulation Mechanism) and pure ML-DSA (Module-Lattice-Based Digital Signature Standard) algorithms on top of the current policy. The PQ subpolicy can be applied on top of LEGACY, DEFAULT, FUTURE, or FIPS policies. Note that in FIPS mode, some PQ settings may be blocked if the FIPS components have not been updated to allow them. A system reboot may be required for the setting to take effect.
+      turn_metrics:
+        - custom:answer_correctness
+
+- conversation_group_id: KBASE-005
+  description: "Leapp upgrade failure on IBM Power - ISA 3.00"
+  tag: evals_kbase
+  turns:
+    - turn_id: turn1
+      query: "Why does a leapp in-place upgrade from RHEL 8 to RHEL 9 fail with 'Fatal glibc error: CPU lacks ISA 3.00 support (POWER9 or later required)' on an IBM Power system?"
+      response: null
+      contexts: null
+      expected_response: |
+        This error occurs because RHEL 9 requires POWER9 or later processors (ISA 3.00). The glibc in RHEL 9 is built to require ISA 3.00 instruction set support. If you are running on a POWER8 or older IBM Power processor, it does not have ISA 3.00 support, and the RHEL 9 userspace packages cannot run on that hardware. The leapp upgrade fails during the dnf install phase inside systemd-nspawn when it tries to execute RHEL 9 binaries that require the newer instruction set. You need POWER9 or later hardware to upgrade to RHEL 9.
+      turn_metrics:
+        - custom:answer_correctness
+
+- conversation_group_id: KBASE-006
+  description: "Supported in-place upgrade paths for RHEL"
+  tag: evals_kbase
+  turns:
+    - turn_id: turn1
+      query: "What are the supported in-place upgrade paths for Red Hat Enterprise Linux using Leapp, and how long are they supported?"
+      response: null
+      contexts: null
+      expected_response: |
+        Starting from RHEL 7, in-place upgrades use the Leapp utility. The current strategy provides upgrade paths for synchronous RHEL releases developed in parallel. The general pattern from RHEL X to RHEL Y is: X.6 to Y.0 (supported 24 months, EUS), X.7 to Y.1 (6 months), X.8 to Y.2 (24 months, EUS), X.9 to Y.3 (6 months), X.10 to Y.4 (24 months, EUS), and so on. The final upgrade path from the last minor release is supported until the end of Maintenance Support 2 for the source system. Upgrade paths are guaranteed only for systems using Red Hat Subscription Manager (RHSM); Pay-As-You-Go (PAYG) systems using RHUI only support the latest available upgrade path.
+      turn_metrics:
+        - custom:answer_correctness
+
+- conversation_group_id: KBASE-007
+  description: "virsh destroy risks for KVM guests"
+  tag: evals_kbase
+  turns:
+    - turn_id: turn1
+      query: "Why is using virsh destroy not recommended for stopping KVM virtual machines?"
+      response: null
+      contexts: null
+      expected_response: |
+        Using virsh destroy is equivalent to pulling the power cord on a physical server. It stops the VM process abruptly without allowing the guest operating system to unmount filesystems or flush the disk cache, which carries a risk of boot partition or filesystem corruption. KVM guests should instead be shut down gracefully from within the guest OS or by using the virsh shutdown command. The virsh destroy command should only be used when the guest is unresponsive and no other option is available. You can check if a guest was stopped this way by examining /var/log/libvirt/qemu/<vm_name>.log for entries containing 'reason=destroyed'.
+      turn_metrics:
+        - custom:answer_correctness
+
+- conversation_group_id: KBASE-008
+  description: "KVM bridge with VLAN filtering - RHEL version requirement"
+  tag: evals_kbase
+  turns:
+    - turn_id: turn1
+      query: "How do I set up a Linux bridge with VLAN filtering for KVM virtual machines on RHEL, using a single bridge for all VLANs?"
+      response: null
+      contexts: null
+      expected_response: |
+        RHEL 10.1 or later is required because older libvirt versions do not support setting VLANs on Linux bridges (they would throw 'vlan tag not supported for this connection type'). Libvirt 11.5.0-4 or later is needed. First, create a bridge with VLAN filtering in NetworkManager: nmcli connection add type bridge con-name br0 ifname br0 bridge.vlan-filtering yes. Then attach a physical port: nmcli connection add type bridge-slave con-name br0-port-bond0 ifname bond0 master br0. For each VM, configure the domain XML with: <interface type='bridge'><source bridge='br0'/><vlan><tag id='123'/></vlan><model type='virtio'/></interface>. For older RHEL versions, you must use the 1-bridge-per-1-VLAN sub-interface approach instead.
+      turn_metrics:
+        - custom:answer_correctness
+
+- conversation_group_id: KBASE-009
+  description: "systemd debug shell for sosreport at boot hang"
+  tag: evals_kbase
+  turns:
+    - turn_id: turn1
+      query: "How can I generate an sosreport when my RHEL system hangs during boot?"
+      response: null
+      contexts: null
+      expected_response: |
+        You can use a systemd debug shell. During boot, press Escape at the GRUB menu to interrupt boot. Navigate to the line beginning with 'linux' and add systemd.debug-shell=1 at the end. Press Ctrl-x to boot. When the system hangs, press Ctrl+Alt+F9 to switch to tty9 where the debug shell is activated. Then remount root as read-write with 'mount -o remount,rw /', mount all filesystems with 'mount -a', activate networking with 'ifup <interface>' or 'systemctl restart NetworkManager', and generate the sosreport. Security warning: this opens a root shell with no password protection, so it should not be made permanent in GRUB configuration. Reboot after collecting the report and verify systemd.debug-shell is not persistent.
+      turn_metrics:
+        - custom:answer_correctness
+
+- conversation_group_id: KBASE-010
+  description: "Azure EUS to non-EUS subscription switch"
+  tag: evals_kbase
+  turns:
+    - turn_id: turn1
+      query: "How do I switch a RHEL 8 server on Microsoft Azure from EUS to non-EUS subscription when getting 'Failed to download metadata for repo' errors during upgrade?"
+      response: null
+      contexts: null
+      expected_response: |
+        For PAYG servers on Azure using RHUI, follow these steps: First, remove /etc/dnf/vars/releasever and uninstall the EUS package: sudo rm /etc/dnf/vars/releasever && sudo dnf remove rhui-azure-rhel8-eus. Then create a temporary repo file at /etc/yum.repos.d/rh-cloud-temp.repo pointing to https://rhui-1.microsoft.com/pulp/repos/microsoft-azure-rhel8/ with gpgcheck enabled. Import the GPG key with: sudo rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release. Install the non-EUS package: sudo dnf install rhui-azure-rhel8. Finally remove the temporary repo file. This switches the system from EUS repositories to the standard non-EUS repositories, allowing minor version upgrades to proceed.
+      turn_metrics:
+        - custom:answer_correctness
+
+- conversation_group_id: KBASE-011
+  description: "SSSD user resolution hangs after RHEL 9.6 upgrade"
+  tag: evals_kbase
+  turns:
+    - turn_id: turn1
+      query: "After upgrading to RHEL 9.6, commands like id, ls -l, and getent hang or time out when resolving users and groups. What is causing this and how do I fix it?"
+      response: null
+      contexts: null
+      expected_response: |
+        This is a known issue in RHEL 9.6 caused by a conflict in /etc/nsswitch.conf when both sss and systemd providers are enabled for user and group resolution. The problematic configuration is: passwd: files sss systemd / group: files [SUCCESS=merge] sss [SUCCESS=merge] systemd. The workaround is to edit /etc/nsswitch.conf and remove sss from the lookup chain: passwd: files systemd / group: files [SUCCESS=merge] systemd. Note that removing sss may impact environments relying on SSSD for remote user and group resolution. Red Hat Engineering is tracking the fix in a JIRA issue. Contact Red Hat Technical Support for updates on the permanent fix.
+      turn_metrics:
+        - custom:answer_correctness
+
+- conversation_group_id: KBASE-012
+  description: "IPA migration sudo rules broken - NIS netgroup"
+  tag: evals_kbase
+  turns:
+    - turn_id: turn1
+      query: "After migrating IPA from RHEL 7 to RHEL 8, sudo rules applied to hostgroups are no longer working. What is the fix?"
+      response: null
+      contexts: null
+      expected_response: |
+        The issue is that NIS netgroup entries are unlinked during migration of hostgroup entries from the older IPA environment. The fix is: First, back up all hostgroups with ldapsearch. Then delete all existing hostgroups in the new IPA environment except the default 'ipaservers'. Enable the 'NGP Definition' managed entries plugin so that whenever a hostgroup is created, a corresponding NIS netgroup is created and linked: ipa-managed-entries -e 'NGP Definition' enable. Verify the status with: ipa-managed-entries -e 'NGP Definition' status. Then re-create all required hostgroups (e.g., ipa hostgroup-add testhostgroup1) and verify the associated netgroup exists (ipa netgroup-show testhostgroup1). Finally, apply sudo rules to hostgroups as desired and clear the SSSD cache on clients: systemctl stop sssd; rm -rf /var/log/sssd/* /var/lib/sss/{db,mc}/*; systemctl start sssd.
+      turn_metrics:
+        - custom:answer_correctness
+
+- conversation_group_id: KBASE-013
+  description: "Intel iavf VF queue limit"
+  tag: evals_kbase
+  turns:
+    - turn_id: turn1
+      query: "Does RHEL support more than 16 IRQ channels or queues with Intel iavf SR-IOV virtual functions on 800-series NICs?"
+      response: null
+      contexts: null
+      expected_response: |
+        No, the in-tree Linux kernel iavf driver currently supports a maximum of 16 queues per virtual function (IAVF_MAX_REQ_QUEUES is set to 16 in the kernel source). Even if you configure more than 16 queues on the PF using the ice driver, the iavf driver will cap it at 16 with the message 'Received 24 queues, but can only have a max of 16. Fixing by reducing queues to 16'. Intel's out-of-tree driver supports up to 256 queues. This is tracked in JIRA RHEL-103994 and Red Hat is waiting for Intel to commit the 'Large VF' changes to the upstream Linux kernel.
+      turn_metrics:
+        - custom:answer_correctness
+
+- conversation_group_id: KBASE-014
+  description: "IMA boot failure on s390x RHEL 9/10"
+  tag: evals_kbase
+  turns:
+    - turn_id: turn1
+      query: "Why does configuring IMA with ima-setup cause boot failure on s390x systems running RHEL 9 or RHEL 10?"
+      response: null
+      contexts: null
+      expected_response: |
+        On RHEL 9 and RHEL 10 s390x systems, running ima-setup --policy= followed by a reboot can cause boot failure. The system logs errors including 'Request for unknown key in .ima keyring' and 'Failed to initialize kmod context: Operation not supported'. For RHEL 10, the fix is in ima-evm-utils-1.6.2-3.el10 via errata RHBA-2025:20097. For RHEL 9, the fix is in ima-evm-utils-1.6.2-2.el9 via errata RHBA-2025:20523. As a workaround, boot the system with the older (n-1) kernel and run the zipl command. If that still fails, boot to rescue mode and run zipl.
+      turn_metrics:
+        - custom:answer_correctness
+
+- conversation_group_id: KBASE-015
+  description: "Disabling SHA-1 and CBC in SSH on RHEL"
+  tag: evals_kbase
+  turns:
+    - turn_id: turn1
+      query: "How do I disable SHA-1 HMAC, SHA-1 key exchange, and CBC cipher algorithms in SSH on RHEL 8 and RHEL 9?"
+      response: null
+      contexts: null
+      expected_response: |
+        On RHEL 8 and 9, use system-wide crypto policies. RHEL 9 disables SHA-1 key exchange by default, but SHA-1 is still allowed for HMAC. To fully disable SHA-1 HMAC and CBC ciphers, create a policy modifier file in /etc/crypto-policies/policies/modules/ (e.g., NO-SHA1-CBC.pmod) with the appropriate directives to remove SHA-1 MACs and CBC ciphers. Then apply it with: update-crypto-policies --set DEFAULT:NO-SHA1-CBC. For RHEL 7 and earlier, you must directly edit /etc/ssh/sshd_config and /etc/ssh/ssh_config to specify the allowed MACs, KexAlgorithms, and Ciphers, removing any SHA-1 and CBC entries.
+      turn_metrics:
+        - custom:answer_correctness
+
+- conversation_group_id: KBASE-016
+  description: "RHEL 9 SSL error connecting to Satellite"
+  tag: evals_kbase
+  turns:
+    - turn_id: turn1
+      query: "Why do RHEL 9 hosts fail to connect to Red Hat Satellite or Capsule with the error 'SSL: couldn't create a context: error:0A000180:SSL routines::bad value' after updating openssl?"
+      response: null
+      contexts: null
+      expected_response: |
+        On RHEL 9, OpenSSL 3.x enforces strict cryptographic policies and rejects insecure algorithms such as SHA-1. The error occurs when /etc/pki/tls/openssl.cnf contains ess_cert_id_alg = sha1. To fix this, edit /etc/pki/tls/openssl.cnf and change ess_cert_id_alg from sha1 to sha256. No service restart is required unless there are persistent services holding active OpenSSL contexts (like monitoring agents), in which case restart those services to reload the updated configuration. Then verify connectivity with: curl -vk https://capsule.example.com:443.
+      turn_metrics:
+        - custom:answer_correctness
+
+- conversation_group_id: KBASE-017
+  description: "Filesystem mount order on RHEL 7+"
+  tag: evals_kbase
+  turns:
+    - turn_id: turn1
+      query: "How do I control the mount order of filesystems in RHEL 7 and later, where systemd manages mounts instead of following fstab order?"
+      response: null
+      contexts: null
+      expected_response: |
+        In RHEL 7 and later, filesystems are managed as systemd mount units. The /etc/fstab entries are converted into dynamic mount units at boot (visible in /run/systemd/generator). To control mount order, add the systemd mount option requires-mounts-for=/mount_point_name to the fstab mount options field. For example, if /test0/test1 must be mounted before /test0/test2, add requires-mounts-for=/test0/test1 to the /test0/test2 entry in /etc/fstab. This creates a hard dependency. Alternatively, you can create custom systemd mount units in /etc/systemd/system/ with explicit Before=, After=, and Requires= dependencies.
+      turn_metrics:
+        - custom:answer_correctness
+
+- conversation_group_id: KBASE-018
+  description: "Root disk to RAID1 post-install on RHEL 9/10"
+  tag: evals_kbase
+  turns:
+    - turn_id: turn1
+      query: "How do I convert my root disk to a RAID1 mirror after installing RHEL 9 or 10?"
+      response: null
+      contexts: null
+      expected_response: |
+        This requires downtime and involves mdadm. First, gather partition info from the main disk with parted /dev/sda u s p. Reproduce the partition scheme on the new disk using the same sector ranges with parted /dev/sdb. Add the RAID flag on all partitions that will be mirrored. Create degraded RAID1 arrays for each partition using mdadm --create with the --level=1 flag and the 'missing' keyword for the source disk partition (since it's in use). Copy data from the original partitions to the new RAID arrays. Update /etc/fstab to use the md device UUIDs. Rebuild the initramfs with dracut. Install the bootloader on the new disk. Then add the original disk's partitions to the RAID arrays. Note: this procedure is unsupported by Red Hat for /boot or / moves across devices except via pvmove, so proper backups are essential.
+      turn_metrics:
+        - custom:answer_correctness
+
+- conversation_group_id: KBASE-019
+  description: "HA cluster rolling upgrade from RHEL 9 to RHEL 10"
+  tag: evals_kbase
+  turns:
+    - turn_id: turn1
+      query: "What is the procedure for upgrading a RHEL 9 High Availability cluster to RHEL 10, and what are the limitations?"
+      response: null
+      contexts: null
+      expected_response: |
+        A rolling upgrade is performed by temporarily removing each node from the running cluster, upgrading the OS, and putting it back. Key limitations: This procedure is NOT supported if cluster nodes use any Resilient Storage packages (GFS2, DLM, lvmlockd), as these are no longer supported on RHEL 10. All applications must be tested and validated for RHEL 10 before upgrading a production cluster. Remote nodes must be upgraded after cluster member nodes. Resources will remain running during the upgrade as long as there are no constraints requiring them on a specific node. Service-specific upgrades (configuration changes, database layout changes) are separate from the cluster upgrade procedure.
+      turn_metrics:
+        - custom:answer_correctness
+
+- conversation_group_id: KBASE-020
+  description: "RHEL 10 TPM errors in FIPS mode"
+  tag: evals_kbase
+  turns:
+    - turn_id: turn1
+      query: "On RHEL 10 with FIPS mode enabled, I see repeated TPM error messages like 'A TPM error (708) occurred start auth session' and 'ima: Error Communicating to TPM chip' in the system logs. Is this a problem?"
+      response: null
+      contexts: null
+      expected_response: |
+        These are harmless messages and can be safely ignored. The errors occur because TPM2 HMAC sessions use the ecdh-nist-p256 algorithm, which is not permitted in FIPS mode. As a result, any kernel attempt to use TPM2 fails when FIPS mode is enabled. The issue is fixed in kernel-6.12.0-124.8.1.el10_1.x86_64 via errata RHSA-2025:20095. Updating to that kernel version or later will resolve the log messages.
+      turn_metrics:
+        - custom:answer_correctness
+
+- conversation_group_id: KBASE-021
+  description: "Stratis non-root filesystem fstab entry with systemd service"
+  tag: evals_kbase
+  turns:
+    - turn_id: turn1
+      query: "How do I add a non-root Stratis filesystem to /etc/fstab so it mounts automatically at boot?"
+      response: null
+      contexts: null
+      expected_response: |
+        In /etc/fstab, add the Stratis filesystem entry with special systemd mount options that ensure the Stratis pool is set up before the filesystem is mounted. The fstab entry should be:
+        /dev/stratis/my-pool/my-fs /mount-point xfs defaults,x-systemd.requires=stratis-fstab-setup@<pool-uuid>.service,x-systemd.after=stratis-fstab-setup@<pool-uuid>.service 0 0
+        Replace <pool-uuid> with the UUID of the Stratis pool (obtainable from 'stratis pool list'). The x-systemd.requires and x-systemd.after options create a dependency on the stratis-fstab-setup service for the pool, ensuring the pool is initialized before the mount is attempted. After editing fstab, run 'systemctl daemon-reload' to pick up the changes.
+      turn_metrics:
+        - custom:answer_correctness
+
+- conversation_group_id: KBASE-022
+  description: "LVM devices file rejects local disk as multipath component"
+  tag: evals_kbase
+  turns:
+    - turn_id: turn1
+      query: "On RHEL 9, running 'lvmdevices --adddev /dev/sda2' fails with 'WARNING: adding device /dev/sda2 that is excluded: device is a multipath component'. How do I fix this?"
+      response: null
+      contexts: null
+      expected_response: |
+        Starting with lvm2-2.03.14-3.el8, LVM checks the /etc/multipath/wwids file and blocks access to any device whose WWID appears in it, even if the device is a single-path local disk. To fix this, remove the device's WWID from /etc/multipath/wwids using 'multipath -w <wwid>' or 'multipath -w /dev/sdXX'. Also manually remove the matching entry from /etc/multipath/bindings. Alternatively, disable LVM's use of the wwids file by setting multipath_wwids_file="" in /etc/lvm/lvm.conf. After that, add the device with 'lvmdevices --adddev /dev/sdXX' and rebuild the initramfs with 'dracut -f' so the changes take effect at boot time.
+      turn_metrics:
+        - custom:answer_correctness
+
+- conversation_group_id: KBASE-023
+  description: "Convert linear LVM logical volume to RAID1"
+  tag: evals_kbase
+  turns:
+    - turn_id: turn1
+      query: "How do I convert an existing linear logical volume to a RAID1 mirrored volume using LVM on RHEL?"
+      response: null
+      contexts: null
+      expected_response: |
+        To convert a linear logical volume to RAID1: First, back up critical data. Ensure the mdadm package is installed (rpm -qa mdadm). Attach a new disk of equal or greater size and scan for it (rescan-scsi-bus.sh). Create a physical volume on the new disk (pvcreate /dev/sdc). Extend the volume group (vgextend wgroup /dev/sdc). Then convert the logical volume using: lvconvert --type raid1 -m 1 /dev/wgroup/wshare. Monitor the sync progress with 'lvs' and wait for the Cpy%Sync column to reach 100.00.
+      turn_metrics:
+        - custom:answer_correctness
+
+- conversation_group_id: KBASE-024
+  description: "When to apply non-default LVM filters"
+  tag: evals_kbase
+  turns:
+    - turn_id: turn1
+      query: "In which scenarios should I configure a non-default LVM filter on RHEL?"
+      response: null
+      contexts: null
+      expected_response: |
+        LVM filters should be applied in these scenarios: (1) In multipath environments, to ensure LVM uses the multipath devices rather than the underlying single-pathed sd devices. (2) To filter out block devices attached to the system but not part of LVM, such as Oracle ASM disks. (3) To reduce scan time when many block devices are attached but not actively used. (4) To limit visibility of devices that are attached to the system but belong to another system. (5) To reduce unnecessary I/O during boot when using the default filter which scans all devices (filter = ["a/.*/"]). The LVM filter is configured in /etc/lvm/lvm.conf. On RHEL 5 and later, the filter data is stored in /etc/lvm/cache/.cache.
+      turn_metrics:
+        - custom:answer_correctness
+
+- conversation_group_id: KBASE-025
+  description: "RHEL 9 multipath PV scanned but VG not activated at boot"
+  tag: evals_kbase
+  turns:
+    - turn_id: turn1
+      query: "On RHEL 9.2, a multipath PV is scanned during boot but the VG is not activated. What causes this?"
+      response: null
+      contexts: null
+      expected_response: |
+        This occurs when use_devicesfile is enabled in /etc/lvm/lvm.conf AND an LVM filter accepting /dev/mapper/ devices is set, AND the /etc/lvm/devices/system.devices file has been deleted or moved. Do not delete or move system.devices to work around the filter warning. Instead, either remove the LVM filter when use_devicesfile is enabled (they should not be used together), or disable use_devicesfile in lvm.conf. The fix is in lvm2 v2.03.19 (RHEL 9.3+) with the commit 'pvscan: use alternate device names from DEVLINKS to check filter'. Updating to RHEL 9.3 or later resolves the issue.
+      turn_metrics:
+        - custom:answer_correctness
+
+- conversation_group_id: KBASE-026
+  description: "XFS V4 format (crc=0) not supported in RHEL 10"
+  tag: evals_kbase
+  turns:
+    - turn_id: turn1
+      query: "Why does my leapp upgrade from RHEL 9 to RHEL 10 fail with an inhibitor about incompatible XFS filesystems?"
+      response: null
+      contexts: null
+      expected_response: |
+        XFS V4 format (crc=0) was deprecated in RHEL 9 and support has been removed in RHEL 10. The leapp pre-upgrade check will inhibit the upgrade with 'Detected XFS filesystems incompatible with target kernel'. It is not possible to upgrade XFS V4 to V5 in place due to metadata changes. You must create a new XFS V5 filesystem and copy all data over. XFS V5 has been the default since RHEL 7.3, so systems upgraded from very old RHEL versions may still have V4 filesystems. Check with: xfs_info /dev/<device> and look for crc=0 (V4, not supported) vs crc=1 (V5, supported).
+      turn_metrics:
+        - custom:answer_correctness
+
+- conversation_group_id: KBASE-027
+  description: "Enable SHA-1 signatures in OpenSSL on RHEL 10"
+  tag: evals_kbase
+  turns:
+    - turn_id: turn1
+      query: "How do I re-enable SHA-1 signatures in OpenSSL on RHEL 10 for compatibility with legacy software?"
+      response: null
+      contexts: null
+      expected_response: |
+        RHEL 10 has disabled SHA-1 signatures in OpenSSL by default. For non-TLS use (Kerberos, DNSSEC), create /etc/pki/tls/openssl-sha1.cnf containing '.include /etc/ssl/openssl.cnf' and under [evp_properties] add 'rh-allow-sha1-signatures = yes'. Set OPENSSL_CONF=/etc/pki/tls/openssl-sha1.cnf for the application or service. For systemd services, create a drop-in with 'systemctl edit <service>' adding Environment=OPENSSL_CONF=/etc/pki/tls/openssl-sha1.cnf. To allow SHA-1 system-wide, create /etc/crypto-policies/policies/modules/SHA1.pmod with directives: hash = SHA1+, sign = ECDSA-SHA1+ RSA-PSS-SHA1+ RSA-SHA1+, sha1_in_certs = 1. Then run 'update-crypto-policies --set DEFAULT:SHA1'. Note this lowers the security of the operating system.
+      turn_metrics:
+        - custom:answer_correctness
+
+- conversation_group_id: KBASE-028
+  description: "Postfix TLS EMS error in FIPS mode on RHEL 9"
+  tag: evals_kbase
+  turns:
+    - turn_id: turn1
+      query: "On RHEL 9 with FIPS enabled, Postfix logs 'TLS library problem: error:1C8000E9:Provider routines::ems not enabled' and mail delivery fails with 'Cannot start TLS: handshake failure'. How do I fix this?"
+      response: null
+      contexts: null
+      expected_response: |
+        This error occurs because FIPS-140-3 requires Extended Master Secret (EMS) for TLS 1.2 connections, but the remote mail server does not support EMS or TLS 1.3. The recommended fix is to enable TLS 1.3 or install an updated OpenSSL on the remote side. If that is not possible, since RHEL 9.3 a crypto-policy subpolicy can disable the EMS requirement (note: this violates FIPS-140-3 standard): run 'update-crypto-policies --set FIPS:NO-ENFORCE-EMS'. This applies the NO-ENFORCE-EMS subpolicy which allows TLS 1.2 connections without EMS in FIPS mode.
+      turn_metrics:
+        - custom:answer_correctness
+
+- conversation_group_id: KBASE-029
+  description: "Dracut initramfs build fails with OpenSSL config syntax error"
+  tag: evals_kbase
+  turns:
+    - turn_id: turn1
+      query: "On RHEL 9 or 10, dracut fails to build an initramfs with the error 'missing equal sign' and 'ossl-files --config does not return a path'. What is the fix?"
+      response: null
+      contexts: null
+      expected_response: |
+        The error is caused by a malformed .include directive in /etc/pki/tls/openssl.cnf. Specifically, an entry '.include = /etc/crypto-policies/back-ends/bind.config' has been added. The bind.config file is intended for the BIND DNS server, not for OpenSSL, and its content causes a parsing error. To fix, edit /etc/pki/tls/openssl.cnf and comment out the problematic line by adding a '#' at the beginning. Then regenerate the initramfs with 'dracut -f /boot/initramfs-<kernel-version>.img <kernel-version>'. Verify if the file was modified using 'rpm -V openssl-libs'.
+      turn_metrics:
+        - custom:answer_correctness
+
+- conversation_group_id: KBASE-030
+  description: "No single package to uninstall all container tooling"
+  tag: evals_kbase
+  turns:
+    - turn_id: turn1
+      query: "Is there a single package I can remove to uninstall all container tools from a RHEL 10 system?"
+      response: null
+      contexts: null
+      expected_response: |
+        No, there is no single parent package whose removal will automatically uninstall all container tools. Container utilities such as podman, buildah, skopeo, conmon, and runc are provided and maintained as independent RPM packages. To remove all container-related tools, run: dnf remove podman buildah skopeo conmon runc. Optionally also add toolbox, crun, and containers-common. Validate what is installed: rpm -qa | grep -E 'podman|buildah|skopeo|runc|conmon|crun|containers'. For automation: dnf remove -y $(rpm -qa | grep -E 'podman|buildah|skopeo|runc|conmon|crun|containers'). Check for cockpit-podman too if installed. For hardened environments, consider using custom kickstart files to remove unwanted packages during image creation.
+      turn_metrics:
+        - custom:answer_correctness
+
+- conversation_group_id: KBASE-031
+  description: "Sharing podman containers or images between rootless users"
+  tag: evals_kbase
+  turns:
+    - turn_id: turn1
+      query: "How can multiple rootless podman users on the same RHEL system share containers or container images without duplicating storage?"
+      response: null
+      contexts: null
+      expected_response: |
+        It is not possible or supported to directly share container storage graphroots or runroots between rootless users. For sharing containers, options include: (1) A single podman user accessible via 'su' to each user. (2) Running a single podman user hosting a local API endpoint, then using podman-remote from other users to connect to the API, effectively sharing containers. For sharing container images, additional image stores can be configured as read-only overlay storage in /etc/containers/storage.conf using the additionalimagestores option, pointing to a shared read-only storage location. Without this, each user duplicates images to their personal graphroot storage.
+      turn_metrics:
+        - custom:answer_correctness
+
+- conversation_group_id: KBASE-032
+  description: "OverlayFS mounts appear without running containers"
+  tag: evals_kbase
+  turns:
+    - turn_id: turn1
+      query: "On my RHEL system, overlay filesystems appear under /var/lib/containers/storage/overlay even though no containers are running. How do I stop this?"
+      response: null
+      contexts: null
+      expected_response: |
+        These overlay mounts are created dynamically by the container runtime's storage driver (overlayfs) and are visible via df -h, mount, or findmnt even when no container workloads are deployed. If containers are not required on the system, the supported method to permanently prevent these mounts is to remove the container-tools module: 'dnf module remove container-tools'. This removes Podman, Buildah, and container storage under /var/lib/containers, preventing overlay filesystem mounts from being created in the future.
+      turn_metrics:
+        - custom:answer_correctness
+
+- conversation_group_id: KBASE-033
+  description: "Uninstall containerized Ansible Automation Platform 2.x"
+  tag: evals_kbase
+  turns:
+    - turn_id: turn1
+      query: "How do I completely uninstall a containerized Ansible Automation Platform 2.x installation?"
+      response: null
+      contexts: null
+      expected_response: |
+        Run the uninstall playbook from inside the AAP containerized installer directory: 'ansible-playbook -i inventory ansible.containerized_installer.uninstall'. Then remove the AAP directory for the home user: 'rm -rf ~/aap'. Stop and remove all containers: 'podman stop $(podman ps -a -q)' and 'podman rm $(podman ps -a -q)'. Remove all images: 'podman rmi -a'. Prune and reset Podman: 'podman system prune -a -f' and 'podman system reset -f'.
+      turn_metrics:
+        - custom:answer_correctness
+
+- conversation_group_id: KBASE-034
+  description: "Manually boot from grub> prompt when system fails to boot"
+  tag: evals_kbase
+  turns:
+    - turn_id: turn1
+      query: "My RHEL system dropped to a grub> prompt and won't boot. How do I manually boot from the grub> prompt?"
+      response: null
+      contexts: null
+      expected_response: |
+        First identify the partition containing /boot by listing: 'ls' shows (hd0,0) (hd0,1) etc. Then 'ls (hd0,0)/' (with trailing slash) to find which partition contains vmlinuz and initramfs files. Set the boot partition: 'set root=(hd0,0)'. For RHEL 8+: 'linux /vmlinuz-<version> root=/dev/mapper/rootvg-rootlv' and 'initrd /initramfs-<version>.img'. For RHEL 7 Legacy use linux16/initrd16, for RHEL 7 UEFI use linuxefi/initrdefi. Then type 'boot'. If the root partition is unknown, use rd.break=initqueue instead of the root= parameter; the system will drop into a dracut shell where you can manually find and mount the root filesystem.
+      turn_metrics:
+        - custom:answer_correctness
+
+- conversation_group_id: KBASE-035
+  description: "Prevent a kernel module from loading automatically on RHEL 8/9/10"
+  tag: evals_kbase
+  turns:
+    - turn_id: turn1
+      query: "How do I permanently prevent a specific kernel module from loading on RHEL 8, 9, or 10?"
+      response: null
+      contexts: null
+      expected_response: |
+        Three steps are needed: (1) Unload the module if currently loaded: 'modprobe -r module_name'. (2) Blacklist it to prevent direct loading: echo 'blacklist module_name' >> /etc/modprobe.d/local-dontload.conf. (3) Prevent on-demand loading as a dependency: echo 'install module_name /bin/false' >> /etc/modprobe.d/local-dontload.conf. Then on RHEL 8/9/10: (4) Back up the initramfs: cp /boot/initramfs-$(uname -r).img /boot/initramfs-$(uname -r).img.bak. (5) If the module is part of the initramfs (verify with 'lsinitrd /boot/initramfs-$(uname -r).img | grep module-name.ko'), rebuild it omitting the module with dracut.
+      turn_metrics:
+        - custom:answer_correctness
+
+- conversation_group_id: KBASE-036
+  description: "Early kdump to capture kernel crashes during boot"
+  tag: evals_kbase
+  turns:
+    - turn_id: turn1
+      query: "What is early kdump and how do I enable it to capture kernel crashes that happen during the boot process on RHEL 8+?"
+      response: null
+      contexts: null
+      expected_response: |
+        Early kdump is a feature in RHEL 8 and above that loads the crash kernel and initramfs much earlier in the boot sequence via dracut modules, allowing vmcore capture for crashes that occur before the normal kdump service starts. To enable: (1) Ensure kdump is set up and the kdump initramfs exists for the current kernel. (2) Rebuild the booting kernel's initramfs with: 'dracut -f --add earlykdump'. (3) Add the rd.earlykdump kernel boot parameter using grubby. (4) Reboot and verify with 'journalctl -b | grep -i earlykdump'. Early kdump does not currently support POWERPC's fadump. It supports all the same dump targets and configuration parameters as normal kdump.
+      turn_metrics:
+        - custom:answer_correctness
+
+- conversation_group_id: KBASE-037
+  description: "Install a specific kernel version or downgrade the kernel"
+  tag: evals_kbase
+  turns:
+    - turn_id: turn1
+      query: "How do I install a specific older kernel version on RHEL to downgrade?"
+      response: null
+      contexts: null
+      expected_response: |
+        On RHEL 8+, use: 'dnf install kernel-<VERSION>' (e.g., 'dnf install kernel-4.18.0-553.44.1.el8_10'). To find available versions: 'dnf search kernel --showduplicates'. On RHEL 7: 'yum install kernel-<VERSION>' and 'yum list kernel --show-duplicates'. By default the newly installed kernel becomes the default boot kernel. On RHEL 9+, at minimum you need to install kernel, kernel-core, kernel-modules, and kernel-modules-core packages of the same version. If installing via RPM directly, use 'rpm -ivh' rather than 'rpm -Uvh' to install alongside the existing kernel.
+      turn_metrics:
+        - custom:answer_correctness
+
+- conversation_group_id: KBASE-038
+  description: "sgdisk command missing in RHEL 10"
+  tag: evals_kbase
+  turns:
+    - turn_id: turn1
+      query: "Where is the sgdisk command in RHEL 10? I cannot find the gdisk package."
+      response: null
+      contexts: null
+      expected_response: |
+        The gdisk package was deprecated in RHEL 9.6 and has been removed from RHEL 10. The replacement is the parted package, which provides GPT partitioning capabilities. Install with 'yum install parted'. As an unsupported workaround, the gdisk package is available in EPEL (Extra Packages for Enterprise Linux).
+      turn_metrics:
+        - custom:answer_correctness
+
+- conversation_group_id: KBASE-039
+  description: "Using systemd-timers as cron job replacement on RHEL"
+  tag: evals_kbase
+  turns:
+    - turn_id: turn1
+      query: "How do I replace a cron job with a systemd timer on RHEL?"
+      response: null
+      contexts: null
+      expected_response: |
+        Create a systemd service file (e.g., /etc/systemd/system/mytask.service) with [Unit] Description, [Service] Type=simple and ExecStart=/path/to/script.sh, and [Install] WantedBy=multiuser.target. Create a matching timer file (/etc/systemd/system/mytask.timer) with [Timer] OnCalendar=*:0/5 (every 5 minutes), Persistent=true (run on boot if missed), Unit=mytask.service, and [Install] WantedBy=timers.target. Run 'systemctl daemon-reload' and 'systemctl enable --now mytask.timer'. The timer starts the service; do not start the service directly. Verify with 'systemctl list-timers --all' and check logs with 'journalctl -u mytask.service'.
+      turn_metrics:
+        - custom:answer_correctness
+
+- conversation_group_id: KBASE-040
+  description: "systemd .include directive deprecated on RHEL 8+"
+  tag: evals_kbase
+  turns:
+    - turn_id: turn1
+      query: "My systemd service file uses .include directives and I get deprecation warnings on RHEL 8. How do I migrate to the recommended approach?"
+      response: null
+      contexts: null
+      expected_response: |
+        The .include directive is deprecated in systemd starting from RHEL 8 and will be removed in future versions. Replace it with drop-in override files: create the directory /etc/systemd/system/<service>.service.d/ and create an override.conf file with only the relevant directives that were previously included. Remove the .include line from the original service file. Run 'systemctl daemon-reload' and restart the service. Verify with 'systemctl status <service>' which should show the Drop-In file being loaded.
+      turn_metrics:
+        - custom:answer_correctness
+
+- conversation_group_id: KBASE-041
+  description: "systemd timer restart triggers immediate service execution bug on RHEL 8.10"
+  tag: evals_kbase
+  turns:
+    - turn_id: turn1
+      query: "On RHEL 8.10, restarting a systemd timer immediately triggers the associated service instead of waiting for the next scheduled time. Is this a bug?"
+      response: null
+      contexts: null
+      expected_response: |
+        Yes, this is a known bug tracked in JIRA RHEL-108744. When a timer unit is restarted, the countdown toward the next activation continues from the last service activation rather than resetting from the restart time. As a workaround, add RefuseManualStart=yes to the [Timer] section of the timer unit file and run 'systemctl daemon-reload'. This prevents the timer from being manually started, which avoids the immediate trigger on restart.
+      turn_metrics:
+        - custom:answer_correctness
+
+- conversation_group_id: KBASE-042
+  description: "DNF modular filtering prevents package updates from non-AppStream repos"
+  tag: evals_kbase
+  turns:
+    - turn_id: turn1
+      query: "DNF shows 'Nothing to do' even though a newer package version is available in a third-party repository. Why?"
+      response: null
+      contexts: null
+      expected_response: |
+        This is caused by DNF modular filtering, which prioritizes versions provided by RHEL AppStream module streams over other repositories. To fix this for third-party or non-AppStream repositories (do NOT apply to AppStream or BaseOS), add module_hotfixes=1 to the repository configuration in /etc/yum.repos.d/. For example, add the line 'module_hotfixes=1' under the relevant repo section. First check for incorrectly created custom modules with 'yum module list' and verify with 'yum module provides <package>'.
+      turn_metrics:
+        - custom:answer_correctness
+
+- conversation_group_id: KBASE-043
+  description: "Remove duplicate packages in rescue mode when dnf is broken"
+  tag: evals_kbase
+  turns:
+    - turn_id: turn1
+      query: "How do I remove duplicate packages when yum/dnf itself is broken and won't run on RHEL?"
+      response: null
+      contexts: null
+      expected_response: |
+        Boot into rescue mode from the RHEL ISO but do NOT chroot into /mnt/sysimage. Bring up networking in the rescue environment. Copy /mnt/sysimage/etc/resolv.conf to /etc/ and entitlement certificates to /etc/pki/entitlement/. For Satellite clients, also copy the katello CA cert. Remove duplicates with: 'dnf remove --duplicates --installroot=/mnt/sysimage --disableplugin=subscription-manager'. Always disable the subscription-manager plugin when running dnf outside of chroot. Verify with 'rpm -Va --nomtime --root=/mnt/sysimage' and reinstall any corrupted packages found.
+      turn_metrics:
+        - custom:answer_correctness
+
+- conversation_group_id: KBASE-044
+  description: "yum/dnf/subscription-manager fails due to missing or corrupt RPM packages"
+  tag: evals_kbase
+  turns:
+    - turn_id: turn1
+      query: "All yum, dnf, and subscription-manager commands fail with 'Unable to open /usr/lib/rpm/rpmrc' or the rpm binary is missing. How do I recover?"
+      response: null
+      contexts: null
+      expected_response: |
+        This occurs when critical RPM packages have been removed or corrupted. Since the rpm binary itself is broken, yum/dnf cannot fix it. Boot the system into rescue mode using a RHEL installation ISO. From rescue mode, reinstall the rpm package from the ISO media using rpm --root=/mnt/sysimage to restore the RPM binary and libraries. After restoring the rpm binary, chroot into /mnt/sysimage and run 'dnf reinstall rpm rpm-libs' to fully restore the RPM database.
+      turn_metrics:
+        - custom:answer_correctness
+
+- conversation_group_id: KBASE-045
+  description: "KVM VM stuck in paused state - qemu monitor blocked after I/O error"
+  tag: evals_kbase
+  turns:
+    - turn_id: turn1
+      query: "A KVM virtual machine paused due to an I/O error, was resumed, then paused again and is now permanently stuck. What is happening?"
+      response: null
+      contexts: null
+      expected_response: |
+        This is a known qemu-kvm bug where the VM pauses once due to an I/O error from storage, resumes, then pauses again within 30 seconds. On the second pause, the qemu main thread becomes stuck in bdrv_drain_all_begin() trying to drain all I/O. The block backend reports 1 tracked I/O in flight while the block state shows zero, creating a deadlock. There is currently no workaround except avoiding the underlying storage issue. The VM must be force-stopped (virsh destroy) and restarted. In OpenShift Virtualization, even management operations and statistics collection will fail while qemu is locked up.
+      turn_metrics:
+        - custom:answer_correctness
+
+- conversation_group_id: KBASE-046
+  description: "KVM live migration fails with piix4_pm missing section footer"
+  tag: evals_kbase
+  turns:
+    - turn_id: turn1
+      query: "KVM live migration fails with 'Missing section footer for 0000:00:01.3/piix4_pm' on the destination host. How do I fix this?"
+      response: null
+      contexts: null
+      expected_response: |
+        This affects VMs using the i440FX machine type. If the migration source is RHEL 8.5 or older, the bug is on the destination hypervisor; upgrade qemu-kvm (fix in RHEL 8.8 via RHSA-2024:0569). If the source is RHEL 8.6, the bug is on the source and has been present since 8.6 GA; VMs need a fresh shutdown and start on the latest qemu-kvm version. Affected RHEL 8.6 hosts can migrate between themselves but not to fixed versions. Confirm with: egrep 'machine|footer' /var/log/libvirt/qemu/<VM>.log.
+      turn_metrics:
+        - custom:answer_correctness
+
+- conversation_group_id: KBASE-047
+  description: "KVM VM database workload high iowait - fix with disk cache settings"
+  tag: evals_kbase
+  turns:
+    - turn_id: turn1
+      query: "After migrating a database VM from vSphere to KVM or OpenShift Virtualization, it has much higher load averages and disk iowait. How do I fix the performance?"
+      response: null
+      contexts: null
+      expected_response: |
+        Change the guest disk caching to reduce flush overhead. Option 1: Set cache='none' in the hypervisor disk XML and 'write through' inside the guest: 'echo "write through" > /sys/block/vdX/cache_type' (virtio-blk) or to /sys/class/scsi_disk/0:0:0:0/cache_type (virtio-scsi). Option 2: Set cache='directsync' in the hypervisor XML (not yet available in OpenShift Virtualization). To make guest changes persistent, create a udev rule: /etc/udev/rules.d/50-virtioblk-cache.rules with ACTION=="add|change", KERNEL=="vd[a-z]*", ATTR{cache_type}="write through". This moves flush handling from the guest to the hypervisor, reducing contention.
+      turn_metrics:
+        - custom:answer_correctness
+
+- conversation_group_id: KBASE-048
+  description: "SSSD searching wrong DNS domain after hostname change"
+  tag: evals_kbase
+  turns:
+    - turn_id: turn1
+      query: "After changing the hostname of an SSSD client, users can no longer authenticate and SSSD reports 'Realm not local to KDC'. What is wrong?"
+      response: null
+      contexts: null
+      expected_response: |
+        SSSD is performing KDC queries using the wrong DNS domain, derived from the new hostname. Add the dns_discovery_domain option to the DOMAIN section of /etc/sssd/sssd.conf: dns_discovery_domain = YOUR.DOMAIN, where YOUR.DOMAIN is the DNS domain where the LDAP and Kerberos servers reside. Then restart SSSD: systemctl restart sssd.
+      turn_metrics:
+        - custom:answer_correctness
+
+- conversation_group_id: KBASE-049
+  description: "IPA/IdM performance degradation from krbLastSuccessfulAuth LDAP writes"
+  tag: evals_kbase
+  turns:
+    - turn_id: turn1
+      query: "Our IPA servers are experiencing severe performance degradation with heavy Kerberos authentication traffic. What could be causing this?"
+      response: null
+      contexts: null
+      expected_response: |
+        Every Kerberos authentication updates the krbLastSuccessfulAuth attribute in LDAP. With frequent logins (e.g., monitoring tools SSHing into systems every few minutes), the directory server becomes overloaded with write operations, especially as 389 Directory Server multi-master replication must keep previous attribute values, causing entries to grow large. To fix: (1) Disable tracking krbLastSuccessfulAuth globally: 'ipa config-mod --ipaconfigstring "KDC:Disable Last Success"' followed by 'ipactl restart'. (2) Better: configure SSSD on clients to cache Kerberos credentials, reducing authentication frequency against IPA.
+      turn_metrics:
+        - custom:answer_correctness
+
+- conversation_group_id: KBASE-050
+  description: "Network ports required for IdM/IPA server and client communication"
+  tag: evals_kbase
+  turns:
+    - turn_id: turn1
+      query: "What network ports need to be opened in the firewall for Red Hat Identity Management (IdM/IPA) to function?"
+      response: null
+      contexts: null
+      expected_response: |
+        IdM Clients to IdM Server require: HTTP/HTTPS (80,443/TCP), LDAP/LDAPS (389,636/TCP), Kerberos (88,464/TCP and UDP), DNS (53/TCP and UDP, optional), NTP (123/UDP, optional, deprecated in RHEL 8+). Between IdM replicas: same ports plus kadmind (749/TCP, localhost only) and Tomcat PKI frontend (8005,8009,8080,8443/TCP, localhost only for CA-enabled replicas). For IPA-AD trust: Kerberos 88/TCP and UDP from IdM clients to AD. Ports 7389/TCP and 9443-9445/TCP are for RHEL 6 and earlier only.
+      turn_metrics:
+        - custom:answer_correctness
+
+- conversation_group_id: KBASE-051
+  description: "Configure fence_aws stonith fencing in HA pacemaker cluster on AWS"
+  tag: evals_kbase
+  turns:
+    - turn_id: turn1
+      query: "How do I set up a stonith fencing device using fence_aws for a RHEL HA pacemaker cluster running on AWS?"
+      response: null
+      contexts: null
+      expected_response: |
+        Install fence-agents-aws on all cluster nodes: 'dnf install fence-agents-aws'. Get each node's Instance ID: 'echo $(curl -s http://169.254.169.254/latest/meta-data/instance-id)'. Create or use an AWS Access Key, Secret Key, or IAM role. Test connectivity: 'fence_aws -o list --region=<region> --access_key=<key> --secret_key=<secret>'. Create the stonith device with pcmk_host_map: 'pcs stonith create cluster_fence fence_aws access_key=<key> secret_key=<secret> region=<region> pcmk_host_map="node1:i-xxx;node2:i-yyy"'. Test with 'pcs stonith fence <node_name>' (this will reboot the test node).
+      turn_metrics:
+        - custom:answer_correctness
+
+- conversation_group_id: KBASE-052
+  description: "Satellite 6.16 OS upgrade from RHEL 8.10 to RHEL 9 methods"
+  tag: evals_kbase
+  turns:
+    - turn_id: turn1
+      query: "What methods are available to upgrade the operating system of a Red Hat Satellite 6.16 server from RHEL 8 to RHEL 9?"
+      response: null
+      contexts: null
+      expected_response: |
+        Satellite 6.16 and Capsule 6.16 are supported on both RHEL 8 and RHEL 9. Three methods are available: (1) Leapp in-place upgrade, which is faster but imposes downtime on Satellite services. (2) Migration by cloning, where the RHEL 8 system stays operational during migration reducing downtime (cloning cannot be used for Capsule migrations). (3) Migration by backup and restore, where the RHEL 8 system remains operational (can be used for both Satellite and Capsule migrations from RHEL 8 to RHEL 9).
+      turn_metrics:
+        - custom:answer_correctness
+
+- conversation_group_id: KBASE-053
+  description: "Check if a RHEL server was in-place upgraded via leapp"
+  tag: evals_kbase
+  turns:
+    - turn_id: turn1
+      query: "How can I determine if a RHEL server was previously in-place upgraded using Leapp?"
+      response: null
+      contexts: null
+      expected_response: |
+        Check for the file /etc/migration-results. If present, it contains a JSON record of leapp executions: 'cat /etc/migration-results | grep executed' will show entries like '/usr/bin/leapp preupgrade' and '/usr/bin/leapp upgrade'. Also check for /var/log/leapp/leapp-upgrade.log which is the main log file recording all steps during the upgrade. Note this log may be absent if post-upgrade cleanup tasks were completed.
+      turn_metrics:
+        - custom:answer_correctness
+
+- conversation_group_id: KBASE-054
+  description: "Leapp upgrade fails with CrowdStrike falcon-sensor installed"
+  tag: evals_kbase
+  turns:
+    - turn_id: turn1
+      query: "My RHEL 7 leapp upgrade dropped to emergency mode during the reboot phase. The logs show falcon-sensor transaction failure. How do I fix this?"
+      response: null
+      contexts: null
+      expected_response: |
+        CrowdStrike falcon-sensor causes leapp upgrade failures because leapp cannot access third-party repositories during the upgrade reboot. To fix: restore from backup or VM snapshot, remove falcon-sensor following the vendor's official procedure (at minimum 'yum remove falcon-sensor'), then re-run 'leapp upgrade --target <version>' and reboot. The diagnostic signs are log entries: 'Failed: falcon-sensor', 'Error in PREUN scriptlet in rpm package falcon-sensor', and 'Error: Transaction failed'. Always remove third-party software before running leapp upgrades.
+      turn_metrics:
+        - custom:answer_correctness
+
+- conversation_group_id: KBASE-055
+  description: "DHCP IP becomes secondary on AWS/Azure after NetworkManager update"
+  tag: evals_kbase
+  turns:
+    - turn_id: turn1
+      query: "After updating NetworkManager on an AWS or Azure RHEL instance, the DHCP-assigned IP became a secondary IP address. How do I fix this?"
+      response: null
+      contexts: null
+      expected_response: |
+        After NetworkManager 1.36.0-4, DHCP-assigned IPs can become secondary when a static IP is also configured on the same interface. Use nm-cloud-setup to handle this. Option A: Disable cloud-init networking entirely by setting 'network: config: disabled' in /etc/cloud/cloud.cfg, letting NetworkManager and nm-cloud-setup manage everything. Option B: Allow cloud-init for primary IP but use nm-cloud-setup for secondary IPs. For AWS: set 'datasource: Ec2: apply_full_imds_network_config: false'. For Azure: set 'datasource: Azure: apply_network_config: False'.
+      turn_metrics:
+        - custom:answer_correctness
+
+- conversation_group_id: KBASE-056
+  description: "Set Power Saver, Balanced, or Performance modes via RHEL CLI"
+  tag: evals_kbase
+  turns:
+    - turn_id: turn1
+      query: "How do I set Power Saver, Balanced, or Performance power modes from the RHEL command line without a GUI?"
+      response: null
+      contexts: null
+      expected_response: |
+        Use the TuneD Dynamic System Tuning Daemon. Display available profiles: 'tuned-adm list'. The three modes map to profiles: Power Saver = 'powersave', Balanced = 'balanced', Performance = 'throughput-performance'. Activate a profile: 'tuned-adm profile powersave'. Check active profile: 'tuned-adm active'. TuneD also provides specialized profiles: virtual-guest, virtual-host, network-latency, network-throughput, latency-performance, and hpc-compute.
+      turn_metrics:
+        - custom:answer_correctness
+
+- conversation_group_id: KBASE-057
+  description: "Create a custom TuneD performance profile on RHEL 7/8/9"
+  tag: evals_kbase
+  turns:
+    - turn_id: turn1
+      query: "How do I create a custom TuneD profile on RHEL 7, 8, or 9?"
+      response: null
+      contexts: null
+      expected_response: |
+        On RHEL 7/8/9, system profiles are in /usr/lib/tuned/ and custom profiles go in /etc/tuned/. Create a directory: 'mkdir /etc/tuned/myprofile'. Create /etc/tuned/myprofile/tuned.conf with [main] include=<base-profile> to inherit settings, then add custom sections such as [cpu] force_latency=1, [vm] transparent_hugepages=never, [disk] elevator=deadline, [sysctl] kernel.sysrq=1, or [script] script=/etc/tuned/myprofile/myscript.sh for custom scripts. Activate with 'tuned-adm profile myprofile'.
+      turn_metrics:
+        - custom:answer_correctness
+
+- conversation_group_id: KBASE-058
+  description: "Tune TCP socket buffers for high-latency WAN connections"
+  tag: evals_kbase
+  turns:
+    - turn_id: turn1
+      query: "How do I tune RHEL for better TCP performance over a high-latency WAN connection?"
+      response: null
+      contexts: null
+      expected_response: |
+        Calculate the Bandwidth Delay Product (BDP) = connection speed (bytes/sec) x latency (seconds). For 10 Gbps with 17ms latency: (10*10^9/8) * 0.017 = 21,250,000 bytes. Set socket buffer maximums to ~2.5x BDP in /etc/sysctl.conf: net.core.rmem_max=53125000, net.core.wmem_max=53125000, net.ipv4.tcp_rmem='8192 262144 53125000', net.ipv4.tcp_wmem='8192 262144 53125000'. Also enable: net.ipv4.tcp_window_scaling=1, net.ipv4.tcp_timestamps=1, net.ipv4.tcp_sack=1. Disable slow start after idle: net.ipv4.tcp_slow_start_after_idle=0.
+      turn_metrics:
+        - custom:answer_correctness
+
+- conversation_group_id: KBASE-059
+  description: "kdump fails on Hyper-V/Proxmox VM - no memory reserved for crash kernel"
+  tag: evals_kbase
+  turns:
+    - turn_id: turn1
+      query: "Kdump fails to start on a Hyper-V or Proxmox VM with 'No memory reserved for crash kernel' and 'crashkernel: invalid size'. What is the cause?"
+      response: null
+      contexts: null
+      expected_response: |
+        The initial system memory allocated by the hypervisor at boot is smaller than the crashkernel reservation size. Hyper-V and Proxmox have memory hotplug features that allocate memory on demand, but the initial allocation may be too small for the crashkernel reservation. The message 'crashkernel: invalid size' means the crashkernel size exceeds the total system memory at boot time. The fix is to increase the startup/minimum memory assigned to the VM in the hypervisor settings. After booting, 'free' shows a much larger memory total than what was available during early boot when the crashkernel reservation was attempted.
+      turn_metrics:
+        - custom:answer_correctness
+
+- conversation_group_id: KBASE-060
+  description: "Kdump fails silently on kernel-rt with EFI boot on RHEL 8"
+  tag: evals_kbase
+  turns:
+    - turn_id: turn1
+      query: "On a RHEL 8 EFI-boot system running kernel-rt, triggering a crash does not invoke kdump and the system simply reboots. Why?"
+      response: null
+      contexts: null
+      expected_response: |
+        This is a known issue affecting kernel-rt on EFI-boot systems starting from RHEL 8.4 GA (kernel-rt-4.18.0-305.rt7.72.el8). When a crash is triggered, the kernel panics but the kdump kernel is never invoked. The system reboots directly into the normal kernel without capturing a vmcore, even though 'Kdump: loaded' is shown. This has been observed on VMware and other EFI-boot environments running kernel-rt.
+      turn_metrics:
+        - custom:answer_correctness
+
+- conversation_group_id: KBASE-061
+  description: "cgroup v1 no longer supported in RHEL 10"
+  tag: evals_kbase
+  turns:
+    - turn_id: turn1
+      query: "Can I configure RHEL 10 to use cgroup v1 instead of cgroup v2?"
+      response: null
+      contexts: null
+      expected_response: |
+        No. cgroup v1 support is deprecated by systemd and only cgroup v2 is available in RHEL 10. Even adding 'systemd.unified_cgroup_hierarchy=0' to kernel parameters results in a warning ('Legacy cgroup v1 configured. This will stop being supported soon. Will proceed with cgroup v2 after 30 s.') and the system boots with cgroup v2 anyway. RHEL 8 defaulted to cgroup v1, RHEL 9 defaulted to v2 but supported v1, and RHEL 10 only supports v2. Setting SYSTEMD_CGROUP_ENABLE_LEGACY_FORCE=1 can temporarily force v1 but is not recommended and will be removed in future releases.
+      turn_metrics:
+        - custom:answer_correctness
+
+- conversation_group_id: KBASE-062
+  description: "libhugetlbfs not available in RHEL 9 or RHEL 10"
+  tag: evals_kbase
+  turns:
+    - turn_id: turn1
+      query: "Why is libhugetlbfs not available in RHEL 9 and RHEL 10, and what are the alternatives for HugePage-backed memory allocation?"
+      response: null
+      contexts: null
+      expected_response: |
+        libhugetlbfs is incompatible with changes to the glibc memory allocator (v2.32+). The upstream project disabled hugepage-backed malloc due to deprecation of __morecore in glibc. RHEL 9 ships glibc v2.34, making libhugetlbfs unfeasible. Alternatives: (1) Use kernel HugeTLB APIs directly (mmap with MAP_HUGETLB, shmget with SHM_HUGETLB) as documented in the kernel hugetlbpage documentation. (2) On RHEL 10, use the glibc tunable glibc.malloc.hugetlb which allows either Transparent HugePages or HugeTLB pages via the glibc memory allocator. It is unlikely libhugetlbfs will be reintroduced.
+      turn_metrics:
+        - custom:answer_correctness
+
+- conversation_group_id: KBASE-063
+  description: "sendmail removed from RHEL 10"
+  tag: evals_kbase
+  turns:
+    - turn_id: turn1
+      query: "Is sendmail available in RHEL 10?"
+      response: null
+      contexts: null
+      expected_response: |
+        No. sendmail has been removed from RHEL 10 and is listed in the removed features in the RHEL 10 release notes. It was deprecated since RHEL 7 and available (but deprecated) throughout RHEL 8 and RHEL 9 AppStream for their entire lifecycle. Red Hat recommends migrating to Postfix as the replacement MTA.
+      turn_metrics:
+        - custom:answer_correctness
+
+- conversation_group_id: KBASE-064
+  description: "BIND auto-dnssec deprecated on RHEL 10"
+  tag: evals_kbase
+  turns:
+    - turn_id: turn1
+      query: "After upgrading to RHEL 10, BIND logs deprecation warnings about the 'auto-dnssec' option. How do I migrate?"
+      response: null
+      contexts: null
+      expected_response: |
+        The auto-dnssec option is deprecated in BIND 9.18 (shipped with RHEL 10) and will be removed in BIND 9.19+. Replace it with dnssec-policy. In /etc/named.conf, change zone configurations from 'auto-dnssec maintain;' to 'dnssec-policy default;'. Example: zone "example.com" { type master; file "example.com"; dnssec-policy default; inline-signing yes; }. Validate with 'named-checkconf'. The dnssec-policy framework provides automated DNSSEC key generation, rollover, and signing.
+      turn_metrics:
+        - custom:answer_correctness
+
+- conversation_group_id: KBASE-065
+  description: "Mount CIFS share with SMB 1 protocol on RHEL 9"
+  tag: evals_kbase
+  turns:
+    - turn_id: turn1
+      query: "How do I mount a CIFS share using the SMB 1 (vers=1.0) protocol on RHEL 9?"
+      response: null
+      contexts: null
+      expected_response: |
+        RHEL 9 supports SMB 1 but does not use it by default. On the Samba server, set 'server min protocol = NT1' in the [global] section of /etc/samba/smb.conf. On the RHEL 9 client, mount using: 'mount -t cifs //server/share /mount_point -o vers=1.0'. Verify with 'cat /proc/self/mounts | grep cifs' which should show vers=1.0 in the options.
+      turn_metrics:
+        - custom:answer_correctness
+
+- conversation_group_id: KBASE-066
+  description: "KVM VM packet loss with vnet TX drops on hypervisor"
+  tag: evals_kbase
+  turns:
+    - turn_id: turn1
+      query: "I'm seeing packet loss into a KVM virtual machine with drops in the vnet TX counters on the hypervisor. How do I reduce the drops?"
+      response: null
+      contexts: null
+      expected_response: |
+        Packet drops in tun_net_xmit (visible with dropwatch) indicate the tuntap device transmit queue is overrun. Optimizations: (1) Use tuned with virtual-host profile on hypervisor, virtual-guest inside the guest. (2) Use virtio-net instead of emulated interfaces like e1000. (3) Enable virtio-net multiqueue to spread load across VCPU cores. (4) Increase the tuntap device transmit queue length. (5) Confine VM VCPU and memory to a single NUMA node on the hypervisor. (6) Avoid over-subscribing the hypervisor. This is most commonly seen with UDP traffic.
+      turn_metrics:
+        - custom:answer_correctness
+
+- conversation_group_id: KBASE-067
+  description: "Dracut temporary directory /var/tmp/dracut/initramfs safe to remove"
+  tag: evals_kbase
+  turns:
+    - turn_id: turn1
+      query: "Why does the /var/tmp/dracut/initramfs directory exist on my RHEL system and is it safe to remove?"
+      response: null
+      contexts: null
+      expected_response: |
+        The /var/tmp/dracut directory is a temporary working directory used by dracut during initramfs generation. The final initramfs is saved at /boot/initramfs-<kernel-version>.img. The initramfs is regenerated with each kernel update. If generation does not complete properly, residual files may be left behind. When generation completes successfully, the directory is automatically cleaned up. It is safe to remove /var/tmp/dracut if no dracut process is currently running.
+      turn_metrics:
+        - custom:answer_correctness
+
+- conversation_group_id: KBASE-068
+  description: "sosreport triggers kernel crash in __d_lookup on proc filesystem"
+  tag: evals_kbase
+  turns:
+    - turn_id: turn1
+      query: "Running sosreport causes a kernel crash with BUG: unable to handle kernel paging request in __d_lookup when looking up /proc/pid/fd. What is this?"
+      response: null
+      contexts: null
+      expected_response: |
+        This is a kernel bug affecting RHEL 8.9 (kernel-4.18.0-513.24.1.el8_9) observed on certain server hardware. When sosreport iterates through /proc/<pid>/fd/, the __d_lookup function encounters a corrupted dentry hash chain pointer, triggering a page fault and kernel panic in iterate_dir -> proc_fill_cache -> d_lookup -> __d_lookup. This is a race condition in the proc filesystem's directory entry lookup. Update the kernel to the latest available version that includes the fix for this dentry hash chain corruption.
+      turn_metrics:
+        - custom:answer_correctness
+
+- conversation_group_id: KBASE-069
+  description: "Connection refused despite working network - firewall blocking"
+  tag: evals_kbase
+  turns:
+    - turn_id: turn1
+      query: "Attempts to connect to a server fail with 'Connection refused' even though ping works fine. What should I investigate?"
+      response: null
+      contexts: null
+      expected_response: |
+        The destination system has a firewall rule rejecting or dropping the connection. Check: 'iptables -L' (legacy), 'nft list ruleset' (nftables), or 'firewall-cmd --list-all-zones' (firewalld). Look for rules blocking the port or source IP. A packet capture on the destination (tcpdump -nni <iface> port <port> or icmp) will show the SYN met with ICMP port unreachable or administratively prohibited. To remove blocking rules: iptables -D <chain> <rule>, nft delete rule <table> <chain> handle <number>, or firewall-cmd --permanent --remove-port=<port>.
+      turn_metrics:
+        - custom:answer_correctness
+
+- conversation_group_id: KBASE-070
+  description: "Customize LUKS encryption key size on RHEL 9"
+  tag: evals_kbase
+  turns:
+    - turn_id: turn1
+      query: "How do I change the LUKS encryption key size on the root volume of a RHEL 9 system to 256 bits?"
+      response: null
+      contexts: null
+      expected_response: |
+        During installation via kickstart, add to %post: echo -n "<password>" | cryptsetup reencrypt --key-size=256 /dev/vda2 --key-file=-. After installation, check the current key size with 'cryptsetup status /dev/mapper/luks-<uuid>'. To change: 'cryptsetup reencrypt --key-size=256 /dev/vda2' and enter the passphrase when prompted. This may take several minutes depending on disk size. Verify the new key size with 'cryptsetup status'. The default RHEL 9 LUKS2 setup uses aes-xts-plain64 with a 512-bit key.
+      turn_metrics:
+        - custom:answer_correctness
+
+- conversation_group_id: KBASE-071
+  description: "rsyslog fails to start at boot with rate limit exceeded"
+  tag: evals_kbase
+  turns:
+    - turn_id: turn1
+      query: "rsyslog fails at boot with 'Start request repeated too quickly' but starts fine manually. What is wrong?"
+      response: null
+      contexts: null
+      expected_response: |
+        The logrotate configuration is missing the 'sharedscripts' directive. Without it, the postrotate script (systemctl -s HUP kill rsyslog.service) runs once per log file instead of once per logrotate run. Multiple rapid SIGHUPs cause rsyslog to stop and restart repeatedly, exceeding systemd's rate limit (DefaultStartLimitBurst=5 in 10 seconds). Fix by adding 'sharedscripts' to /etc/logrotate.d/rsyslog before the postrotate block.
+      turn_metrics:
+        - custom:answer_correctness
+
+- conversation_group_id: KBASE-072
+  description: "Chrony cannot sync due to minsources misconfiguration"
+  tag: evals_kbase
+  turns:
+    - turn_id: turn1
+      query: "Chrony reports 'Can't synchronise: not enough selectable sources' even though NTP sources are configured. Why?"
+      response: null
+      contexts: null
+      expected_response: |
+        The minsources directive in /etc/chrony.conf is set to a value greater than the number of configured NTP sources. For example, minsources=2 with only 1 source configured will prevent synchronization. Fix by either commenting out minsources (defaults to 1) or setting it equal to or less than the number of configured time sources. Verify with 'chronyc sources' and 'grep minsources /etc/chrony.conf'.
+      turn_metrics:
+        - custom:answer_correctness
+
+- conversation_group_id: KBASE-073
+  description: "Reset broken PAM configuration in rescue mode after lockout"
+  tag: evals_kbase
+  turns:
+    - turn_id: turn1
+      query: "I am locked out of my RHEL 8/9 system due to a broken PAM configuration. How do I recover?"
+      response: null
+      contexts: null
+      expected_response: |
+        Boot into rescue mode: at GRUB press e, add 'rd.break' to the linux line, press Ctrl+X. At switch_root, remount root read-write: 'mount -o remount,rw /sysroot'. Chroot: 'chroot /sysroot'. Check PAM files: /etc/pam.d/system-auth, /etc/pam.d/password-auth. Check authselect status: 'authselect check'. Reset PAM to defaults: 'authselect select sssd with-mkhomedir --force'. Exit chroot and exit to reboot. The root cause is typically manual PAM edits outside of authselect.
+      turn_metrics:
+        - custom:answer_correctness
+
+- conversation_group_id: KBASE-074
+  description: "RHEL 8.10 kernel memory leak with Transparent Huge Pages"
+  tag: evals_kbase
+  turns:
+    - turn_id: turn1
+      query: "After updating to kernel-4.18.0-553.81.1.el8_10, the system frequently runs out of memory with no single process consuming excessive amounts. What is happening?"
+      response: null
+      contexts: null
+      expected_response: |
+        This is a known memory leak in RHEL 8.10 kernels starting from 4.18.0-553.81.1 when Transparent Huge Pages (THP) and swap are both enabled. Fixed in kernel-4.18.0-553.94.1.el8_10 via RHSA-2026:0759. Workarounds: (1) Boot the unaffected kernel 4.18.0-553.80.1.el8_10. (2) Disable THP. (3) For Shared Memory THPs, also run 'echo deny > /sys/kernel/mm/transparent_hugepage/shmem_enabled'. Verify THP status with 'cat /sys/kernel/mm/transparent_hugepage/enabled' and check AnonHugePages/ShmemHugePages in /proc/meminfo.
+      turn_metrics:
+        - custom:answer_correctness
+
+- conversation_group_id: KBASE-075
+  description: "Suppress Red Hat Insights registration message at SSH login"
+  tag: evals_kbase
+  turns:
+    - turn_id: turn1
+      query: "How do I prevent the 'Register this system with Red Hat Insights: rhc connect' message from appearing at every SSH login on RHEL 9?"
+      response: null
+      contexts: null
+      expected_response: |
+        Replace the insights-client motd file with a symlink to /dev/null: 'ln -sfn /dev/null /etc/motd.d/insights-client'. The message is displayed from /etc/motd.d/insights-client which is a symlink to /etc/insights-client/insights-client.motd.
+      turn_metrics:
+        - custom:answer_correctness
+
+- conversation_group_id: KBASE-076
+  description: "Third-party RPM fails on RHEL 10 due to /bin/ path dependency"
+  tag: evals_kbase
+  turns:
+    - turn_id: turn1
+      query: "A third-party RPM package fails to install on RHEL 10 with 'nothing provides /bin/rm'. Why does this happen?"
+      response: null
+      contexts: null
+      expected_response: |
+        RHEL 10 removed backward-compatibility RPM metadata that previously listed /bin/* paths as provided by coreutils. Since RHEL 7, /bin has been a symlink to /usr/bin, but until RHEL 9 compatibility entries existed in RPM metadata for /bin/* paths. RHEL 10 removed these following Fedora packaging guideline updates. Packages requiring /bin/rm instead of /usr/bin/rm will fail. This must be fixed by the third-party vendor updating their RPM spec to use /usr/bin/ paths.
+      turn_metrics:
+        - custom:answer_correctness
+
+- conversation_group_id: KBASE-077
+  description: "Podman auth file does not support glob/wildcard URLs for registries"
+  tag: evals_kbase
+  turns:
+    - turn_id: turn1
+      query: "Can I use wildcard patterns like '*.redhat.io' in the podman auth.json file to match multiple registry subdomains?"
+      response: null
+      contexts: null
+      expected_response: |
+        No. Podman, buildah, and skopeo do not support glob URLs or prefix-matched paths in their auth files. While Kubernetes config.json supports glob patterns for registry subdomains, Red Hat container tools require exact registry hostnames. Using '*.redhat.io' results in 'unable to retrieve auth token: unauthorized'. Each registry subdomain must be listed individually in the auth file.
+      turn_metrics:
+        - custom:answer_correctness
+
+- conversation_group_id: KBASE-078
+  description: "Configure corosync logging in RHEL HA pacemaker cluster"
+  tag: evals_kbase
+  turns:
+    - turn_id: turn1
+      query: "How do I configure and change the logging level for corosync in a RHEL High Availability pacemaker cluster?"
+      response: null
+      contexts: null
+      expected_response: |
+        Stop the cluster: 'pcs cluster stop --all'. Edit the logging {} block in /etc/corosync/corosync.conf. Key directives: to_logfile: yes with logfile: /var/log/cluster/corosync.log, to_syslog: yes, to_stderr: yes. Set priorities with logfile_priority and syslog_priority (values: alert, crit, err, warning, notice, info). Enable debug: 'debug: on'. Add 'timestamp: on'. Sync changes: 'pcs cluster sync'. Reload: 'pcs cluster reload corosync'. Start: 'pcs cluster start --all'. Default logging is to syslog and stderr.
+      turn_metrics:
+        - custom:answer_correctness
+
+- conversation_group_id: KBASE-079
+  description: "iptables ICMP type 15/16 rules not visible in nft list ruleset"
+  tag: evals_kbase
+  turns:
+    - turn_id: turn1
+      query: "I added iptables rules for ICMP type 15 and 16 but 'nft list ruleset' shows them as opaque 'xt match icmp' without the type. Are the rules working?"
+      response: null
+      contexts: null
+      expected_response: |
+        Yes, the rules are functional. This is a display bug in the iptables-to-nftables translation layer (libxtables). ICMP types 15 (information-request) and 16 (information-reply) are missing from the iptables-translate lookup table. The rules appear as 'xt match "icmp"' in nft output but 'iptables-save' correctly shows them with ICMP types intact. In native nftables, use 'info-request' and 'info-reply' names or numeric types. Fix planned for RHEL 10 in JIRA RHEL-85286.
+      turn_metrics:
+        - custom:answer_correctness
+
+- conversation_group_id: KBASE-080
+  description: "View user systemd service logs without systemd-journal group"
+  tag: evals_kbase
+  turns:
+    - turn_id: turn1
+      query: "A non-root user gets 'No journal files were opened due to insufficient permissions' when viewing their systemd user service logs and cannot be added to systemd-journal group. How do I fix this?"
+      response: null
+      contexts: null
+      expected_response: |
+        Configure the systemd journal for persistent storage. By default on RHEL 8, journal data is stored in /run/log/journal (volatile) with restrictive permissions. Enable persistent storage by creating /var/log/journal or setting Storage=persistent in /etc/systemd/journald.conf, then restart systemd-journald. This allows users to access their own journal entries without being a member of the systemd-journal group.
+      turn_metrics:
+        - custom:answer_correctness
