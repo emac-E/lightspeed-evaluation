@@ -35,19 +35,23 @@ if [ "$CURRENT_BRANCH" != "okp-mcp-integration" ]; then
     fi
 fi
 
-# Menu
-echo "Select migration phase:"
-echo "  1) Security scan (detect secrets)"
-echo "  2) Archive sensitive files"
-echo "  3) Create destination directory structure"
-echo "  4) Copy and rename files"
-echo "  5) Run quality checks"
-echo "  6) Full automated migration (steps 2-4)"
-echo "  0) Exit"
-echo
-read -p "Enter choice [0-6]: " choice
+# Main loop
+while true; do
+    echo ""
+    echo "==============================================="
+    echo "HEAL Migration Steps (run in this order):"
+    echo "  1) Security scan (detect secrets)"
+    echo "  2) Run quality checks (format/lint SOURCE)"
+    echo "  3) Archive sensitive files (copy to archive)"
+    echo "  4) Create destination directory structure"
+    echo "  5) Copy and rename files"
+    echo "  6) Full automated migration (steps 2-5)"
+    echo "  0) Exit"
+    echo "==============================================="
+    echo
+    read -p "Enter choice [0-6]: " choice
 
-case $choice in
+    case $choice in
     1)
         echo -e "\n${GREEN}Running security scan...${NC}"
         make detect-secrets || echo -e "${YELLOW}Note: Fix any secrets before proceeding${NC}"
@@ -247,7 +251,7 @@ EOF
         read -p "Continue? (y/n) " -n 1 -r
         echo
         if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-            exit 0
+            continue  # Go back to menu instead of exiting
         fi
 
         # Run steps 2, 3, 4
@@ -267,6 +271,9 @@ EOF
         echo "  5. Test imports: uv run python -c 'import heal'"
         echo "  6. Run tests: uv run pytest tests/"
         echo "  7. Create GitHub repository and push"
+
+        # Exit after full migration completes
+        exit 0
         ;;
 
     0)
@@ -275,9 +282,13 @@ EOF
         ;;
 
     *)
-        echo -e "${RED}Invalid choice${NC}"
-        exit 1
+        echo -e "${RED}Invalid choice. Please select 0-6.${NC}"
         ;;
-esac
+    esac
 
-echo -e "\n${GREEN}Done!${NC}"
+    # Pause before showing menu again (except for option 0 which exits)
+    if [ "$choice" != "0" ]; then
+        echo ""
+        read -p "Press Enter to continue..." dummy
+    fi
+done

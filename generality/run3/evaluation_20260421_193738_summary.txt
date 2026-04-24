@@ -1,0 +1,236 @@
+LSC Evaluation Framework - Summary Report
+==================================================
+
+Generated: 2026-04-21 19:37:40
+Total Evaluations: 120
+
+Overall Statistics:
+--------------------
+Pass: 44 (36.7%)
+Fail: 64 (53.3%)
+Error: 12 (10.0%)
+Skipped: 0 (0.0%)
+
+Token Usage (Judge LLM):
+--------------------
+Input Tokens: 364,808
+Output Tokens: 344,629
+Total Tokens: 709,437
+
+Token Usage (API Calls):
+--------------------
+Input Tokens: 0
+Output Tokens: 0
+Total Tokens: 0
+
+By Metric:
+---------
+ragas:faithfulness:
+  Pass: 3 (15.0%)
+  Fail: 14 (70.0%)
+  Error: 3 (15.0%)
+  Score Statistics:
+    Mean: 0.376
+    Median: 0.269
+    Min: 0.000, Max: 1.000
+    Std Dev: 0.348
+
+ragas:response_relevancy:
+  Pass: 16 (80.0%)
+  Fail: 4 (20.0%)
+  Error: 0 (0.0%)
+  Score Statistics:
+    Mean: 0.776
+    Median: 0.970
+    Min: 0.000, Max: 0.970
+    Std Dev: 0.398
+
+ragas:context_precision_without_reference:
+  Pass: 1 (5.0%)
+  Fail: 16 (80.0%)
+  Error: 3 (15.0%)
+  Score Statistics:
+    Mean: 0.315
+    Median: 0.292
+    Min: 0.000, Max: 0.927
+    Std Dev: 0.266
+
+ragas:context_relevance:
+  Pass: 10 (50.0%)
+  Fail: 7 (35.0%)
+  Error: 3 (15.0%)
+  Score Statistics:
+    Mean: 0.618
+    Median: 1.000
+    Min: 0.000, Max: 1.000
+    Std Dev: 0.485
+
+ragas:context_recall:
+  Pass: 3 (15.0%)
+  Fail: 14 (70.0%)
+  Error: 3 (15.0%)
+  Score Statistics:
+    Mean: 0.294
+    Median: 0.000
+    Min: 0.000, Max: 1.000
+    Std Dev: 0.402
+
+custom:answer_correctness:
+  Pass: 11 (55.0%)
+  Fail: 9 (45.0%)
+  Error: 0 (0.0%)
+  Score Statistics:
+    Mean: 0.615
+    Median: 0.900
+    Min: 0.000, Max: 1.000
+    Std Dev: 0.439
+
+By Conversation:
+---------------
+rhel10_benchmark_q03:
+  Pass: 0 (0.0%)
+  Fail: 2 (33.3%)
+  Error: 4 (66.7%)
+
+rhel10_benchmark_q13:
+  Pass: 2 (33.3%)
+  Fail: 0 (0.0%)
+  Error: 4 (66.7%)
+
+rhel10_benchmark_q05:
+  Pass: 2 (33.3%)
+  Fail: 0 (0.0%)
+  Error: 4 (66.7%)
+
+rhel10_benchmark_q11:
+  Pass: 2 (33.3%)
+  Fail: 4 (66.7%)
+  Error: 0 (0.0%)
+
+rhel10_benchmark_q10:
+  Pass: 2 (33.3%)
+  Fail: 4 (66.7%)
+  Error: 0 (0.0%)
+
+rhel10_benchmark_q14:
+  Pass: 4 (66.7%)
+  Fail: 2 (33.3%)
+  Error: 0 (0.0%)
+
+rhel10_benchmark_q02:
+  Pass: 5 (83.3%)
+  Fail: 1 (16.7%)
+  Error: 0 (0.0%)
+
+rhel10_benchmark_q08:
+  Pass: 0 (0.0%)
+  Fail: 6 (100.0%)
+  Error: 0 (0.0%)
+
+rhel10_benchmark_q06:
+  Pass: 0 (0.0%)
+  Fail: 6 (100.0%)
+  Error: 0 (0.0%)
+
+rhel10_benchmark_q01:
+  Pass: 2 (33.3%)
+  Fail: 4 (66.7%)
+  Error: 0 (0.0%)
+
+rhel10_benchmark_q12:
+  Pass: 2 (33.3%)
+  Fail: 4 (66.7%)
+  Error: 0 (0.0%)
+
+rhel10_benchmark_q15:
+  Pass: 3 (50.0%)
+  Fail: 3 (50.0%)
+  Error: 0 (0.0%)
+
+rhel10_benchmark_q19:
+  Pass: 2 (33.3%)
+  Fail: 4 (66.7%)
+  Error: 0 (0.0%)
+
+rhel10_benchmark_q16:
+  Pass: 2 (33.3%)
+  Fail: 4 (66.7%)
+  Error: 0 (0.0%)
+
+rhel10_benchmark_q20:
+  Pass: 2 (33.3%)
+  Fail: 4 (66.7%)
+  Error: 0 (0.0%)
+
+rhel10_benchmark_q07:
+  Pass: 4 (66.7%)
+  Fail: 2 (33.3%)
+  Error: 0 (0.0%)
+
+rhel10_benchmark_q17:
+  Pass: 3 (50.0%)
+  Fail: 3 (50.0%)
+  Error: 0 (0.0%)
+
+rhel10_benchmark_q18:
+  Pass: 3 (50.0%)
+  Fail: 3 (50.0%)
+  Error: 0 (0.0%)
+
+rhel10_benchmark_q04:
+  Pass: 0 (0.0%)
+  Fail: 6 (100.0%)
+  Error: 0 (0.0%)
+
+rhel10_benchmark_q09:
+  Pass: 4 (66.7%)
+  Fail: 2 (33.3%)
+  Error: 0 (0.0%)
+
+By Tag:
+------
+rhel10_benchmark:
+  Pass: 44 (36.7%)
+  Fail: 64 (53.3%)
+  Error: 12 (10.0%)
+  Score Statistics:
+    Mean: 0.510
+    Median: 0.500
+    Min: 0.000, Max: 1.000
+    Std Dev: 0.429
+
+Configuration Parameters:
+-------------------------
+
+Llm:
+  Provider: vertex
+  Model: gemini-2.5-pro
+  Ssl Verify: True
+  Ssl Cert File: None
+  Temperature: 0.0
+  Max Tokens: 65536
+  Timeout: 300
+  Num Retries: 3
+  Cache Enabled: True
+
+Embedding:
+  Provider: huggingface
+  Model: sentence-transformers/all-MiniLM-L6-v2
+  Provider Kwargs: {}
+  Cache Enabled: True
+
+Api:
+  Enabled: True
+  Api Base: http://127.0.0.1:8443/api/lightspeed
+  Version: v1
+  Endpoint Type: infer
+  Timeout: 300
+  Provider: vertex
+  Model: google/gemini-2.5-flash
+  No Tools: None
+  System Prompt: None
+  Mode: None
+  Mcp Url: None
+  Cache Enabled: True
+  Num Retries: 3
+

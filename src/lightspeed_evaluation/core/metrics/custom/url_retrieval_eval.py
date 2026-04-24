@@ -16,25 +16,75 @@ from lightspeed_evaluation.core.models import TurnData
 
 
 def normalize_url(url: str) -> str:
-    """Normalize URL for comparison by removing protocol, trailing slashes, etc.
+    """Normalize URL for comparison by extracting document identifier.
+
+    Handles both full URLs and short-form paths from okp-mcp:
+    - https://access.redhat.com/solutions/1136173/index.html → solutions/1136173
+    - solutions/1136173 → solutions/1136173
+    - documentation/en-us/red_hat.../index → documentation/en-us/red_hat...
 
     Args:
-        url: Raw URL string
+        url: Raw URL string (full URL or short-form path)
 
     Returns:
-        Normalized URL for comparison
+        Normalized document identifier for comparison
     """
     if not url:
         return ""
 
     # Parse URL
-    parsed = urlparse(url.strip())
+    url_stripped = url.strip()
+    parsed = urlparse(url_stripped)
 
-    # Reconstruct without protocol, trailing slash, fragments, or query params
-    # Keep: domain + path
-    normalized = parsed.netloc + parsed.path.rstrip("/")
+    # Extract path (works for both full URLs and short-form paths)
+    path = parsed.path if parsed.path else url_stripped
 
-    return normalized.lower()
+    # Remove common suffixes
+    path = path.rstrip("/")
+    if path.endswith("/index.html"):
+        path = path[:-11]  # Remove /index.html
+    elif path.endswith("/index"):
+        path = path[:-6]  # Remove /index
+
+    # Remove leading slash if present
+    path = path.lstrip("/")
+
+    return path.lower()
+
+
+def extract_urls_from_contexts(contexts: list[str]) -> list[str]:
+    """Extract URLs from contexts field (okp-mcp format).
+
+    The contexts field contains formatted text like:
+    "**Title**\\nType: Article | Applicability: RHEL\\nURL: https://access.redhat.com/solutions/123\\nContent: ..."
+
+    Args:
+        contexts: List of context strings from turn_data.contexts
+
+    Returns:
+        List of normalized URLs extracted from contexts (in order)
+    """
+    import re
+
+    urls = []
+
+    # Pattern matches: "URL: https://access.redhat.com/..."
+    # Captures until whitespace or newline
+    url_pattern = r'URL:\s*(https://[^\s\n]+)'
+
+    for context in contexts:
+        if not isinstance(context, str):
+            continue
+
+        matches = re.findall(url_pattern, context)
+        for url in matches:
+            # Clean up trailing punctuation/markup
+            url = url.rstrip('\\nContent:').rstrip()
+            normalized = normalize_url(url)
+            if normalized:
+                urls.append(normalized)
+
+    return urls
 
 
 def extract_urls_from_tool_calls(
@@ -256,6 +306,12 @@ def evaluate_url_retrieval(
     retrieved_urls_ordered = extract_urls_from_tool_calls(
         turn_data.tool_calls, preserve_order=True
     )
+
+    # FALLBACK: If no URLs in tool_calls, try extracting from contexts field
+    # This handles okp-mcp format where contexts are separate from tool_calls
+    if not retrieved_urls_ordered and turn_data.contexts:
+        retrieved_urls_ordered = extract_urls_from_contexts(turn_data.contexts)
+
     retrieved_urls_unique = list(
         dict.fromkeys(retrieved_urls_ordered)
     )  # Dedupe while preserving order

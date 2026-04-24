@@ -19,6 +19,7 @@ set -e  # Exit on error
 NUM_RUNS=5
 EVAL_CONFIG="config/chronically_failing_questions.yaml"
 SYSTEM_CONFIG="config/system_mcp_direct.yaml"
+METRICS=""  # Optional metrics filter
 
 # Parse arguments
 while [[ $# -gt 0 ]]; do
@@ -35,6 +36,10 @@ while [[ $# -gt 0 ]]; do
             SYSTEM_CONFIG="$2"
             shift 2
             ;;
+        --metrics)
+            METRICS="$2"
+            shift 2
+            ;;
         --help)
             echo "Usage: $0 [OPTIONS]"
             echo ""
@@ -42,10 +47,12 @@ while [[ $# -gt 0 ]]; do
             echo "  --runs N                 Number of runs (default: 5)"
             echo "  --config FILE            Evaluation config (default: config/chronically_failing_questions.yaml)"
             echo "  --system-config FILE     System config (default: config/system_mcp_direct.yaml)"
+            echo "  --metrics METRICS        Filter to specific metrics (e.g., 'custom:url_retrieval_eval ragas:context_relevance')"
             echo "  --help                   Show this help"
             echo ""
             echo "Example:"
             echo "  $0 --runs 10 --config config/chronically_failing_questions.yaml"
+            echo "  $0 --metrics 'custom:url_retrieval_eval' --runs 5"
             exit 0
             ;;
         *)
@@ -126,10 +133,16 @@ for run in $(seq 1 ${NUM_RUNS}); do
     mkdir -p .caches/llm_cache
 
     # Run evaluation
+    METRICS_ARGS=""
+    if [ -n "${METRICS}" ]; then
+        METRICS_ARGS="--metrics ${METRICS}"
+    fi
+
     if uv run lightspeed-eval \
         --system-config "${SYSTEM_CONFIG}" \
         --eval-data "${EVAL_CONFIG}" \
-        --output-dir "${RUN_DIR}" 2>&1 | tee "${RUN_DIR}/eval.log"; then
+        --output-dir "${RUN_DIR}" \
+        ${METRICS_ARGS} 2>&1 | tee "${RUN_DIR}/eval.log"; then
 
         echo -e "${GREEN}✓ Run ${run} complete${NC}"
         SUCCESSFUL_RUNS=$((SUCCESSFUL_RUNS + 1))

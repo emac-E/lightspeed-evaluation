@@ -34,6 +34,7 @@ When modifying functionality, you **MUST** update:
 - `docs/` - Update relevant guide if feature behavior changes
 - `README.md` - Update when features change or adding new features
 - `AGENTS.md` - Update if adding new conventions or project structure changes
+- `docs/SECURITY_ASSESSMENT.md` - Update if adding security-relevant features or fixing vulnerabilities
 
 ### 4. Update This File When Receiving New Instructions
 If the user provides new project conventions, coding standards, or constraints:
@@ -174,6 +175,42 @@ def test_llm_manager(mocker):
 2. **Register**: Update `MetricManager` supported_metrics dictionary
 3. **Configure**: Add metadata to `config/system.yaml` metrics_metadata section
 4. **Test**: Add comprehensive tests with mocked LLM calls using pytest
+
+## Security Considerations
+
+**CRITICAL:** Review `docs/SECURITY_ASSESSMENT.md` before implementing security-sensitive features.
+
+### Security Guidelines for Agents
+
+1. **Script Execution** - NEVER allow arbitrary script paths. Use allowlists.
+2. **Path Traversal** - Validate all file paths, check `is_relative_to()` for directory containment
+3. **SSL Verification** - NEVER hardcode `verify=False`. Always respect config settings.
+4. **Secrets** - NEVER hardcode API keys, passwords, tokens. Use environment variables only.
+5. **Input Validation** - Always validate YAML/JSON inputs with Pydantic models
+6. **Subprocess** - NEVER use `shell=True`. Always use list form: `["cmd", "arg"]`
+7. **Logging** - Sanitize sensitive data before logging (API keys, PII, credentials)
+
+### Before Committing Security Changes
+
+```bash
+# Run security scans
+make bandit          # Code vulnerability scan
+make detect-secrets  # Credential leak detection
+
+# Review security assessment
+cat docs/SECURITY_ASSESSMENT.md
+
+# Test with malicious inputs (fuzzing)
+# Example: try path traversal, prompt injection, etc.
+```
+
+### Reporting Security Issues
+
+If you discover a security vulnerability while working on the code:
+1. DO NOT create a public GitHub issue
+2. Document in `docs/SECURITY_ASSESSMENT.md` under appropriate severity
+3. Notify the user immediately
+4. Propose remediation with code examples
 
 ## Troubleshooting
 
