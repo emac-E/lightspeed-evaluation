@@ -523,6 +523,23 @@ make black-check     # Check formatting
 make test            # Or: uv run pytest tests --cov=src
 ```
 
+## 🔒 Security
+
+For security considerations, vulnerability assessments, and secure deployment guidelines, see:
+
+**[Security Assessment](docs/SECURITY_ASSESSMENT.md)** - Comprehensive security review including:
+- 🔴 Critical findings (SSL verification, script execution)
+- 🟠 High-priority remediations (path traversal, prompt injection)
+- ✅ Security best practices already implemented
+- 📋 Secure deployment checklist
+
+**Quick Security Checklist:**
+- ✅ Run `make bandit` and `make detect-secrets` before commits
+- ✅ Never commit `.env` files or API keys
+- ✅ Enable SSL verification in production (`api.ssl_verify: true`)
+- ✅ Restrict script execution paths (see security assessment)
+- ✅ Keep dependencies updated (`pip-audit` or `uv pip check`)
+
 ## 🔧 Troubleshooting
 
 | Issue | Solution |

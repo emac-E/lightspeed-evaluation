@@ -22,7 +22,7 @@ llm:
   ssl_verify: true
   ssl_cert_file: null
   temperature: 0.0
-  max_tokens: 32768
+  max_tokens: 65536
   timeout: 300
   num_retries: 3
   cache_dir: ".caches/llm_cache"
@@ -70,6 +70,18 @@ metrics_metadata:
       description: "How precise the retrieved context is (without reference)"
       default: false  # Only run when explicitly specified in turn_metrics
 
+    # === RESPONSE EVALUATION METRICS ===
+
+    "ragas:faithfulness":
+      threshold: 0.8
+      description: "How faithful the response is to the provided context"
+      default: false  # Only run when explicitly specified in turn_metrics
+
+    "ragas:response_relevancy":
+      threshold: 0.8
+      description: "How relevant the response is to the question"
+      default: false  # Only run when explicitly specified in turn_metrics
+
     # === CUSTOM FUNCTIONAL TEST METRICS ===
 
     "custom:url_retrieval_eval":
@@ -77,17 +89,18 @@ metrics_metadata:
       description: "URL retrieval quality - F1 score of expected vs retrieved documentation URLs"
       default: false  # Only run when explicitly specified in turn_metrics
 
-    "custom:keywords_eval":
-      description: "Keywords (ALL) matching evaluation with alternative sets"
-      default: false  # Only run when explicitly specified in turn_metrics
+    # DEPRECATED - kept as code artifacts
+    # "custom:keywords_eval":
+    #   description: "Keywords (ALL) matching evaluation with alternative sets"
+    #   default: false  # Only run when explicitly specified in turn_metrics
 
-    "custom:forbidden_claims_eval":
-      threshold: 1.0
-      description: "Known-incorrect claims avoided in response (regression detection)"
-      default: false  # Only run when explicitly specified in turn_metrics
+    # "custom:forbidden_claims_eval":
+    #   threshold: 1.0
+    #   description: "Known-incorrect claims avoided in response (regression detection)"
+    #   default: false  # Only run when explicitly specified in turn_metrics
 
     "custom:answer_correctness":
-      threshold: 0.75
+      threshold: 0.9
       description: "Correctness vs expected answer using custom LLM evaluation"
       default: false  # Only run when explicitly specified in turn_metrics (when expected_response exists)
 

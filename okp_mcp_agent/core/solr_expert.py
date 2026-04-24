@@ -131,6 +131,118 @@ class SolrExpertAgent:
             reasoning=reasoning,
         )
 
+    def _build_smart_params(
+        self,
+        query: str,
+        num_results: int = 10,
+    ) -> dict[str, Any]:
+        """Build RHEL-aware Solr params with better defaults.
+
+        Non-agentic improvements over basic params:
+        - Better field weights (from okp-mcp base_params)
+        - Phrase boosting (pf, pf2, pf3)
+        - RHEL version detection and filtering
+        - Topic-specific boosts (bootloader, container, lifecycle, etc.)
+        - Minimum match for precision
+
+        Args:
+            query: Search query
+            num_results: Number of results to return
+
+        Returns:
+            Dict of Solr params
+        """
+        import re
+
+        # Start with okp-mcp's proven base params (simplified - no highlighting)
+        params = {
+            "q": query,
+            "defType": "edismax",
+            # Improved field weights (from okp-mcp)
+            "qf": "title^5 main_content^3 heading_h1^3 heading_h2 portal_synopsis^3 allTitle^3 content^2 product^2",
+            # Phrase boosting for multi-word queries
+            "pf": "title^8 main_content^5",
+            "ps": "3",
+            "pf2": "title^5 main_content^3",
+            "ps2": "2",
+            "pf3": "title^2 main_content^1",
+            "ps3": "5",
+            # Minimum match for precision (at least 2 terms for 2-4 term queries, 60% for longer)
+            "mm": "2<-1 5<60%",
+            "rows": num_results,
+            "fl": "title,resourceName,main_content,documentKind,product,documentation_version",
+            "wt": "json",
+        }
+
+        # RHEL version detection and filtering
+        rhel_version = self._detect_rhel_version(query)
+        if rhel_version:
+            # Filter to docs for this version (allows other versions to still match, but boosts exact)
+            params["bq"] = f"documentation_version:*{rhel_version}*^4"
+            logger.debug(f"  Detected RHEL {rhel_version}, boosting matching docs")
+
+        # Topic-specific boosts
+        query_lower = query.lower()
+
+        # Bootloader topics (GRUB, UEFI, boot)
+        if any(kw in query_lower for kw in ["grub", "bootloader", "boot", "uefi"]):
+            # Boost bootloader-specific docs
+            bq = params.get("bq", "")
+            params["bq"] = f"{bq} documentKind:bootloader^10" if bq else "documentKind:bootloader^10"
+            logger.debug("  Topic: bootloader - boosting bootloader docs")
+
+        # Container topics
+        elif any(kw in query_lower for kw in ["container", "podman", "docker"]):
+            # Boost container docs
+            params["qf"] += " container_compatibility^10"
+            logger.debug("  Topic: container - added container field boost")
+
+        # Lifecycle/EOL topics
+        elif any(kw in query_lower for kw in ["eol", "end of life", "lifecycle", "eus", "extended update"]):
+            # Boost lifecycle docs
+            params["qf"] += " lifecycle_info^8"
+            logger.debug("  Topic: lifecycle - added lifecycle field boost")
+
+        # Systemd topics
+        elif any(kw in query_lower for kw in ["systemd", "service", "unit file"]):
+            # Boost systemd docs
+            bq = params.get("bq", "")
+            params["bq"] = f"{bq} documentKind:documentation^5" if bq else "documentKind:documentation^5"
+            logger.debug("  Topic: systemd - boosting documentation")
+
+        # Networking topics
+        elif any(kw in query_lower for kw in ["network", "nmcli", "bond", "interface", "ip"]):
+            # Boost networking docs
+            bq = params.get("bq", "")
+            params["bq"] = f"{bq} documentKind:documentation^5" if bq else "documentKind:documentation^5"
+            logger.debug("  Topic: networking - boosting documentation")
+
+        return params
+
+    def _detect_rhel_version(self, query: str) -> Optional[str]:
+        """Detect RHEL version from query.
+
+        Args:
+            query: Search query
+
+        Returns:
+            Version string (e.g., "9", "8", "7") or None
+        """
+        import re
+
+        # Match patterns like "RHEL 9", "rhel9", "Red Hat Enterprise Linux 8"
+        patterns = [
+            r"rhel\s*([6-9])",
+            r"red\s+hat\s+enterprise\s+linux\s+([6-9])",
+        ]
+
+        for pattern in patterns:
+            match = re.search(pattern, query, re.IGNORECASE)
+            if match:
+                return match.group(1)
+
+        return None
+
     async def _query_solr(
         self,
         client: httpx.AsyncClient,
@@ -147,15 +259,9 @@ class SolrExpertAgent:
         Returns:
             List of document dictionaries with title, url, content
         """
-        # Build Solr query with edismax parser
-        params = {
-            "q": query,
-            "defType": "edismax",
-            "qf": "title^5 main_content^2 product",
-            "rows": num_results,
-            "fl": "title,resourceName,main_content,documentKind,product,documentation_version",
-            "wt": "json",
-        }
+        # Preprocess query for better results
+        params = self._build_smart_params(query, num_results)
+        logger.debug(f"  Using params: qf={params.get('qf', 'N/A')[:50]}...")
 
         try:
             response = await client.get(

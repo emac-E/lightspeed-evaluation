@@ -13,7 +13,7 @@ llm:
   ssl_verify: true                    # Verify SSL certificates for specified provider
   ssl_cert_file: null                 # Path to custom CA
   temperature: 0.0                    # Generation temperature
-  max_tokens: 32768                   # Maximum tokens in response - "malformed json" error is caused by this limit, increase it
+  max_tokens: 65536                   # Maximum tokens in response - increased to avoid truncation
   timeout: 300                        # Request timeout in seconds
   num_retries: 3                      # Retry attempts
   cache_dir: ".caches/llm_cache"      # Directory with LLM cache

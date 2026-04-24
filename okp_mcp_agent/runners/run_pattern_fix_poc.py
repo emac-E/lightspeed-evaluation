@@ -22,6 +22,7 @@ Output:
 
 import argparse
 import json
+import os
 import sys
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -81,14 +82,23 @@ class PatternFixResult:
 class PatternFixAgent(OkpMcpAgent):
     """Fix loop agent for pattern-based ticket resolution."""
 
-    def __init__(self, pattern_id: str, **kwargs):
+    def __init__(self, pattern_id: str, eval_root: Path, okp_mcp_root: Path,
+                 lscore_deploy_root: Path, **kwargs):
         """Initialize pattern fix agent.
 
         Args:
             pattern_id: Pattern identifier
-            **kwargs: Passed to OkpMcpAgent
+            eval_root: Path to lightspeed-evaluation repo
+            okp_mcp_root: Path to okp-mcp repo
+            lscore_deploy_root: Path to lscore-deploy repo
+            **kwargs: Additional options (interactive, enable_llm_advisor, etc.)
         """
-        super().__init__(**kwargs)
+        super().__init__(
+            eval_root=eval_root,
+            okp_mcp_root=okp_mcp_root,
+            lscore_deploy_root=lscore_deploy_root,
+            **kwargs
+        )
         self.pattern_id = pattern_id
         self.pattern_tickets = []
         self.branch_name = f"fix/pattern-{pattern_id.lower().replace('_', '-')}"
@@ -930,6 +940,60 @@ class PatternFixAgent(OkpMcpAgent):
         print(f"\n📄 Review report generated: {report_path}")
 
 
+def load_config(config_path: Path) -> Dict:
+    """Load configuration from YAML with environment variable expansion.
+
+    Args:
+        config_path: Path to config YAML file
+
+    Returns:
+        Dictionary with resolved configuration
+    """
+    if not config_path.exists():
+        raise FileNotFoundError(f"Config file not found: {config_path}")
+
+    with open(config_path) as f:
+        lines = f.readlines()
+
+    # Expand environment variables in non-comment lines only
+    import re
+    def expand_var(match):
+        var_name = match.group(1)
+        value = os.environ.get(var_name)
+        if value is None:
+            raise ValueError(
+                f"Environment variable ${{{var_name}}} not set. "
+                f"Please set it or edit {config_path}"
+            )
+        return value
+
+    processed_lines = []
+    for line in lines:
+        # Skip comment lines for variable expansion
+        if not line.lstrip().startswith('#'):
+            # Only expand ${VAR} syntax (not bare $VAR to avoid false matches)
+            line = re.sub(r'\$\{(\w+)\}', expand_var, line)
+        processed_lines.append(line)
+
+    config_str = ''.join(processed_lines)
+    config = yaml.safe_load(config_str)
+
+    # Resolve relative paths
+    config_dir = config_path.parent
+
+    # Repository root paths are relative to config file directory
+    for key in ['eval_root', 'okp_mcp_root', 'lscore_deploy_root']:
+        if key in config and not Path(config[key]).is_absolute():
+            config[key] = (config_dir / config[key]).resolve()
+
+    # patterns_dir is relative to eval_root, not config_dir
+    if 'patterns_dir' in config and not Path(config['patterns_dir']).is_absolute():
+        eval_root = Path(config.get('eval_root', REPO_ROOT))
+        config['patterns_dir'] = (eval_root / config['patterns_dir']).resolve()
+
+    return config
+
+
 def main():
     """Main entry point for POC."""
     parser = argparse.ArgumentParser(
@@ -938,44 +1002,78 @@ def main():
 
     parser.add_argument(
         'pattern_id',
-        help='Pattern ID to fix (e.g., RHEL10_DEPRECATED_FEATURES)'
+        help='Pattern ID to fix (e.g., EOL_UNSUPPORTED_LEGACY_RHEL)'
+    )
+    parser.add_argument(
+        '--config',
+        type=Path,
+        default=REPO_ROOT / "okp_mcp_agent/config/pattern_fix_config.yaml",
+        help='Config file with paths (default: okp_mcp_agent/config/pattern_fix_config.yaml)'
     )
     parser.add_argument(
         '--patterns-dir',
         type=Path,
-        default=REPO_ROOT / "config" / "patterns_v2",
-        help='Directory containing pattern YAMLs (default: config/patterns_v2)'
+        help='Override patterns directory from config'
     )
     parser.add_argument(
         '--max-iterations',
         type=int,
-        default=10,
-        help='Max optimization iterations (default: 10)'
+        help='Override max optimization iterations from config'
     )
     parser.add_argument(
         '--answer-threshold',
         type=float,
-        default=0.75,
-        help='Minimum answer_correctness to pass (default: 0.75)'
+        help='Override minimum answer_correctness from config'
     )
     parser.add_argument(
         '--stability-runs',
         type=int,
-        default=3,
-        help='Number of stability check runs (default: 3)'
+        help='Override number of stability check runs from config'
     )
 
     args = parser.parse_args()
+
+    # Load configuration
+    try:
+        config = load_config(args.config)
+    except Exception as e:
+        print(f"❌ Failed to load config from {args.config}: {e}")
+        sys.exit(1)
+
+    # Override config with command-line args if provided
+    if args.patterns_dir:
+        config['patterns_dir'] = args.patterns_dir
+    if args.max_iterations:
+        config['max_iterations'] = args.max_iterations
+    if args.answer_threshold:
+        config['answer_threshold'] = args.answer_threshold
+    if args.stability_runs:
+        config['stability_runs'] = args.stability_runs
+
+    # Validate required paths exist
+    for key in ['eval_root', 'okp_mcp_root', 'lscore_deploy_root']:
+        path = Path(config[key])
+        if not path.exists():
+            print(f"❌ Required path does not exist: {key} = {path}")
+            print(f"   Please edit {args.config} or set environment variable")
+            sys.exit(1)
 
     # Initialize agent
     print(f"🚀 Pattern Fix Loop POC")
     print(f"{'='*80}\n")
 
-    agent = PatternFixAgent(pattern_id=args.pattern_id)
+    agent = PatternFixAgent(
+        pattern_id=args.pattern_id,
+        eval_root=Path(config['eval_root']),
+        okp_mcp_root=Path(config['okp_mcp_root']),
+        lscore_deploy_root=Path(config['lscore_deploy_root']),
+        interactive=config.get('interactive', True),
+        enable_llm_advisor=config.get('enable_llm_advisor', True),
+    )
 
     # Load pattern tickets
     try:
-        agent.load_pattern_tickets(args.patterns_dir)
+        agent.load_pattern_tickets(Path(config['patterns_dir']))
     except Exception as e:
         print(f"❌ Failed to load pattern: {e}")
         sys.exit(1)
@@ -983,9 +1081,9 @@ def main():
     # Run fix loop
     try:
         result = agent.run_fix_loop(
-            max_iterations=args.max_iterations,
-            answer_threshold=args.answer_threshold,
-            stability_runs=args.stability_runs,
+            max_iterations=config['max_iterations'],
+            answer_threshold=config['answer_threshold'],
+            stability_runs=config['stability_runs'],
         )
     except KeyboardInterrupt:
         print("\n\n⚠️  Interrupted by user")

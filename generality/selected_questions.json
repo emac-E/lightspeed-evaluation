@@ -1,0 +1,327 @@
+[
+  {
+    "question": "How does perf integrate with uprobes?",
+    "ground_truth_answer": "Uprobes integrate seamlessly with perf, which can both consume existing uprobes and create new ones. This integration provides powerful, non-intrusive observability and profiling of user-space behavior alongside kernel-space instrumentation.",
+    "source_topic_slug": "monitoring_and_managing_system_status_and_performance",
+    "source_location": "(preamble) > Chapter\u00a015.\u00a0Creating uprobes with perf",
+    "source_change_type": "text_change",
+    "source_versions": [
+      "9",
+      "10"
+    ],
+    "question_type": "single_hop_specific_query_synthesizer",
+    "metadata": {
+      "query_style": "WEB_SEARCH_LIKE",
+      "query_length": "SHORT",
+      "persona_name": "Dr. Anya Sharma"
+    }
+  },
+  {
+    "question": "How can I report Red Hat documentation errors using Jira?",
+    "ground_truth_answer": "You can submit suggestions or report errors through the Red Hat Jira tracking system to help improve the documentation.",
+    "source_topic_slug": "composing_installing_and_managing_rhel_for_edge_images",
+    "source_location": "(preamble) > Providing feedback on Red Hat documentation",
+    "source_change_type": "text_change",
+    "source_versions": [
+      "9",
+      "10"
+    ],
+    "question_type": "single_hop_specific_query_synthesizer",
+    "metadata": {
+      "query_style": "WEB_SEARCH_LIKE",
+      "query_length": "MEDIUM",
+      "persona_name": "Rhys SystemManager"
+    }
+  },
+  {
+    "question": "How do I go about submmiting feedback through Jira?",
+    "ground_truth_answer": "Feedback can be submitted through Jira, but an account is required.",
+    "source_topic_slug": "10.1_release_notes",
+    "source_location": "Providing feedback on Red Hat documentation",
+    "source_change_type": "document_added",
+    "source_versions": null,
+    "question_type": "single_hop_specific_query_synthesizer",
+    "metadata": {
+      "query_style": "MISSPELLED",
+      "query_length": "MEDIUM",
+      "persona_name": "Rhys SystemManager"
+    }
+  },
+  {
+    "question": "What is Relax-and-Recovr?",
+    "ground_truth_answer": "Relax-and-Recover (ReaR) is a utility used to restore a system by using an existing backup. It functions as a disaster recovery solution, helping to minimize the impact of failures and supporting system migration. Furthermore, it allows for integration with certain backup software for disaster recovery.",
+    "source_topic_slug": "risk_reduction_and_recovery_operations",
+    "source_location": "Chapter\u00a01.\u00a0Recovering and restoring a system",
+    "source_change_type": "document_added",
+    "source_versions": null,
+    "question_type": "single_hop_specific_query_synthesizer",
+    "metadata": {
+      "query_style": "MISSPELLED",
+      "query_length": "SHORT",
+      "persona_name": "Dr. Anya Sharma"
+    }
+  },
+  {
+    "question": "How does dual RAiD provide redudancy in an active/passive configeration?",
+    "ground_truth_answer": "Active/passive configuration with dual RAID devices provides redundant paths to multiple storage arrays, ensuring failover protection across separate RAID systems with dedicated controllers. With DM Multipath configured, a failure at any of the points of the I/O path to either of the RAID devices causes DM Multipath to switch to the alternate I/O path for that device.",
+    "source_topic_slug": "configuring_device_mapper_multipath",
+    "source_location": "(preamble) > Chapter\u00a01.\u00a0Overview of device mapper multipathing > 1.2.\u00a0Active/Passive multipath configuration with two RAID devices",
+    "source_change_type": "text_change",
+    "source_versions": [
+      "9",
+      "10"
+    ],
+    "question_type": "single_hop_specific_query_synthesizer",
+    "metadata": {
+      "query_style": "MISSPELLED",
+      "query_length": "SHORT",
+      "persona_name": "Dr. Anya Sharma"
+    }
+  },
+  {
+    "question": "As a Rhys SystemManager overseeing RHEL environments, I'm trying to get a clear understanding of the `samba-bgq` service. Could you please detail its primary function, specify the conditions under which it should be utilized, particularly concerning print servers, and explain how it is managed within the system?",
+    "ground_truth_answer": "The `samba-bgqd` service, which is the Samba background queue daemon, has the primary function of regularly updating the printer list with printers from CUPS. It should be utilized for print servers that have multiple printers. This daemon is managed by the `samba-bgqd` systemd service, and if it fails to run, `rpcd_spoolss` starts it on demand.",
+    "source_topic_slug": "configuring_and_using_network_file_services",
+    "source_location": "(preamble) > Chapter\u00a01.\u00a0Using Samba as a server > 1.1.\u00a0Understanding the different Samba services and modes > 1.1.1.\u00a0The Samba services",
+    "source_change_type": "text_change",
+    "source_versions": [
+      "9",
+      "10"
+    ],
+    "question_type": "single_hop_specific_query_synthesizer",
+    "metadata": {
+      "query_style": "MISSPELLED",
+      "query_length": "LONG",
+      "persona_name": "Rhys SystemManager"
+    }
+  },
+  {
+    "question": "Under what circumstances does the `wsrep_cluster_address` option contribute to a failed MariaDB Galera Cluster restart?",
+    "ground_truth_answer": "The `wsrep_cluster_address` option contributes to a failed MariaDB Galera Cluster restart if the cluster is not bootstrapped and the `mariadb` service on the first node is started using only the `systemctl start mariadb` command. In such a situation, the node attempts to connect to at least one of the nodes listed in the `wsrep_cluster_address` option within the `/etc/my.cnf.d/galera.cnf` file. If no nodes are currently running, this connection attempt fails, resulting in a failed restart.",
+    "source_topic_slug": "configuring_and_using_database_servers",
+    "source_location": "(preamble) > Chapter\u00a01.\u00a0Using MariaDB > 1.8.\u00a0Replicating MariaDB with Galera > 1.8.6.\u00a0Restarting MariaDB Galera Cluster",
+    "source_change_type": "text_change",
+    "source_versions": [
+      "9",
+      "10"
+    ],
+    "question_type": "single_hop_specific_query_synthesizer",
+    "metadata": {
+      "query_style": "PERFECT_GRAMMAR",
+      "query_length": "MEDIUM",
+      "persona_name": "Rhys SystemManager"
+    }
+  },
+  {
+    "question": "As a system manager, what is the purpose of installing the `pcp-zero-conf` package, and what considerations should I keep in mind regarding its data storage?",
+    "ground_truth_answer": "The `pcp-zeroconf` package is installed to configure Performance Co-Pilot (PCP), which collects performance data essential for troubleshooting fencing, resource failures, and cluster disruptions. For cluster deployments where PCP is enabled, sufficient space is needed for PCP\u2019s captured data on the file system that contains `/var/log/pcp/`. While 10Gb is usually sufficient when using the `pcp-zeroconf` default settings, monitoring usage in this directory over a 14-day period of typical activity can provide a more accurate usage expectation.",
+    "source_topic_slug": "configuring_and_managing_high_availability_clusters",
+    "source_location": "(preamble) > Chapter\u00a03.\u00a0Creating a Red Hat High-Availability cluster with Pacemaker > 3.3.\u00a0Installing the pcp-zeroconf package (recommended)",
+    "source_change_type": "text_change",
+    "source_versions": [
+      "9",
+      "10"
+    ],
+    "question_type": "single_hop_specific_query_synthesizer",
+    "metadata": {
+      "query_style": "MISSPELLED",
+      "query_length": "MEDIUM",
+      "persona_name": "Rhys SystemManager"
+    }
+  },
+  {
+    "question": "As Dr. Anya Sharma, a Principal Systems Engineer, I frequently consult technical resources for deep-level system configuration and kernel optimization. Could you please detail the established procedure for providing feedback on Red Hat documantation, especially concerning areas that might impact hardware compatibility or system security, to ensure its continuous improvement?",
+    "ground_truth_answer": "Feedback on Red Hat documentation is appreciated, and it helps us improve it. The established procedure for submitting feedback is through Jira, which requires an account.",
+    "source_topic_slug": "risk_reduction_and_recovery_operations",
+    "source_location": "Providing feedback on Red Hat documentation",
+    "source_change_type": "document_added",
+    "source_versions": null,
+    "question_type": "single_hop_specific_query_synthesizer",
+    "metadata": {
+      "query_style": "MISSPELLED",
+      "query_length": "LONG",
+      "persona_name": "Dr. Anya Sharma"
+    }
+  },
+  {
+    "question": "RHEL blueprint, what it is?",
+    "ground_truth_answer": "A blueprint is a description of a customized system image for RHEL. It lists the packages and customizations that will be part of the system. You can edit blueprints with customizations and save them as a particular version, and they are created in the TOML format.",
+    "source_topic_slug": "composing_a_customized_rhel_system_image",
+    "source_location": "(preamble) > Chapter\u00a01.\u00a0RHEL image builder description > 1.1.\u00a0RHEL image builder terminology",
+    "source_change_type": "text_change",
+    "source_versions": [
+      "9",
+      "10"
+    ],
+    "question_type": "single_hop_specific_query_synthesizer",
+    "metadata": {
+      "query_style": "POOR_GRAMMAR",
+      "query_length": "SHORT",
+      "persona_name": "Alexius Redman"
+    }
+  },
+  {
+    "question": "As a System Manager overseeing Red Hat Enterprise Linux environments, I am keen to understand the specific content provided by official documentation. Could you please inform me what particular information is explained within the Red Hat Enterprise Linux 9: Application Compatibility Guide document?",
+    "ground_truth_answer": "The Red Hat Enterprise Linux 9: Application Compatibility Guide document explains application compatibility levels.",
+    "source_topic_slug": "package_manifest",
+    "source_location": "(preamble) > Preface",
+    "source_change_type": "text_change",
+    "source_versions": [
+      "9",
+      "10"
+    ],
+    "question_type": "single_hop_specific_query_synthesizer",
+    "metadata": {
+      "query_style": "PERFECT_GRAMMAR",
+      "query_length": "LONG",
+      "persona_name": "Rhys SystemManager"
+    }
+  },
+  {
+    "question": "Why does Red Hat make a specific recomendation about duplicate UIDs and GIDs?",
+    "ground_truth_answer": "Red Hat recommends you do not have multiple entries with the same UIDs or GIDs. This is because if you have objects with duplicate IDs, security identifiers (SIDs) are not generated correctly. SIDs are crucial for trusts between IdM and Active Directory and for Kerberos authentication to work correctly.",
+    "source_topic_slug": "managing_idm_users_groups_hosts_and_access_control_rules",
+    "source_location": "(preamble) > Chapter\u00a01.\u00a0Managing user accounts using the command line > 1.2.\u00a0Adding users using the command line",
+    "source_change_type": "text_change",
+    "source_versions": [
+      "9",
+      "10"
+    ],
+    "question_type": "single_hop_specific_query_synthesizer",
+    "metadata": {
+      "query_style": "MISSPELLED",
+      "query_length": "MEDIUM",
+      "persona_name": "Alexius Redman"
+    }
+  },
+  {
+    "question": "As someone managing Red Hat Enterprise Linux environments and building UBI-based web server containers, what is the importance of disabeling non-UBI DNF repositries to ensure that my image contains only Red Hat software that I can redistribute, and when should I consider using microdnf instead of dnf for these tasks?",
+    "ground_truth_answer": "When creating a UBI-based web server container from a Containerfile, you have to disable all non-UBI DNF repositories to ensure that your image contains only Red Hat software that you can redistribute. For UBI minimal images, you should use microdnf instead of dnf, for example, with commands like `RUN microdnf update -y && rm -rf /var/cache/yum` and `RUN microdnf install httpd -y && microdnf clean all`.",
+    "source_topic_slug": "building_running_and_managing_containers",
+    "source_location": "(preamble) > Chapter\u00a07.\u00a0Adding software to a UBI container > 7.7.\u00a0Building UBI-based images",
+    "source_change_type": "text_change",
+    "source_versions": [
+      "9",
+      "10"
+    ],
+    "question_type": "single_hop_specific_query_synthesizer",
+    "metadata": {
+      "query_style": "MISSPELLED",
+      "query_length": "LONG",
+      "persona_name": "Alexius Redman"
+    }
+  },
+  {
+    "question": "As a manager of Red Hat Enterprise Linux environments who values high-quality documentation for system stability and application deployment, what is the established method for providing feedback, such as submitting suggestions or reporting errors, to Red Hat concerning their documentation?",
+    "ground_truth_answer": "To help improve the documentation, you can submit suggestions or report errors through the Red Hat Jira tracking system.",
+    "source_topic_slug": "managing_smart_card_authentication",
+    "source_location": "(preamble) > Providing feedback on Red Hat documentation",
+    "source_change_type": "text_change",
+    "source_versions": [
+      "9",
+      "10"
+    ],
+    "question_type": "single_hop_specific_query_synthesizer",
+    "metadata": {
+      "query_style": "PERFECT_GRAMMAR",
+      "query_length": "LONG",
+      "persona_name": "Alexius Redman"
+    }
+  },
+  {
+    "question": "AD trust FIPS mode, what do?",
+    "ground_truth_answer": "To establish a cross-forest trust with an Active Directory (AD) domain while FIPS mode is enabled, you must authenticate with an AD administrative account. You cannot establish a trust using a shared secret while FIPS mode is enabled.",
+    "source_topic_slug": "installing_identity_management",
+    "source_location": "(preamble) > Chapter\u00a01.\u00a0Preparing the system for IdM server installation > 1.3.\u00a0Custom configuration requirements for IdM > 1.3.4.\u00a0FIPS compliance",
+    "source_change_type": "text_change",
+    "source_versions": [
+      "9",
+      "10"
+    ],
+    "question_type": "single_hop_specific_query_synthesizer",
+    "metadata": {
+      "query_style": "POOR_GRAMMAR",
+      "query_length": "SHORT",
+      "persona_name": "Rhys SystemManager"
+    }
+  },
+  {
+    "question": "How are OpenPGPvI signatures used in RHEL 10.1?",
+    "ground_truth_answer": "In RHEL 10.1, OpenPGPv6 signatures can be created or verified using Sequoia PGP tools to sign RPM packages with PQC algorithms. This is part of the new RPMv6 signature format, which enables multiple signatures in an RPM package.",
+    "source_topic_slug": "10.1_release_notes",
+    "source_location": "Chapter\u00a01.\u00a0Overview > 1.1.\u00a0Major changes in RHEL 10.1 > Security",
+    "source_change_type": "document_added",
+    "source_versions": null,
+    "question_type": "single_hop_specific_query_synthesizer",
+    "metadata": {
+      "query_style": "MISSPELLED",
+      "query_length": "SHORT",
+      "persona_name": "Alexius Redman"
+    }
+  },
+  {
+    "question": "Dr. Anya Sharma, me, Principal Systems Engineer, I need to know about the new features and enhancements for installer and image creation, what is there for me to see, like, what is important for my work with system configuration and kernel optimization, can you tell me about it?",
+    "ground_truth_answer": "The context mentions Key highlights for RHEL installer and Key highlights for RHEL image builder. For more information, you should see New features and enhancements - Installer and image creation.",
+    "source_topic_slug": "10.1_release_notes",
+    "source_location": "Chapter\u00a01.\u00a0Overview > 1.1.\u00a0Major changes in RHEL 10.1 > Installer and image creation",
+    "source_change_type": "document_added",
+    "source_versions": null,
+    "question_type": "single_hop_specific_query_synthesizer",
+    "metadata": {
+      "query_style": "POOR_GRAMMAR",
+      "query_length": "LONG",
+      "persona_name": "Dr. Anya Sharma"
+    }
+  },
+  {
+    "question": "Me, Alexius, I'm wondering about Podman, like, how it helps with the network for my applications, and what it does for the communication with the host and outside networks, and if it makes things good for performance and security isolation, you know, for my specific application requirements, because I need to deploy and update applications and keep things stable.",
+    "ground_truth_answer": "You can configure container network modes by using Podman to define how your workloads communicate with the host and external networks. Selecting the appropriate networking environment ensures optimal performance and security isolation tailored to your specific application requirements.",
+    "source_topic_slug": "building_running_and_managing_containers",
+    "source_location": "(preamble) > Chapter\u00a011.\u00a0Setting container network modes",
+    "source_change_type": "text_change",
+    "source_versions": [
+      "9",
+      "10"
+    ],
+    "question_type": "single_hop_specific_query_synthesizer",
+    "metadata": {
+      "query_style": "POOR_GRAMMAR",
+      "query_length": "LONG",
+      "persona_name": "Alexius Redman"
+    }
+  },
+  {
+    "question": "How to display printer drivers for CUSP in RHEL?",
+    "ground_truth_answer": "After installing the required package, you can display the list of drivers in the CUPS web interface or by using the lpinfo -m command.",
+    "source_topic_slug": "configuring_and_using_a_cups_printing_server",
+    "source_location": "(preamble) > Chapter\u00a04.\u00a0Packages with printer drivers",
+    "source_change_type": "text_change",
+    "source_versions": [
+      "9",
+      "10"
+    ],
+    "question_type": "single_hop_specific_query_synthesizer",
+    "metadata": {
+      "query_style": "MISSPELLED",
+      "query_length": "SHORT",
+      "persona_name": "Alexius Redman"
+    }
+  },
+  {
+    "question": "How can I run multiple PostgreSQL 16 instances on a single RHEL 10 host?",
+    "ground_truth_answer": "On RHEL 10, you cannot install multiple PostgreSQL instances on the same host due to conflicting RPM packages, as only one version (stream) of the same module can be installed by design. As an alternative, you can run the database server services in a container.",
+    "source_topic_slug": "configuring_and_using_database_servers",
+    "source_location": "(preamble) > Chapter\u00a03.\u00a0Using PostgreSQL > 3.1.\u00a0Installing PostgreSQL",
+    "source_change_type": "text_change",
+    "source_versions": [
+      "9",
+      "10"
+    ],
+    "question_type": "single_hop_specific_query_synthesizer",
+    "metadata": {
+      "query_style": "WEB_SEARCH_LIKE",
+      "query_length": "MEDIUM",
+      "persona_name": "Dr. Anya Sharma"
+    }
+  }
+]
