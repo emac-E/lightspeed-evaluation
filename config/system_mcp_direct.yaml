@@ -41,7 +41,7 @@ embedding:
 api:
   enabled: true
   mode: "mcp_direct"                       # MCP direct mode (instead of "infer")
-  mcp_url: "http://localhost:8001"         # MCP server URL
+  mcp_url: "http://localhost:8000"         # MCP server URL (updated for local dev)
   timeout: 300
 
   # Provider/model for cache key generation (not used for actual queries)

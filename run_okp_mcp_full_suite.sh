@@ -102,8 +102,8 @@ fi
 
 # Check if okp-mcp is running
 echo -e "${YELLOW}Checking okp-mcp status...${NC}"
-if ! curl -s http://localhost:8001/mcp > /dev/null 2>&1; then
-    echo -e "${RED}Error: okp-mcp not responding on http://localhost:8001${NC}"
+if ! curl -s http://localhost:8000/mcp > /dev/null 2>&1; then
+    echo -e "${RED}Error: okp-mcp not responding on http://localhost:8000${NC}"
     echo -e "${YELLOW}Start it with: cd ~/Work/lscore-deploy/local && podman-compose up -d okp-mcp${NC}"
     exit 1
 fi
