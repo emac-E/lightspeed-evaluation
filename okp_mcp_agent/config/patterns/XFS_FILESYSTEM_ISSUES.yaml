@@ -1,0 +1,153 @@
+# Pattern: XFS_FILESYSTEM_ISSUES
+# Description: XFS filesystem configuration and support issues across multiple RHEL versions
+# Total tickets: 3
+# Problem Type: INCORRECT_PROCEDURE / UNSUPPORTED_CONFIG / OTHER
+# Components: filesystem, xfs, storage, lvm
+
+- conversation_group_id: RSPEED-1585
+  metadata:
+    jira_ticket: RSPEED-1585
+    jira_url: https://redhat.atlassian.net/browse/RSPEED-1585
+    confidence: HIGH
+    pattern_id: XFS_FILESYSTEM_ISSUES
+  turns:
+  - query: What mkfs.xfs options should be used for a mission-critical, performance-sensitive
+      100 terabyte filesystem in RHEL?
+    expected_response: 'For a mission-critical, performance-sensitive 100TB XFS filesystem
+      in RHEL, use the default mkfs.xfs options without manual tuning. Simply run:
+      mkfs.xfs /dev/device
+
+
+      According to Red Hat''s official best practices documentation: "There are few
+      workloads where using non-default mkfs.xfs or mount options are required. In
+      most cases, the default values will suffice. The filesystem driver probes its
+      underlying storage devices and the resulting default values are already optimized."
+      (Source: Red Hat KB 203173)
+
+
+      Key points:
+
+      1. Use defaults: mkfs.xfs automatically calculates optimal parameters including
+      allocation group count, log size, and block sizes based on device size
+
+      2. 100TB is supported: XFS officially supports filesystems up to 100TB (Source:
+      Red Hat KB 764393)
+
+      3. Avoid manual tuning: Red Hat documentation shows that non-default options
+      can cause severe issues. For example, using -n size=64k can cause memory allocation
+      deadlocks requiring kernel upgrades to fix (Source: Red Hat KB 1597523)
+
+      4. Mount options matter more: For performance tuning, focus on mount options
+      rather than mkfs options. For filesystems >1TB, ensure inode64 mount option
+      is used (default in RHEL7+) to avoid inodes being confined to the first 1TB
+      which causes performance problems (Source: Red Hat KB 67091)
+
+
+      The defaults should only be changed if "the specific workload on the machine
+      is known to cause problems with the default settings, and can be worked around
+      via a configuration change" (Source: Red Hat KB 203173).'
+    expected_urls:
+    - https://access.redhat.com/solutions/203173
+    - https://access.redhat.com/solutions/764393
+    - https://access.redhat.com/solutions/1597523
+    - https://access.redhat.com/solutions/67091
+    expected_keywords: []
+    forbidden_claims: []
+    turn_metrics:
+    - ragas:context_relevance
+    - ragas:context_precision_without_reference
+    - custom:answer_correctness
+- conversation_group_id: RSPEED-1583
+  metadata:
+    jira_ticket: RSPEED-1583
+    jira_url: https://redhat.atlassian.net/browse/RSPEED-1583
+    confidence: MEDIUM
+    pattern_id: XFS_FILESYSTEM_ISSUES
+  turns:
+  - query: Why does XFS null files on a crash for safety, and how does XFS handle
+      file writes interrupted by system crashes?
+    expected_response: 'TODO: The retrieved RHEL documentation does not directly address
+      the claim that ''XFS nulls files on crash for safety.'' However, based on available
+      documentation and XFS architecture:
+
+
+      The premise of the question appears to be based on a misconception. XFS does
+      not intentionally ''null files for safety'' as a crash recovery feature.
+
+
+      What the documentation confirms:
+
+      - XFS uses CRC (Cyclic Redundancy Check) enabled by default in RHEL 7.4+ which
+      ''improves crash recovery algorithms and the ability of various tools to validate
+      and repair metadata corruptions when they are found'' (Source: https://access.redhat.com/solutions/3202781,
+      https://access.redhat.com/solutions/7071127)
+
+      - Disabling CRC is described as ''a trade-off with file-system consistency''
+
+
+      What is not confirmed by retrieved documentation:
+
+      - Specific behavior of file data during interrupted writes
+
+      - Any ''nulling files for safety'' mechanism
+
+      - Details about XFS metadata journaling vs data journaling behavior during crashes
+
+
+      Based on XFS architecture knowledge (not directly confirmed by retrieved docs):
+      XFS uses metadata journaling to ensure filesystem consistency after crashes,
+      but does not journal data by default. Files being written during a crash may
+      contain partial data, zero-filled regions from delayed allocation, or appear
+      zero-length if metadata was journaled but data wasn''t flushed. This is not
+      a deliberate ''nulling for safety'' feature.
+
+
+      Note: No mention of ''.xfs_null'' prefixes or ''xfs_repair removes null files''
+      was found in official RHEL documentation, suggesting these are inaccurate details.'
+    expected_urls:
+    - https://access.redhat.com/solutions/3202781
+    - https://access.redhat.com/solutions/7071127
+    expected_keywords: []
+    forbidden_claims: []
+    turn_metrics:
+    - ragas:context_relevance
+    - ragas:context_precision_without_reference
+    - custom:answer_correctness
+- conversation_group_id: RSPEED-1582
+  metadata:
+    jira_ticket: RSPEED-1582
+    jira_url: https://redhat.atlassian.net/browse/RSPEED-1582
+    confidence: HIGH
+    pattern_id: XFS_FILESYSTEM_ISSUES
+  turns:
+  - query: How do I shrink an LVM logical volume with XFS filesystem on it?
+    expected_response: 'XFS filesystems cannot be shrunk in a supported manner on
+      RHEL 6, 7, 8, and 9. According to Red Hat solution article 540013: "At the moment,
+      functionality to shrink XFS filesystems is not available in RHEL in a supported
+      manner." A request for this feature (Bug 1062667) was CLOSED as WONTFIX due
+      to design constraints. The root cause is that "while the XFS file systems can
+      be grown while mounted, their size cannot be reduced" - this limitation has
+      been discussed upstream for over 10 years but is "deemed to be complex and risky."
+
+
+      Note: RHEL 10 offers XFS shrink functionality as a Tech Preview with limitations.
+
+
+      Workarounds:
+
+      1. Backup and restore: Use xfsdump to backup data, destroy the filesystem, create
+      a smaller LVM volume, create new XFS filesystem, and restore with xfsrestore
+
+      2. Use xfs_quota to implement project (directory tree) quotas for space limitations
+      within the filesystem
+
+      3. Use ext4 filesystem instead if shrinking capability is required, as ext4
+      supports both growing and shrinking via resize2fs'
+    expected_urls:
+    - https://access.redhat.com/solutions/540013/index.html
+    expected_keywords: []
+    forbidden_claims: []
+    turn_metrics:
+    - ragas:context_relevance
+    - ragas:context_precision_without_reference
+    - custom:answer_correctness

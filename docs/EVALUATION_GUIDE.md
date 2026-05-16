@@ -420,6 +420,113 @@ expected_tool_calls:
 
 ---
 
+#### Forbidden Claims Evaluation
+
+**What it measures:** Does the AI's response avoid known-incorrect phrases or claims?
+
+**Plain English:** "Make sure the AI doesn't repeat wrong answers we've seen before."
+
+**Score Range:** 0.0 to 1.0 (higher is better)
+
+**How it works:**
+- Maintains a list of forbidden phrases per question
+- Scans the AI's response for any forbidden claims
+- Binary scoring: 1.0 if no forbidden claims found, 0.0 if any detected
+- Partial scoring: (avoided_claims / total_claims)
+
+**Example:**
+```yaml
+turns:
+  - query: "Can I run a RHEL 6 container on RHEL 9?"
+    forbidden_claims:
+      - "viable strategy"
+      - "fully supported"
+      - "recommended approach"
+    turn_metrics:
+      - custom:forbidden_claims_eval
+```
+
+**Results Example:**
+```
+forbidden_claims_eval: 1.0 ✅
+Reason: No forbidden claims found. All 3 known-incorrect phrases avoided.
+```
+
+**When to use:** Regression testing after model/prompt updates, preventing known-incorrect answers
+
+**Threshold:** 1.0 (strict - no forbidden claims allowed)
+
+**Required fields:** `query`, `response`, `forbidden_claims`
+
+---
+
+#### URL Retrieval Evaluation
+
+**What it measures:** How well does the RAG system retrieve the expected documents, and where do they rank?
+
+**Plain English:** "Did the AI find the right documentation, and was it near the top of the search results?"
+
+**Score Range:** 0.0 to 1.0 F1 score (higher is better)
+
+**Metrics Provided:**
+- **F1 Score**: Harmonic mean of precision and recall for URL matching
+- **Precision**: Percentage of retrieved URLs that were expected
+- **Recall**: Percentage of expected URLs that were retrieved
+- **MRR (Mean Reciprocal Rank)**: Industry-standard ranking metric (1.0 = perfect ranking)
+- **Average Position**: Mean position of expected documents in results
+- **Top-3 / Top-5 Rate**: Percentage of expected docs found in top positions
+
+**How it works:**
+- Extracts URLs from `tool_calls` or `contexts` field
+- Normalizes URLs to short-form (e.g., `https://access.redhat.com/solutions/1136173` → `solutions/1136173`)
+- Compares against expected URLs
+- Calculates precision, recall, F1, and ranking metrics
+
+**Example:**
+```yaml
+turns:
+  - query: "How do I configure XFS quotas on RHEL 9?"
+    expected_urls:
+      - "solutions/1136173"
+      - "documentation/red_hat_enterprise_linux/9/..."
+      - "articles/234567"
+    turn_metrics:
+      - custom:url_retrieval_eval
+```
+
+**Results Example:**
+```
+url_retrieval_eval: 0.85
+F1=0.85, Precision=0.90, Recall=0.80
+Ranking: MRR=0.833, Avg_Pos=1.5, Top3=100%, Top5=100%
+Matched 4/5: 'solutions/1136173' (#1), 'articles/234567' (#2)
+```
+
+**MRR Calculation:**
+```
+Expected URLs: ["solutions/123", "solutions/456", "articles/789"]
+Retrieved (in order):
+  #1: solutions/123  → RR = 1/1 = 1.000
+  #2: articles/999   → not expected
+  #3: solutions/456  → RR = 1/3 = 0.333
+  #4: articles/789   → RR = 1/4 = 0.250
+
+MRR = (1.000 + 0.333 + 0.250) / 3 = 0.528
+```
+
+**MRR Interpretation:**
+- MRR = 1.0: All expected docs ranked #1 (perfect)
+- MRR = 0.5: Expected docs average position ~2
+- MRR = 0.1: Expected docs ranked very low
+
+**When to use:** RAG quality monitoring, search ranking evaluation, detecting retrieval degradation
+
+**Threshold:** 0.7 or higher (F1 score)
+
+**Required fields:** `expected_urls`, and either `tool_calls` or `contexts`
+
+---
+
 ### 4.3 Script-Based Metrics
 
 #### Action Evaluation

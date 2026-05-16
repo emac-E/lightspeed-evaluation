@@ -43,6 +43,13 @@
         - "Kea"
         - "RHEL 10"
 
+
+      # Expected URLs that should be retrieved from Solr (for debugging/validation)
+      # Uncomment to enable URL validation in future metrics
+      # expected_urls:
+      #   - https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/10/html-single/managing_networking_infrastructure_services
+      #   - https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/10/html-single/10.0_release_notes
+
       turn_metrics:
         - ragas:faithfulness
         - ragas:response_relevancy
@@ -192,6 +199,13 @@
         - "only"
         - "RHEL 10"
 
+
+      # Expected URLs that should be retrieved from Solr (for debugging/validation)
+      # Uncomment to enable URL validation in future metrics
+      # expected_urls:
+      #   - https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/10/html-single/managing_networking_infrastructure_services
+      #   - https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/10/html-single/10.0_release_notes
+
       turn_metrics:
         - ragas:faithfulness
         - ragas:response_relevancy
@@ -225,6 +239,13 @@
       required_terms:
         - "kernel 6"
         - "RHEL 10"
+
+
+      # Expected URLs that should be retrieved from Solr (for debugging/validation)
+      # Uncomment to enable URL validation in future metrics
+      # expected_urls:
+      #   - https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/10/html-single/10.1_release_notes
+      #   - https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/10/html-single/10.0_release_notes
 
       turn_metrics:
         - ragas:faithfulness
@@ -346,6 +367,13 @@
         - "RHEL 9"
         - "RHEL 10"
 
+
+      # Expected URLs that should be retrieved from Solr (for debugging/validation)
+      # Uncomment to enable URL validation in future metrics
+      # expected_urls:
+      #   - https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/10/html-single/managing_networking_infrastructure_services
+      #   - https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/9/html-single/managing_networking_infrastructure_services
+
       turn_metrics:
         - ragas:faithfulness
         - ragas:response_relevancy
@@ -387,6 +415,13 @@
         - "RHEL 10"
         - "Python 3.9"
         - "Python 3.12"
+
+
+      # Expected URLs that should be retrieved from Solr (for debugging/validation)
+      # Uncomment to enable URL validation in future metrics
+      # expected_urls:
+      #   - https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/10/html-single/installing_and_using_dynamic_programming_languages
+      #   - https://access.redhat.com/support/policy/updates/rhel-app-streams-life-cycle
 
       turn_metrics:
         - ragas:faithfulness
@@ -651,6 +686,12 @@
       forbidden_terms:
         - "dhcp-server"
         - "dhcpd.conf"
+
+
+      # Expected URLs that should be retrieved from Solr (for debugging/validation)
+      # Uncomment to enable URL validation in future metrics
+      # expected_urls:
+      #   - https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/10/html-single/managing_networking_infrastructure_services
 
       turn_metrics:
         - ragas:faithfulness

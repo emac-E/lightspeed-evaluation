@@ -1,0 +1,156 @@
+# Pattern: INCORRECT_RPM_OSTREE_PROCEDURES
+# Description: Incorrect procedures for rpm-ostree operations including kernel and package management
+# Total tickets: 4
+# Problem Type: INCORRECT_PROCEDURE
+# Components: rpm-ostree, kernel, packages
+
+- conversation_group_id: RSPEED-1931
+  turns:
+  - query: How do I manage kernel arguments on rpm-ostree-based RHEL systems (RHEL
+      for Edge, RHEL CoreOS, RHEL Atomic Host)?
+    expected_response: 'On rpm-ostree-based systems (RHEL for Edge, RHEL CoreOS, RHEL
+      Atomic Host), you must use ''rpm-ostree kargs'' to manage kernel arguments.
+      The command syntax is:
+
+
+      - Add arguments: ''rpm-ostree kargs --append=KEY=VALUE'' (use --append-if-missing=KEY=VALUE
+      to only add if not present)
+
+      - Replace arguments: ''rpm-ostree kargs --replace=KEY=VALUE=NEWVALUE''
+
+      - Remove arguments: ''rpm-ostree kargs --delete=KEY=VALUE'' (use --delete-if-present=KEY=VALUE
+      to avoid errors if missing)
+
+      - View current arguments: ''rpm-ostree kargs'' (without options)
+
+      - Edit interactively: ''rpm-ostree kargs --editor''
+
+
+      After making changes, the output will show ''Changes queued for next boot. Run
+      "systemctl reboot" to start a reboot''. A reboot is required to apply kernel
+      argument changes. The rpm-ostree changes will be preserved after cluster/system
+      updates.
+
+
+      Important notes:
+
+      - For arguments with special characters like quotes, use escape characters (e.g.,
+      ''rpm-ostree kargs --append-if-missing=cgroup_no_v1=\"all\"'')
+
+      - The --delete operation will fail if the specified kernel argument doesn''t
+      exist (unless using --delete-if-present)
+
+      - On OpenShift, MachineConfig is the standard way to manage kernel arguments,
+      but rpm-ostree kargs is used for operations not supported by MachineConfig Operator
+      (like removing certain arguments)
+
+      - Do not use grubby on rpm-ostree systems, as it is designed for traditional
+      RPM-based RHEL systems'
+    turn_metrics:
+    - custom:url_retrieval_eval
+    - ragas:context_relevance
+    - ragas:context_precision_without_reference
+    - custom:answer_correctness
+    expected_urls:
+    - https://access.redhat.com/solutions/7069583
+    - https://access.redhat.com/solutions/7124614
+    - https://access.redhat.com/solutions/6972920
+    - https://access.redhat.com/solutions/6178742
+    - https://access.redhat.com/solutions/3909051
+  metadata:
+    pattern_id: INCORRECT_RPM_OSTREE_PROCEDURES
+    confidence: HIGH
+- conversation_group_id: RSPEED-1930
+  turns:
+  - query: How do I install a package on a system using rpm-ostree?
+    expected_response: 'To install a package on an rpm-ostree-based system (such as
+      RHEL Atomic Host, RHEL Image Mode, or Red Hat CoreOS), use the command ''rpm-ostree
+      install <package_name>''. This adds the package to a new deployment layer on
+      top of the base image. After installation completes, you must reboot the system
+      to activate the new deployment and use the installed package - the package is
+      not immediately available until after reboot.
+
+
+      Important considerations:
+
+      1. Red Hat strongly recommends using containers or system containers to extend
+      functionality rather than adding packages to the rpm-ostree branch whenever
+      possible.
+
+      2. Package path restrictions apply: rpm-ostree install will not allow packages
+      that place binaries in /opt. Packages must use allowed paths: /usr, /bin, /sbin,
+      /lib, /lib64 (or alternatives like /usr/opt or /usr/local/opt).
+
+      3. The reboot requirement is mandatory - unlike traditional dnf/yum installations,
+      packages installed via rpm-ostree are not available in the current session.
+
+
+      Example: ''rpm-ostree install oddjob oddjob-mkhomedir'' followed by ''systemctl
+      reboot'''
+    turn_metrics:
+    - custom:url_retrieval_eval
+    - ragas:context_relevance
+    - ragas:context_precision_without_reference
+    - custom:answer_correctness
+    expected_urls:
+    - https://access.redhat.com/solutions/3297891
+    - https://access.redhat.com/solutions/3154491
+    - https://access.redhat.com/solutions/2946401
+  metadata:
+    pattern_id: INCORRECT_RPM_OSTREE_PROCEDURES
+    confidence: HIGH
+- conversation_group_id: RSPEED-1929
+  turns:
+  - query: How do I rollback my system to a previous version using rpm-ostree?
+    expected_response: To rollback your system to a previous version using rpm-ostree,
+      use the 'rpm-ostree rollback' command followed by a system reboot. According
+      to RHEL for Edge documentation, you can use 'rpm-ostree rollback' to rollback
+      to the previous RHEL for Edge image, and 'rpm-ostree status' to show which image
+      will be booted by default. The rollback command switches the default deployment
+      to the previous one in the bootloader. After running 'rpm-ostree rollback',
+      reboot the system with 'systemctl reboot' to boot into the previous deployment.
+      To view available deployments, use 'rpm-ostree status', which shows the deployment
+      history and which one is currently booted. Note that commands like 'rpm-ostree
+      split --list' and 'rpm-ostree transaction rollback <commit-id>' do not exist
+      and are incorrect.
+    turn_metrics:
+    - custom:url_retrieval_eval
+    - ragas:context_relevance
+    - ragas:context_precision_without_reference
+    - custom:answer_correctness
+    expected_urls:
+    - https://access.redhat.com/articles/5719641/index.html
+    - https://access.redhat.com/errata/RHEA-2015:1171/index.html
+  metadata:
+    pattern_id: INCORRECT_RPM_OSTREE_PROCEDURES
+    confidence: HIGH
+- conversation_group_id: RSPEED-1859
+  turns:
+  - query: What is the correct rpm-ostree command to view the list of deployments
+      on a RHEL system?
+    expected_response: "The correct command is `rpm-ostree status`. This command displays\
+      \ all available rpm-ostree deployments on OSTree-based RHEL systems (such as\
+      \ RHEL for Edge, RHEL Atomic Host, or RHEL CoreOS). According to Red Hat documentation,\
+      \ `rpm-ostree status` is explicitly used to 'display rpm-ostree deployments'\
+      \ and 'show which image will be booted by default'.\n\nThe command output includes:\n\
+      - Currently booted deployment (marked with *)\n- Available rollback deployments\n\
+      - Timestamp, version, and commit ID for each deployment\n- OSTree refspec information\n\
+      - Package layering details (when using -v verbose flag)\n\nExample output:\n\
+      ```\nState: idle\nDeployments:\n* ostree://rhel-atomic-host-ostree:rhel-atomic-host/7/x86_64/standard\n\
+      \    Version: 7.8.3 (2020-08-05 13:51:05)\n    Commit: dfd383553c0f25c503272b0d193ac863f2deede0fa69278391bd2b1e6d02b56a\n\
+      ```\n\nThe suggested `rpm-ostree branch` command is NOT a valid rpm-ostree command\
+      \ for viewing deployments. This may be confusion with lower-level `ostree` CLI\
+      \ commands that work with repository refs, not system deployments."
+    turn_metrics:
+    - custom:url_retrieval_eval
+    - ragas:context_relevance
+    - ragas:context_precision_without_reference
+    - custom:answer_correctness
+    expected_urls:
+    - https://access.redhat.com/articles/5719641/index.html
+    - https://access.redhat.com/solutions/5694181/index.html
+    - https://access.redhat.com/solutions/2792901/index.html
+    - https://access.redhat.com/solutions/7049418/index.html
+  metadata:
+    pattern_id: INCORRECT_RPM_OSTREE_PROCEDURES
+    confidence: HIGH

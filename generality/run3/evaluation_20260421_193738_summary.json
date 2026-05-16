@@ -1,0 +1,3459 @@
+{
+  "timestamp": "2026-04-21T19:37:40.650085",
+  "total_evaluations": 120,
+  "summary_stats": {
+    "overall": {
+      "TOTAL": 120,
+      "PASS": 44,
+      "FAIL": 64,
+      "ERROR": 12,
+      "SKIPPED": 0,
+      "pass_rate": 36.666666666666664,
+      "fail_rate": 53.333333333333336,
+      "error_rate": 10.0,
+      "skipped_rate": 0.0,
+      "total_judge_llm_input_tokens": 364808,
+      "total_judge_llm_output_tokens": 344629,
+      "total_judge_llm_tokens": 709437,
+      "total_api_input_tokens": 0,
+      "total_api_output_tokens": 0,
+      "total_api_tokens": 0,
+      "total_tokens": 709437
+    },
+    "by_metric": {
+      "ragas:faithfulness": {
+        "pass": 3,
+        "fail": 14,
+        "error": 3,
+        "skipped": 0,
+        "scores": [
+          0.0,
+          0.0,
+          0.75,
+          0.8,
+          0.0,
+          0.038461538461538464,
+          0.21428571428571427,
+          0.3157894736842105,
+          1.0,
+          0.0,
+          0.25,
+          0.75,
+          0.8461538461538461,
+          0.6842105263157895,
+          0.275,
+          0.2,
+          0.2692307692307692
+        ],
+        "pass_rate": 15.0,
+        "fail_rate": 70.0,
+        "error_rate": 15.0,
+        "skipped_rate": 0.0,
+        "score_statistics": {
+          "count": 17,
+          "mean": 0.3760665804783452,
+          "median": 0.2692307692307692,
+          "std": 0.3484436819240754,
+          "min": 0.0,
+          "max": 1.0,
+          "confidence_interval": {
+            "low": 0.21414773500493312,
+            "mean": 0.37517733814173443,
+            "high": 0.5320428758547954,
+            "confidence_level": 95
+          }
+        }
+      },
+      "ragas:response_relevancy": {
+        "pass": 16,
+        "fail": 4,
+        "error": 0,
+        "skipped": 0,
+        "scores": [
+          0.0,
+          0.9703048282420464,
+          0.9703048282420464,
+          0.9703048282420464,
+          0.9703048282420464,
+          0.9703048282420464,
+          0.9703048282420464,
+          0.0,
+          0.0,
+          0.9703048282420464,
+          0.9703048282420464,
+          0.9703048282420464,
+          0.9703048282420464,
+          0.9703048282420464,
+          0.9703048282420464,
+          0.9703048282420464,
+          0.9703048282420464,
+          0.9703048282420464,
+          0.0,
+          0.9703048282420464
+        ],
+        "pass_rate": 80.0,
+        "fail_rate": 20.0,
+        "error_rate": 0.0,
+        "skipped_rate": 0.0,
+        "score_statistics": {
+          "count": 20,
+          "mean": 0.7762438625936372,
+          "median": 0.9703048282420464,
+          "std": 0.3982046994800173,
+          "min": 0.0,
+          "max": 0.9703048282420464,
+          "confidence_interval": {
+            "low": 0.6306981383573302,
+            "mean": 0.7762438625936371,
+            "high": 0.9703048282420463,
+            "confidence_level": 95
+          }
+        }
+      },
+      "ragas:context_precision_without_reference": {
+        "pass": 1,
+        "fail": 16,
+        "error": 3,
+        "skipped": 0,
+        "scores": [
+          0.0,
+          0.0,
+          0.499999999975,
+          0.9266666666481335,
+          0.0,
+          0.0,
+          0.16666666665,
+          0.249999999975,
+          0.5333333333155555,
+          0.16666666665,
+          0.14285714284285714,
+          0.4166666666458333,
+          0.555555555537037,
+          0.2916666666520833,
+          0.32499999998375,
+          0.4166666666458333,
+          0.6595238095106191
+        ],
+        "pass_rate": 5.0,
+        "fail_rate": 80.0,
+        "error_rate": 15.0,
+        "skipped_rate": 0.0,
+        "score_statistics": {
+          "count": 17,
+          "mean": 0.3147805788842178,
+          "median": 0.2916666666520833,
+          "std": 0.2655976460217995,
+          "min": 0.0,
+          "max": 0.9266666666481335,
+          "confidence_interval": {
+            "low": 0.190884570482183,
+            "mean": 0.31210084032144825,
+            "high": 0.4353034546979805,
+            "confidence_level": 95
+          }
+        }
+      },
+      "ragas:context_relevance": {
+        "pass": 10,
+        "fail": 7,
+        "error": 3,
+        "skipped": 0,
+        "scores": [
+          0.0,
+          0.0,
+          1.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          0.5,
+          1.0,
+          1.0,
+          1.0,
+          0.0,
+          1.0
+        ],
+        "pass_rate": 50.0,
+        "fail_rate": 35.0,
+        "error_rate": 15.0,
+        "skipped_rate": 0.0,
+        "score_statistics": {
+          "count": 17,
+          "mean": 0.6176470588235294,
+          "median": 1.0,
+          "std": 0.48507125007266594,
+          "min": 0.0,
+          "max": 1.0,
+          "confidence_interval": {
+            "low": 0.41176470588235303,
+            "mean": 0.6176470588235294,
+            "high": 0.8529411764705883,
+            "confidence_level": 95
+          }
+        }
+      },
+      "ragas:context_recall": {
+        "pass": 3,
+        "fail": 14,
+        "error": 3,
+        "skipped": 0,
+        "scores": [
+          0.0,
+          0.0,
+          1.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.3333333333333333,
+          0.0,
+          0.0,
+          0.0,
+          0.5,
+          0.6666666666666666,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
+        "pass_rate": 15.0,
+        "fail_rate": 70.0,
+        "error_rate": 15.0,
+        "skipped_rate": 0.0,
+        "score_statistics": {
+          "count": 17,
+          "mean": 0.29411764705882354,
+          "median": 0.0,
+          "std": 0.4019458390334945,
+          "min": 0.0,
+          "max": 1.0,
+          "confidence_interval": {
+            "low": 0.10784313725490202,
+            "mean": 0.29411764705882354,
+            "high": 0.47058823529411764,
+            "confidence_level": 95
+          }
+        }
+      },
+      "custom:answer_correctness": {
+        "pass": 11,
+        "fail": 9,
+        "error": 0,
+        "skipped": 0,
+        "scores": [
+          0.0,
+          1.0,
+          0.9,
+          1.0,
+          0.9,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.2,
+          0.5,
+          0.4,
+          0.4,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          0.0,
+          1.0
+        ],
+        "pass_rate": 55.00000000000001,
+        "fail_rate": 45.0,
+        "error_rate": 0.0,
+        "skipped_rate": 0.0,
+        "score_statistics": {
+          "count": 20,
+          "mean": 0.615,
+          "median": 0.9,
+          "std": 0.4392277912787156,
+          "min": 0.0,
+          "max": 1.0,
+          "confidence_interval": {
+            "low": 0.43499999999999994,
+            "mean": 0.615,
+            "high": 0.8049999999999999,
+            "confidence_level": 95
+          }
+        }
+      }
+    },
+    "by_conversation": {
+      "rhel10_benchmark_q03": {
+        "pass": 0,
+        "fail": 2,
+        "error": 4,
+        "skipped": 0,
+        "pass_rate": 0.0,
+        "fail_rate": 33.33333333333333,
+        "error_rate": 66.66666666666666,
+        "skipped_rate": 0.0
+      },
+      "rhel10_benchmark_q13": {
+        "pass": 2,
+        "fail": 0,
+        "error": 4,
+        "skipped": 0,
+        "pass_rate": 33.33333333333333,
+        "fail_rate": 0.0,
+        "error_rate": 66.66666666666666,
+        "skipped_rate": 0.0
+      },
+      "rhel10_benchmark_q05": {
+        "pass": 2,
+        "fail": 0,
+        "error": 4,
+        "skipped": 0,
+        "pass_rate": 33.33333333333333,
+        "fail_rate": 0.0,
+        "error_rate": 66.66666666666666,
+        "skipped_rate": 0.0
+      },
+      "rhel10_benchmark_q11": {
+        "pass": 2,
+        "fail": 4,
+        "error": 0,
+        "skipped": 0,
+        "pass_rate": 33.33333333333333,
+        "fail_rate": 66.66666666666666,
+        "error_rate": 0.0,
+        "skipped_rate": 0.0
+      },
+      "rhel10_benchmark_q10": {
+        "pass": 2,
+        "fail": 4,
+        "error": 0,
+        "skipped": 0,
+        "pass_rate": 33.33333333333333,
+        "fail_rate": 66.66666666666666,
+        "error_rate": 0.0,
+        "skipped_rate": 0.0
+      },
+      "rhel10_benchmark_q14": {
+        "pass": 4,
+        "fail": 2,
+        "error": 0,
+        "skipped": 0,
+        "pass_rate": 66.66666666666666,
+        "fail_rate": 33.33333333333333,
+        "error_rate": 0.0,
+        "skipped_rate": 0.0
+      },
+      "rhel10_benchmark_q02": {
+        "pass": 5,
+        "fail": 1,
+        "error": 0,
+        "skipped": 0,
+        "pass_rate": 83.33333333333334,
+        "fail_rate": 16.666666666666664,
+        "error_rate": 0.0,
+        "skipped_rate": 0.0
+      },
+      "rhel10_benchmark_q08": {
+        "pass": 0,
+        "fail": 6,
+        "error": 0,
+        "skipped": 0,
+        "pass_rate": 0.0,
+        "fail_rate": 100.0,
+        "error_rate": 0.0,
+        "skipped_rate": 0.0
+      },
+      "rhel10_benchmark_q06": {
+        "pass": 0,
+        "fail": 6,
+        "error": 0,
+        "skipped": 0,
+        "pass_rate": 0.0,
+        "fail_rate": 100.0,
+        "error_rate": 0.0,
+        "skipped_rate": 0.0
+      },
+      "rhel10_benchmark_q01": {
+        "pass": 2,
+        "fail": 4,
+        "error": 0,
+        "skipped": 0,
+        "pass_rate": 33.33333333333333,
+        "fail_rate": 66.66666666666666,
+        "error_rate": 0.0,
+        "skipped_rate": 0.0
+      },
+      "rhel10_benchmark_q12": {
+        "pass": 2,
+        "fail": 4,
+        "error": 0,
+        "skipped": 0,
+        "pass_rate": 33.33333333333333,
+        "fail_rate": 66.66666666666666,
+        "error_rate": 0.0,
+        "skipped_rate": 0.0
+      },
+      "rhel10_benchmark_q15": {
+        "pass": 3,
+        "fail": 3,
+        "error": 0,
+        "skipped": 0,
+        "pass_rate": 50.0,
+        "fail_rate": 50.0,
+        "error_rate": 0.0,
+        "skipped_rate": 0.0
+      },
+      "rhel10_benchmark_q19": {
+        "pass": 2,
+        "fail": 4,
+        "error": 0,
+        "skipped": 0,
+        "pass_rate": 33.33333333333333,
+        "fail_rate": 66.66666666666666,
+        "error_rate": 0.0,
+        "skipped_rate": 0.0
+      },
+      "rhel10_benchmark_q16": {
+        "pass": 2,
+        "fail": 4,
+        "error": 0,
+        "skipped": 0,
+        "pass_rate": 33.33333333333333,
+        "fail_rate": 66.66666666666666,
+        "error_rate": 0.0,
+        "skipped_rate": 0.0
+      },
+      "rhel10_benchmark_q20": {
+        "pass": 2,
+        "fail": 4,
+        "error": 0,
+        "skipped": 0,
+        "pass_rate": 33.33333333333333,
+        "fail_rate": 66.66666666666666,
+        "error_rate": 0.0,
+        "skipped_rate": 0.0
+      },
+      "rhel10_benchmark_q07": {
+        "pass": 4,
+        "fail": 2,
+        "error": 0,
+        "skipped": 0,
+        "pass_rate": 66.66666666666666,
+        "fail_rate": 33.33333333333333,
+        "error_rate": 0.0,
+        "skipped_rate": 0.0
+      },
+      "rhel10_benchmark_q17": {
+        "pass": 3,
+        "fail": 3,
+        "error": 0,
+        "skipped": 0,
+        "pass_rate": 50.0,
+        "fail_rate": 50.0,
+        "error_rate": 0.0,
+        "skipped_rate": 0.0
+      },
+      "rhel10_benchmark_q18": {
+        "pass": 3,
+        "fail": 3,
+        "error": 0,
+        "skipped": 0,
+        "pass_rate": 50.0,
+        "fail_rate": 50.0,
+        "error_rate": 0.0,
+        "skipped_rate": 0.0
+      },
+      "rhel10_benchmark_q04": {
+        "pass": 0,
+        "fail": 6,
+        "error": 0,
+        "skipped": 0,
+        "pass_rate": 0.0,
+        "fail_rate": 100.0,
+        "error_rate": 0.0,
+        "skipped_rate": 0.0
+      },
+      "rhel10_benchmark_q09": {
+        "pass": 4,
+        "fail": 2,
+        "error": 0,
+        "skipped": 0,
+        "pass_rate": 66.66666666666666,
+        "fail_rate": 33.33333333333333,
+        "error_rate": 0.0,
+        "skipped_rate": 0.0
+      }
+    },
+    "by_tag": {
+      "rhel10_benchmark": {
+        "pass": 44,
+        "fail": 64,
+        "error": 12,
+        "skipped": 0,
+        "scores": [
+          0.0,
+          0.0,
+          0.9703048282420464,
+          1.0,
+          0.9703048282420464,
+          0.9,
+          0.0,
+          0.9703048282420464,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.9703048282420464,
+          0.0,
+          0.0,
+          0.0,
+          0.9,
+          0.75,
+          0.9703048282420464,
+          0.499999999975,
+          1.0,
+          1.0,
+          1.0,
+          0.8,
+          0.9703048282420464,
+          0.9266666666481335,
+          1.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.038461538461538464,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.21428571428571427,
+          0.9703048282420464,
+          0.16666666665,
+          0.0,
+          0.0,
+          1.0,
+          0.3157894736842105,
+          0.9703048282420464,
+          0.249999999975,
+          1.0,
+          0.3333333333333333,
+          0.2,
+          1.0,
+          0.9703048282420464,
+          0.5333333333155555,
+          1.0,
+          0.0,
+          0.5,
+          0.0,
+          0.9703048282420464,
+          0.16666666665,
+          1.0,
+          0.0,
+          0.4,
+          0.25,
+          0.9703048282420464,
+          0.14285714284285714,
+          1.0,
+          0.0,
+          0.4,
+          0.75,
+          0.9703048282420464,
+          0.4166666666458333,
+          0.5,
+          0.5,
+          1.0,
+          0.8461538461538461,
+          0.9703048282420464,
+          0.555555555537037,
+          1.0,
+          0.6666666666666666,
+          1.0,
+          0.6842105263157895,
+          0.9703048282420464,
+          0.2916666666520833,
+          1.0,
+          0.0,
+          1.0,
+          0.275,
+          0.9703048282420464,
+          0.32499999998375,
+          1.0,
+          0.5,
+          1.0,
+          0.2,
+          0.0,
+          0.4166666666458333,
+          0.0,
+          0.0,
+          0.0,
+          0.2692307692307692,
+          0.9703048282420464,
+          0.6595238095106191,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "pass_rate": 36.666666666666664,
+        "fail_rate": 53.333333333333336,
+        "error_rate": 10.0,
+        "skipped_rate": 0.0,
+        "score_statistics": {
+          "count": 108,
+          "mean": 0.5099007311207066,
+          "median": 0.5,
+          "std": 0.42886019452167823,
+          "min": 0.0,
+          "max": 1.0,
+          "confidence_interval": {
+            "low": 0.43101284811564455,
+            "mean": 0.5097477211519446,
+            "high": 0.5895106416751354,
+            "confidence_level": 95
+          }
+        }
+      }
+    },
+    "streaming_performance": {
+      "time_to_first_token": {
+        "count": 0
+      },
+      "streaming_duration": {
+        "count": 0
+      },
+      "tokens_per_second": {
+        "count": 0
+      }
+    }
+  },
+  "configuration": {
+    "llm": {
+      "provider": "vertex",
+      "model": "gemini-2.5-pro",
+      "ssl_verify": true,
+      "ssl_cert_file": null,
+      "temperature": 0.0,
+      "max_tokens": 65536,
+      "timeout": 300,
+      "num_retries": 3,
+      "cache_enabled": true
+    },
+    "embedding": {
+      "provider": "huggingface",
+      "model": "sentence-transformers/all-MiniLM-L6-v2",
+      "provider_kwargs": {},
+      "cache_enabled": true
+    },
+    "api": {
+      "enabled": true,
+      "api_base": "http://127.0.0.1:8443/api/lightspeed",
+      "version": "v1",
+      "endpoint_type": "infer",
+      "timeout": 300,
+      "provider": "vertex",
+      "model": "google/gemini-2.5-flash",
+      "no_tools": null,
+      "system_prompt": null,
+      "mode": null,
+      "mcp_url": null,
+      "cache_enabled": true,
+      "num_retries": 3
+    }
+  },
+  "results": [
+    {
+      "conversation_group_id": "rhel10_benchmark_q03",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:faithfulness",
+      "result": "ERROR",
+      "score": null,
+      "threshold": null,
+      "execution_time": 0.0,
+      "judge_llm_input_tokens": 0,
+      "judge_llm_output_tokens": 0,
+      "judge_scores": null,
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q03",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:response_relevancy",
+      "result": "FAIL",
+      "score": 0.0,
+      "threshold": 0.8,
+      "execution_time": 6.527,
+      "judge_llm_input_tokens": 446,
+      "judge_llm_output_tokens": 657,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.0,
+          "reason": "Ragas response relevancy: 0.00",
+          "input_tokens": 446,
+          "output_tokens": 657
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q03",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:context_precision_without_reference",
+      "result": "ERROR",
+      "score": null,
+      "threshold": null,
+      "execution_time": 0.0,
+      "judge_llm_input_tokens": 0,
+      "judge_llm_output_tokens": 0,
+      "judge_scores": null,
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q03",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:context_relevance",
+      "result": "ERROR",
+      "score": null,
+      "threshold": null,
+      "execution_time": 0.0,
+      "judge_llm_input_tokens": 0,
+      "judge_llm_output_tokens": 0,
+      "judge_scores": null,
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q03",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:context_recall",
+      "result": "ERROR",
+      "score": null,
+      "threshold": null,
+      "execution_time": 0.0,
+      "judge_llm_input_tokens": 0,
+      "judge_llm_output_tokens": 0,
+      "judge_scores": null,
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q03",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "custom:answer_correctness",
+      "result": "FAIL",
+      "score": 0.0,
+      "threshold": 0.75,
+      "execution_time": 11.08,
+      "judge_llm_input_tokens": 190,
+      "judge_llm_output_tokens": 1107,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.0,
+          "reason": "Custom answer correctness: 0.00 - The response completely fails to answer the user's question. Instead of providing any information about submitting feedback in Jira, it deflects by stating a lack of expertise and suggesting the user consult other resources. The expected response, while minimal, directly addresses the question by confirming that feedback can be submitted and mentioning the requirement of an account. The provided response contains none of this information and is therefore entirely unhelpful and incorrect as an answer.",
+          "input_tokens": 190,
+          "output_tokens": 1107
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q13",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:faithfulness",
+      "result": "ERROR",
+      "score": null,
+      "threshold": null,
+      "execution_time": 0.0,
+      "judge_llm_input_tokens": 0,
+      "judge_llm_output_tokens": 0,
+      "judge_scores": null,
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q13",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:response_relevancy",
+      "result": "PASS",
+      "score": 0.9703048282420464,
+      "threshold": 0.8,
+      "execution_time": 8.578,
+      "judge_llm_input_tokens": 1172,
+      "judge_llm_output_tokens": 1008,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.9703048282420464,
+          "reason": "Ragas response relevancy: 0.97",
+          "input_tokens": 1172,
+          "output_tokens": 1008
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q13",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:context_precision_without_reference",
+      "result": "ERROR",
+      "score": null,
+      "threshold": null,
+      "execution_time": 0.0,
+      "judge_llm_input_tokens": 0,
+      "judge_llm_output_tokens": 0,
+      "judge_scores": null,
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q13",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:context_relevance",
+      "result": "ERROR",
+      "score": null,
+      "threshold": null,
+      "execution_time": 0.0,
+      "judge_llm_input_tokens": 0,
+      "judge_llm_output_tokens": 0,
+      "judge_scores": null,
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q13",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:context_recall",
+      "result": "ERROR",
+      "score": null,
+      "threshold": null,
+      "execution_time": 0.0,
+      "judge_llm_input_tokens": 0,
+      "judge_llm_output_tokens": 0,
+      "judge_scores": null,
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q13",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "custom:answer_correctness",
+      "result": "PASS",
+      "score": 1.0,
+      "threshold": 0.75,
+      "execution_time": 13.221,
+      "judge_llm_input_tokens": 1030,
+      "judge_llm_output_tokens": 1410,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 1.0,
+          "reason": "Custom answer correctness: 1.00 - The response is excellent and provides a comprehensive and accurate answer to the user's question.",
+          "input_tokens": 1030,
+          "output_tokens": 1410
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q05",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:faithfulness",
+      "result": "ERROR",
+      "score": null,
+      "threshold": null,
+      "execution_time": 0.0,
+      "judge_llm_input_tokens": 0,
+      "judge_llm_output_tokens": 0,
+      "judge_scores": null,
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q05",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:response_relevancy",
+      "result": "PASS",
+      "score": 0.9703048282420464,
+      "threshold": 0.8,
+      "execution_time": 9.552,
+      "judge_llm_input_tokens": 756,
+      "judge_llm_output_tokens": 970,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.9703048282420464,
+          "reason": "Ragas response relevancy: 0.97",
+          "input_tokens": 756,
+          "output_tokens": 970
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q05",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:context_precision_without_reference",
+      "result": "ERROR",
+      "score": null,
+      "threshold": null,
+      "execution_time": 0.0,
+      "judge_llm_input_tokens": 0,
+      "judge_llm_output_tokens": 0,
+      "judge_scores": null,
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q05",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:context_relevance",
+      "result": "ERROR",
+      "score": null,
+      "threshold": null,
+      "execution_time": 0.0,
+      "judge_llm_input_tokens": 0,
+      "judge_llm_output_tokens": 0,
+      "judge_scores": null,
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q05",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:context_recall",
+      "result": "ERROR",
+      "score": null,
+      "threshold": null,
+      "execution_time": 0.0,
+      "judge_llm_input_tokens": 0,
+      "judge_llm_output_tokens": 0,
+      "judge_scores": null,
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q05",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "custom:answer_correctness",
+      "result": "PASS",
+      "score": 0.9,
+      "threshold": 0.75,
+      "execution_time": 21.192,
+      "judge_llm_input_tokens": 555,
+      "judge_llm_output_tokens": 1891,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.9,
+          "reason": "Custom answer correctness: 0.90 - The provided response gives a factually correct and well-structured explanation of a common high-availability architecture using two separate, replicated RAID arrays in an active/passive configuration. It correctly identifies the two levels of redundancy: within each array (protecting against disk failure) and between the arrays (protecting against a full array/system failure).",
+          "input_tokens": 555,
+          "output_tokens": 1891
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q11",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:faithfulness",
+      "result": "FAIL",
+      "score": 0.0,
+      "threshold": 0.8,
+      "execution_time": 46.083,
+      "judge_llm_input_tokens": 1679,
+      "judge_llm_output_tokens": 6166,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.0,
+          "reason": "Ragas faithfulness: 0.00",
+          "input_tokens": 1679,
+          "output_tokens": 6166
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q11",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:response_relevancy",
+      "result": "PASS",
+      "score": 0.9703048282420464,
+      "threshold": 0.8,
+      "execution_time": 5.533,
+      "judge_llm_input_tokens": 563,
+      "judge_llm_output_tokens": 619,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.9703048282420464,
+          "reason": "Ragas response relevancy: 0.97",
+          "input_tokens": 563,
+          "output_tokens": 619
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q11",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:context_precision_without_reference",
+      "result": "FAIL",
+      "score": 0.0,
+      "threshold": 0.7,
+      "execution_time": 5.518,
+      "judge_llm_input_tokens": 1214,
+      "judge_llm_output_tokens": 595,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.0,
+          "reason": "Ragas context precision without reference: 0.00",
+          "input_tokens": 1214,
+          "output_tokens": 595
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q11",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:context_relevance",
+      "result": "FAIL",
+      "score": 0.0,
+      "threshold": 0.7,
+      "execution_time": 15.661,
+      "judge_llm_input_tokens": 255,
+      "judge_llm_output_tokens": 1423,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.0,
+          "reason": "Ragas context relevance: 0.00",
+          "input_tokens": 255,
+          "output_tokens": 1423
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q11",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:context_recall",
+      "result": "FAIL",
+      "score": 0.0,
+      "threshold": 0.8,
+      "execution_time": 7.381,
+      "judge_llm_input_tokens": 980,
+      "judge_llm_output_tokens": 1021,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.0,
+          "reason": "Ragas LLM context recall: 0.00",
+          "input_tokens": 980,
+          "output_tokens": 1021
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q11",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "custom:answer_correctness",
+      "result": "PASS",
+      "score": 1.0,
+      "threshold": 0.75,
+      "execution_time": 9.854,
+      "judge_llm_input_tokens": 333,
+      "judge_llm_output_tokens": 1184,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 1.0,
+          "reason": "Custom answer correctness: 1.00 - The response is factually correct and provides a comprehensive and well-structured summary of the document's contents. It directly includes the information from the expected response (\"Compatibility levels\") while also offering additional, relevant details such as the other sections of the guide. This makes the answer more complete and useful to the user than the minimal expected response, without introducing any contradictory or inaccurate information.",
+          "input_tokens": 333,
+          "output_tokens": 1184
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q10",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:faithfulness",
+      "result": "FAIL",
+      "score": 0.0,
+      "threshold": 0.8,
+      "execution_time": 43.574,
+      "judge_llm_input_tokens": 2098,
+      "judge_llm_output_tokens": 5438,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.0,
+          "reason": "Ragas faithfulness: 0.00",
+          "input_tokens": 2098,
+          "output_tokens": 5438
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q10",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:response_relevancy",
+      "result": "PASS",
+      "score": 0.9703048282420464,
+      "threshold": 0.8,
+      "execution_time": 5.338,
+      "judge_llm_input_tokens": 501,
+      "judge_llm_output_tokens": 699,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.9703048282420464,
+          "reason": "Ragas response relevancy: 0.97",
+          "input_tokens": 501,
+          "output_tokens": 699
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q10",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:context_precision_without_reference",
+      "result": "FAIL",
+      "score": 0.0,
+      "threshold": 0.7,
+      "execution_time": 16.228,
+      "judge_llm_input_tokens": 3868,
+      "judge_llm_output_tokens": 1749,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.0,
+          "reason": "Ragas context precision without reference: 0.00",
+          "input_tokens": 3868,
+          "output_tokens": 1749
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q10",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:context_relevance",
+      "result": "FAIL",
+      "score": 0.0,
+      "threshold": 0.7,
+      "execution_time": 5.535,
+      "judge_llm_input_tokens": 779,
+      "judge_llm_output_tokens": 654,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.0,
+          "reason": "Ragas context relevance: 0.00",
+          "input_tokens": 779,
+          "output_tokens": 654
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q10",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:context_recall",
+      "result": "FAIL",
+      "score": 0.0,
+      "threshold": 0.8,
+      "execution_time": 10.839,
+      "judge_llm_input_tokens": 1541,
+      "judge_llm_output_tokens": 1496,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.0,
+          "reason": "Ragas LLM context recall: 0.00",
+          "input_tokens": 1541,
+          "output_tokens": 1496
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q10",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "custom:answer_correctness",
+      "result": "PASS",
+      "score": 0.9,
+      "threshold": 0.75,
+      "execution_time": 15.679,
+      "judge_llm_input_tokens": 278,
+      "judge_llm_output_tokens": 1553,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.9,
+          "reason": "Custom answer correctness: 0.90 - The response is factually accurate and provides an excellent, high-level explanation of what a RHEL blueprint is and its purpose. It correctly identifies that blueprints are templates for creating customized RHEL images, specifying packages and configurations to ensure consistency. The mention of Red Hat's Image Builder and the different image types (VM, cloud, bare metal) adds valuable context that is not present in the expected response.",
+          "input_tokens": 278,
+          "output_tokens": 1553
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q14",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:faithfulness",
+      "result": "FAIL",
+      "score": 0.75,
+      "threshold": 0.8,
+      "execution_time": 41.314,
+      "judge_llm_input_tokens": 4233,
+      "judge_llm_output_tokens": 5688,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.75,
+          "reason": "Ragas faithfulness: 0.75",
+          "input_tokens": 4233,
+          "output_tokens": 5688
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q14",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:response_relevancy",
+      "result": "PASS",
+      "score": 0.9703048282420464,
+      "threshold": 0.8,
+      "execution_time": 6.957,
+      "judge_llm_input_tokens": 796,
+      "judge_llm_output_tokens": 754,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.9703048282420464,
+          "reason": "Ragas response relevancy: 0.97",
+          "input_tokens": 796,
+          "output_tokens": 754
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q14",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:context_precision_without_reference",
+      "result": "FAIL",
+      "score": 0.499999999975,
+      "threshold": 0.7,
+      "execution_time": 48.556,
+      "judge_llm_input_tokens": 12311,
+      "judge_llm_output_tokens": 5188,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.499999999975,
+          "reason": "Ragas context precision without reference: 0.50",
+          "input_tokens": 12311,
+          "output_tokens": 5188
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q14",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:context_relevance",
+      "result": "PASS",
+      "score": 1.0,
+      "threshold": 0.7,
+      "execution_time": 13.812,
+      "judge_llm_input_tokens": 2021,
+      "judge_llm_output_tokens": 1561,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 1.0,
+          "reason": "Ragas context relevance: 1.00",
+          "input_tokens": 2021,
+          "output_tokens": 1561
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q14",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:context_recall",
+      "result": "PASS",
+      "score": 1.0,
+      "threshold": 0.8,
+      "execution_time": 10.737,
+      "judge_llm_input_tokens": 3280,
+      "judge_llm_output_tokens": 1411,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 1.0,
+          "reason": "Ragas LLM context recall: 1.00",
+          "input_tokens": 3280,
+          "output_tokens": 1411
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q14",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "custom:answer_correctness",
+      "result": "PASS",
+      "score": 1.0,
+      "threshold": 0.75,
+      "execution_time": 8.286,
+      "judge_llm_input_tokens": 570,
+      "judge_llm_output_tokens": 788,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 1.0,
+          "reason": "Custom answer correctness: 1.00 - The response is factually correct and aligns perfectly with the expected response. It correctly identifies the Red Hat Jira tracking system as the established method for providing documentation feedback. The response goes beyond the expected answer by providing a helpful, step-by-step guide on how to create and submit a Jira ticket, which adds significant value and completeness. It also correctly notes that the specific Jira project might vary and provides credible, official Red Hat sources to support its claims. There is no contradictory information.",
+          "input_tokens": 570,
+          "output_tokens": 788
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q02",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:faithfulness",
+      "result": "PASS",
+      "score": 0.8,
+      "threshold": 0.8,
+      "execution_time": 39.501,
+      "judge_llm_input_tokens": 3790,
+      "judge_llm_output_tokens": 5202,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.8,
+          "reason": "Ragas faithfulness: 0.80",
+          "input_tokens": 3790,
+          "output_tokens": 5202
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q02",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:response_relevancy",
+      "result": "PASS",
+      "score": 0.9703048282420464,
+      "threshold": 0.8,
+      "execution_time": 7.875,
+      "judge_llm_input_tokens": 613,
+      "judge_llm_output_tokens": 918,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.9703048282420464,
+          "reason": "Ragas response relevancy: 0.97",
+          "input_tokens": 613,
+          "output_tokens": 918
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q02",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:context_precision_without_reference",
+      "result": "PASS",
+      "score": 0.9266666666481335,
+      "threshold": 0.7,
+      "execution_time": 44.837,
+      "judge_llm_input_tokens": 10678,
+      "judge_llm_output_tokens": 4823,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.9266666666481335,
+          "reason": "Ragas context precision without reference: 0.93",
+          "input_tokens": 10678,
+          "output_tokens": 4823
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q02",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:context_relevance",
+      "result": "PASS",
+      "score": 1.0,
+      "threshold": 0.7,
+      "execution_time": 11.398,
+      "judge_llm_input_tokens": 1928,
+      "judge_llm_output_tokens": 1319,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 1.0,
+          "reason": "Ragas context relevance: 1.00",
+          "input_tokens": 1928,
+          "output_tokens": 1319
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q02",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:context_recall",
+      "result": "PASS",
+      "score": 1.0,
+      "threshold": 0.8,
+      "execution_time": 11.641,
+      "judge_llm_input_tokens": 3137,
+      "judge_llm_output_tokens": 1463,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 1.0,
+          "reason": "Ragas LLM context recall: 1.00",
+          "input_tokens": 3137,
+          "output_tokens": 1463
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q02",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "custom:answer_correctness",
+      "result": "FAIL",
+      "score": 0.0,
+      "threshold": 0.75,
+      "execution_time": 16.273,
+      "judge_llm_input_tokens": 358,
+      "judge_llm_output_tokens": 1709,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.0,
+          "reason": "Custom answer correctness: 0.00 - The response is factually incorrect and directly contradicts the provided sources. The sources clearly state that to provide feedback on Red Hat documentation, one should create a **Bugzilla** ticket, not a Jira issue. The response confidently provides steps for using Jira, which is the wrong tool according to the official documentation cited. This makes the entire answer misleading and unhelpful for the user's goal.",
+          "input_tokens": 358,
+          "output_tokens": 1709
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q08",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:faithfulness",
+      "result": "FAIL",
+      "score": 0.0,
+      "threshold": 0.8,
+      "execution_time": 39.975,
+      "judge_llm_input_tokens": 2980,
+      "judge_llm_output_tokens": 5239,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.0,
+          "reason": "Ragas faithfulness: 0.00",
+          "input_tokens": 2980,
+          "output_tokens": 5239
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q08",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:response_relevancy",
+      "result": "FAIL",
+      "score": 0.0,
+      "threshold": 0.8,
+      "execution_time": 8.318,
+      "judge_llm_input_tokens": 484,
+      "judge_llm_output_tokens": 963,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.0,
+          "reason": "Ragas response relevancy: 0.00",
+          "input_tokens": 484,
+          "output_tokens": 963
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q08",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:context_precision_without_reference",
+      "result": "FAIL",
+      "score": 0.0,
+      "threshold": 0.7,
+      "execution_time": 45.843,
+      "judge_llm_input_tokens": 9181,
+      "judge_llm_output_tokens": 4766,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.0,
+          "reason": "Ragas context precision without reference: 0.00",
+          "input_tokens": 9181,
+          "output_tokens": 4766
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q08",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:context_relevance",
+      "result": "FAIL",
+      "score": 0.0,
+      "threshold": 0.7,
+      "execution_time": 17.204,
+      "judge_llm_input_tokens": 1663,
+      "judge_llm_output_tokens": 2169,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.0,
+          "reason": "Ragas context relevance: 0.00",
+          "input_tokens": 1663,
+          "output_tokens": 2169
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q08",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:context_recall",
+      "result": "FAIL",
+      "score": 0.0,
+      "threshold": 0.8,
+      "execution_time": 12.085,
+      "judge_llm_input_tokens": 2496,
+      "judge_llm_output_tokens": 1821,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.0,
+          "reason": "Ragas LLM context recall: 0.00",
+          "input_tokens": 2496,
+          "output_tokens": 1821
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q08",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "custom:answer_correctness",
+      "result": "FAIL",
+      "score": 0.0,
+      "threshold": 0.75,
+      "execution_time": 12.033,
+      "judge_llm_input_tokens": 355,
+      "judge_llm_output_tokens": 1222,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.0,
+          "reason": "Custom answer correctness: 0.00 - The response completely fails to answer the question. Instead of providing any information about the `pcp-zeroconf` package, it explicitly states an inability to do so. This is a direct refusal to answer, making it factually empty and entirely unhelpful. The expected response, in contrast, provides specific, accurate details about the package's purpose (performance data collection for clusters) and its data storage considerations (location, recommended size, and monitoring advice). The given response meets none of the evaluation criteria: it has no factual accuracy, is completely incomplete, and has zero alignment with the expected correct answer.",
+          "input_tokens": 355,
+          "output_tokens": 1222
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q06",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:faithfulness",
+      "result": "FAIL",
+      "score": 0.038461538461538464,
+      "threshold": 0.8,
+      "execution_time": 59.509,
+      "judge_llm_input_tokens": 4345,
+      "judge_llm_output_tokens": 9177,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.038461538461538464,
+          "reason": "Ragas faithfulness: 0.04",
+          "input_tokens": 4345,
+          "output_tokens": 9177
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q06",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:response_relevancy",
+      "result": "FAIL",
+      "score": 0.0,
+      "threshold": 0.8,
+      "execution_time": 8.162,
+      "judge_llm_input_tokens": 964,
+      "judge_llm_output_tokens": 973,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.0,
+          "reason": "Ragas response relevancy: 0.00",
+          "input_tokens": 964,
+          "output_tokens": 973
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q06",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:context_precision_without_reference",
+      "result": "FAIL",
+      "score": 0.0,
+      "threshold": 0.7,
+      "execution_time": 54.02,
+      "judge_llm_input_tokens": 13149,
+      "judge_llm_output_tokens": 5591,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.0,
+          "reason": "Ragas context precision without reference: 0.00",
+          "input_tokens": 13149,
+          "output_tokens": 5591
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q06",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:context_relevance",
+      "result": "FAIL",
+      "score": 0.0,
+      "threshold": 0.7,
+      "execution_time": 5.842,
+      "judge_llm_input_tokens": 2109,
+      "judge_llm_output_tokens": 681,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.0,
+          "reason": "Ragas context relevance: 0.00",
+          "input_tokens": 2109,
+          "output_tokens": 681
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q06",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:context_recall",
+      "result": "FAIL",
+      "score": 0.0,
+      "threshold": 0.8,
+      "execution_time": 9.531,
+      "judge_llm_input_tokens": 2902,
+      "judge_llm_output_tokens": 1231,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.0,
+          "reason": "Ragas LLM context recall: 0.00",
+          "input_tokens": 2902,
+          "output_tokens": 1231
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q06",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "custom:answer_correctness",
+      "result": "FAIL",
+      "score": 0.0,
+      "threshold": 0.75,
+      "execution_time": 11.79,
+      "judge_llm_input_tokens": 807,
+      "judge_llm_output_tokens": 1215,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.0,
+          "reason": "Custom answer correctness: 0.00 - The response completely fails to answer the user's question. It incorrectly states that it could not find any information on a service named `samba-bgq`, suggesting it might be a typo or non-existent. This is factually incorrect.",
+          "input_tokens": 807,
+          "output_tokens": 1215
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q01",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:faithfulness",
+      "result": "FAIL",
+      "score": 0.21428571428571427,
+      "threshold": 0.8,
+      "execution_time": 67.037,
+      "judge_llm_input_tokens": 4084,
+      "judge_llm_output_tokens": 9170,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.21428571428571427,
+          "reason": "Ragas faithfulness: 0.21",
+          "input_tokens": 4084,
+          "output_tokens": 9170
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q01",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:response_relevancy",
+      "result": "PASS",
+      "score": 0.9703048282420464,
+      "threshold": 0.8,
+      "execution_time": 7.377,
+      "judge_llm_input_tokens": 856,
+      "judge_llm_output_tokens": 1192,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.9703048282420464,
+          "reason": "Ragas response relevancy: 0.97",
+          "input_tokens": 856,
+          "output_tokens": 1192
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q01",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:context_precision_without_reference",
+      "result": "FAIL",
+      "score": 0.16666666665,
+      "threshold": 0.7,
+      "execution_time": 47.473,
+      "judge_llm_input_tokens": 12175,
+      "judge_llm_output_tokens": 5057,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.16666666665,
+          "reason": "Ragas context precision without reference: 0.17",
+          "input_tokens": 12175,
+          "output_tokens": 5057
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q01",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:context_relevance",
+      "result": "FAIL",
+      "score": 0.0,
+      "threshold": 0.7,
+      "execution_time": 13.019,
+      "judge_llm_input_tokens": 2221,
+      "judge_llm_output_tokens": 1501,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.0,
+          "reason": "Ragas context relevance: 0.00",
+          "input_tokens": 2221,
+          "output_tokens": 1501
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q01",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:context_recall",
+      "result": "FAIL",
+      "score": 0.0,
+      "threshold": 0.8,
+      "execution_time": 14.458,
+      "judge_llm_input_tokens": 2975,
+      "judge_llm_output_tokens": 1906,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.0,
+          "reason": "Ragas LLM context recall: 0.00",
+          "input_tokens": 2975,
+          "output_tokens": 1906
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q01",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "custom:answer_correctness",
+      "result": "PASS",
+      "score": 1.0,
+      "threshold": 0.75,
+      "execution_time": 12.747,
+      "judge_llm_input_tokens": 597,
+      "judge_llm_output_tokens": 1354,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 1.0,
+          "reason": "Custom answer correctness: 1.00 - The provided response is excellent. It is factually correct, comprehensive, and aligns perfectly with the concepts outlined in the expected response, while also providing significantly more detail.",
+          "input_tokens": 597,
+          "output_tokens": 1354
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q12",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:faithfulness",
+      "result": "FAIL",
+      "score": 0.3157894736842105,
+      "threshold": 0.8,
+      "execution_time": 59.221,
+      "judge_llm_input_tokens": 4093,
+      "judge_llm_output_tokens": 9169,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.3157894736842105,
+          "reason": "Ragas faithfulness: 0.32",
+          "input_tokens": 4093,
+          "output_tokens": 9169
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q12",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:response_relevancy",
+      "result": "PASS",
+      "score": 0.9703048282420464,
+      "threshold": 0.8,
+      "execution_time": 9.386,
+      "judge_llm_input_tokens": 866,
+      "judge_llm_output_tokens": 1343,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.9703048282420464,
+          "reason": "Ragas response relevancy: 0.97",
+          "input_tokens": 866,
+          "output_tokens": 1343
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q12",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:context_precision_without_reference",
+      "result": "FAIL",
+      "score": 0.249999999975,
+      "threshold": 0.7,
+      "execution_time": 53.191,
+      "judge_llm_input_tokens": 12184,
+      "judge_llm_output_tokens": 5574,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.249999999975,
+          "reason": "Ragas context precision without reference: 0.25",
+          "input_tokens": 12184,
+          "output_tokens": 5574
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q12",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:context_relevance",
+      "result": "PASS",
+      "score": 1.0,
+      "threshold": 0.7,
+      "execution_time": 8.804,
+      "judge_llm_input_tokens": 2104,
+      "judge_llm_output_tokens": 994,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 1.0,
+          "reason": "Ragas context relevance: 1.00",
+          "input_tokens": 2104,
+          "output_tokens": 994
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q12",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:context_recall",
+      "result": "FAIL",
+      "score": 0.3333333333333333,
+      "threshold": 0.8,
+      "execution_time": 14.591,
+      "judge_llm_input_tokens": 2877,
+      "judge_llm_output_tokens": 1915,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.3333333333333333,
+          "reason": "Ragas LLM context recall: 0.33",
+          "input_tokens": 2877,
+          "output_tokens": 1915
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q12",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "custom:answer_correctness",
+      "result": "FAIL",
+      "score": 0.2,
+      "threshold": 0.75,
+      "execution_time": 18.385,
+      "judge_llm_input_tokens": 653,
+      "judge_llm_output_tokens": 1909,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.2,
+          "reason": "Custom answer correctness: 0.20 - The provided response correctly identifies the high-level recommendation from Red Hat (do not use duplicate UIDs/GIDs) and gives several valid, general reasons that are true for any Linux environment (security, access control, stability, auditing).",
+          "input_tokens": 653,
+          "output_tokens": 1909
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q15",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:faithfulness",
+      "result": "PASS",
+      "score": 1.0,
+      "threshold": 0.8,
+      "execution_time": 46.694,
+      "judge_llm_input_tokens": 4190,
+      "judge_llm_output_tokens": 6393,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 1.0,
+          "reason": "Ragas faithfulness: 1.00",
+          "input_tokens": 4190,
+          "output_tokens": 6393
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q15",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:response_relevancy",
+      "result": "PASS",
+      "score": 0.9703048282420464,
+      "threshold": 0.8,
+      "execution_time": 9.23,
+      "judge_llm_input_tokens": 752,
+      "judge_llm_output_tokens": 1223,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.9703048282420464,
+          "reason": "Ragas response relevancy: 0.97",
+          "input_tokens": 752,
+          "output_tokens": 1223
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q15",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:context_precision_without_reference",
+      "result": "FAIL",
+      "score": 0.5333333333155555,
+      "threshold": 0.7,
+      "execution_time": 61.928,
+      "judge_llm_input_tokens": 11725,
+      "judge_llm_output_tokens": 6276,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.5333333333155555,
+          "reason": "Ragas context precision without reference: 0.53",
+          "input_tokens": 11725,
+          "output_tokens": 6276
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q15",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:context_relevance",
+      "result": "PASS",
+      "score": 1.0,
+      "threshold": 0.7,
+      "execution_time": 16.909,
+      "judge_llm_input_tokens": 2088,
+      "judge_llm_output_tokens": 1871,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 1.0,
+          "reason": "Ragas context relevance: 1.00",
+          "input_tokens": 2088,
+          "output_tokens": 1871
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q15",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:context_recall",
+      "result": "FAIL",
+      "score": 0.0,
+      "threshold": 0.8,
+      "execution_time": 13.622,
+      "judge_llm_input_tokens": 3250,
+      "judge_llm_output_tokens": 1731,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.0,
+          "reason": "Ragas LLM context recall: 0.00",
+          "input_tokens": 3250,
+          "output_tokens": 1731
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q15",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "custom:answer_correctness",
+      "result": "FAIL",
+      "score": 0.5,
+      "threshold": 0.75,
+      "execution_time": 16.106,
+      "judge_llm_input_tokens": 518,
+      "judge_llm_output_tokens": 1613,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.5,
+          "reason": "Custom answer correctness: 0.50 - The provided response contains factually correct and relevant information regarding the environmental prerequisites for establishing an Active Directory trust from a RHEL system in FIPS mode (specifically, the AD functional level requirement). It also includes useful operational details about managing FIPS mode on RHEL.",
+          "input_tokens": 518,
+          "output_tokens": 1613
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q19",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:faithfulness",
+      "result": "FAIL",
+      "score": 0.0,
+      "threshold": 0.8,
+      "execution_time": 55.918,
+      "judge_llm_input_tokens": 3824,
+      "judge_llm_output_tokens": 8385,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.0,
+          "reason": "Ragas faithfulness: 0.00",
+          "input_tokens": 3824,
+          "output_tokens": 8385
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q19",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:response_relevancy",
+      "result": "PASS",
+      "score": 0.9703048282420464,
+      "threshold": 0.8,
+      "execution_time": 7.679,
+      "judge_llm_input_tokens": 639,
+      "judge_llm_output_tokens": 973,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.9703048282420464,
+          "reason": "Ragas response relevancy: 0.97",
+          "input_tokens": 639,
+          "output_tokens": 973
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q19",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:context_precision_without_reference",
+      "result": "FAIL",
+      "score": 0.16666666665,
+      "threshold": 0.7,
+      "execution_time": 51.608,
+      "judge_llm_input_tokens": 10756,
+      "judge_llm_output_tokens": 4940,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.16666666665,
+          "reason": "Ragas context precision without reference: 0.17",
+          "input_tokens": 10756,
+          "output_tokens": 4940
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q19",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:context_relevance",
+      "result": "PASS",
+      "score": 1.0,
+      "threshold": 0.7,
+      "execution_time": 23.65,
+      "judge_llm_input_tokens": 2061,
+      "judge_llm_output_tokens": 2375,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 1.0,
+          "reason": "Ragas context relevance: 1.00",
+          "input_tokens": 2061,
+          "output_tokens": 2375
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q19",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:context_recall",
+      "result": "FAIL",
+      "score": 0.0,
+      "threshold": 0.8,
+      "execution_time": 12.237,
+      "judge_llm_input_tokens": 3036,
+      "judge_llm_output_tokens": 1224,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.0,
+          "reason": "Ragas LLM context recall: 0.00",
+          "input_tokens": 3036,
+          "output_tokens": 1224
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q19",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "custom:answer_correctness",
+      "result": "FAIL",
+      "score": 0.4,
+      "threshold": 0.75,
+      "execution_time": 14.174,
+      "judge_llm_input_tokens": 382,
+      "judge_llm_output_tokens": 1318,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.4,
+          "reason": "Custom answer correctness: 0.40 - The provided response is factually correct in that it identifies the locations where PPD (PostScript Printer Description) files, which act as drivers, are stored. Listing the contents of `/usr/share/cups/model/` and `/etc/cups/ppd/` will indeed show you the raw driver files.",
+          "input_tokens": 382,
+          "output_tokens": 1318
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q16",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:faithfulness",
+      "result": "FAIL",
+      "score": 0.25,
+      "threshold": 0.8,
+      "execution_time": 88.111,
+      "judge_llm_input_tokens": 6253,
+      "judge_llm_output_tokens": 12842,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.25,
+          "reason": "Ragas faithfulness: 0.25",
+          "input_tokens": 6253,
+          "output_tokens": 12842
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q16",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:response_relevancy",
+      "result": "PASS",
+      "score": 0.9703048282420464,
+      "threshold": 0.8,
+      "execution_time": 5.594,
+      "judge_llm_input_tokens": 520,
+      "judge_llm_output_tokens": 655,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.9703048282420464,
+          "reason": "Ragas response relevancy: 0.97",
+          "input_tokens": 520,
+          "output_tokens": 655
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q16",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:context_precision_without_reference",
+      "result": "FAIL",
+      "score": 0.14285714284285714,
+      "threshold": 0.7,
+      "execution_time": 43.329,
+      "judge_llm_input_tokens": 9377,
+      "judge_llm_output_tokens": 4822,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.14285714284285714,
+          "reason": "Ragas context precision without reference: 0.14",
+          "input_tokens": 9377,
+          "output_tokens": 4822
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q16",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:context_relevance",
+      "result": "PASS",
+      "score": 1.0,
+      "threshold": 0.7,
+      "execution_time": 11.054,
+      "judge_llm_input_tokens": 1722,
+      "judge_llm_output_tokens": 1411,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 1.0,
+          "reason": "Ragas context relevance: 1.00",
+          "input_tokens": 1722,
+          "output_tokens": 1411
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q16",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:context_recall",
+      "result": "FAIL",
+      "score": 0.0,
+      "threshold": 0.8,
+      "execution_time": 8.595,
+      "judge_llm_input_tokens": 2485,
+      "judge_llm_output_tokens": 1095,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.0,
+          "reason": "Ragas LLM context recall: 0.00",
+          "input_tokens": 2485,
+          "output_tokens": 1095
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q16",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "custom:answer_correctness",
+      "result": "FAIL",
+      "score": 0.4,
+      "threshold": 0.75,
+      "execution_time": 15.552,
+      "judge_llm_input_tokens": 305,
+      "judge_llm_output_tokens": 1719,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.4,
+          "reason": "Custom answer correctness: 0.40 - The provided response is factually correct but severely incomplete.",
+          "input_tokens": 305,
+          "output_tokens": 1719
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q20",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:faithfulness",
+      "result": "FAIL",
+      "score": 0.75,
+      "threshold": 0.8,
+      "execution_time": 77.702,
+      "judge_llm_input_tokens": 4936,
+      "judge_llm_output_tokens": 11760,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.75,
+          "reason": "Ragas faithfulness: 0.75",
+          "input_tokens": 4936,
+          "output_tokens": 11760
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q20",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:response_relevancy",
+      "result": "PASS",
+      "score": 0.9703048282420464,
+      "threshold": 0.8,
+      "execution_time": 5.224,
+      "judge_llm_input_tokens": 1151,
+      "judge_llm_output_tokens": 585,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.9703048282420464,
+          "reason": "Ragas response relevancy: 0.97",
+          "input_tokens": 1151,
+          "output_tokens": 585
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q20",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:context_precision_without_reference",
+      "result": "FAIL",
+      "score": 0.4166666666458333,
+      "threshold": 0.7,
+      "execution_time": 50.34,
+      "judge_llm_input_tokens": 14637,
+      "judge_llm_output_tokens": 5569,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.4166666666458333,
+          "reason": "Ragas context precision without reference: 0.42",
+          "input_tokens": 14637,
+          "output_tokens": 5569
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q20",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:context_relevance",
+      "result": "FAIL",
+      "score": 0.5,
+      "threshold": 0.7,
+      "execution_time": 24.927,
+      "judge_llm_input_tokens": 2048,
+      "judge_llm_output_tokens": 3004,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.5,
+          "reason": "Ragas context relevance: 0.50",
+          "input_tokens": 2048,
+          "output_tokens": 3004
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q20",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:context_recall",
+      "result": "FAIL",
+      "score": 0.5,
+      "threshold": 0.8,
+      "execution_time": 10.825,
+      "judge_llm_input_tokens": 3311,
+      "judge_llm_output_tokens": 1459,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.5,
+          "reason": "Ragas LLM context recall: 0.50",
+          "input_tokens": 3311,
+          "output_tokens": 1459
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q20",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "custom:answer_correctness",
+      "result": "PASS",
+      "score": 1.0,
+      "threshold": 0.75,
+      "execution_time": 14.353,
+      "judge_llm_input_tokens": 897,
+      "judge_llm_output_tokens": 1497,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 1.0,
+          "reason": "Custom answer correctness: 1.00 - The provided response is factually correct and offers the standard, recommended procedure for running multiple instances of the same PostgreSQL version on a modern RHEL system. It correctly identifies the use of systemd templated units and the helper scripts (`postgresql-new-systemd-unit`, `postgresql-setup`) provided by the `postgresql-server` RPM package for this exact purpose. The steps are clear, complete, and accurate.",
+          "input_tokens": 897,
+          "output_tokens": 1497
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q07",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:faithfulness",
+      "result": "PASS",
+      "score": 0.8461538461538461,
+      "threshold": 0.8,
+      "execution_time": 70.808,
+      "judge_llm_input_tokens": 5419,
+      "judge_llm_output_tokens": 10211,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.8461538461538461,
+          "reason": "Ragas faithfulness: 0.85",
+          "input_tokens": 5419,
+          "output_tokens": 10211
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q07",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:response_relevancy",
+      "result": "PASS",
+      "score": 0.9703048282420464,
+      "threshold": 0.8,
+      "execution_time": 7.122,
+      "judge_llm_input_tokens": 982,
+      "judge_llm_output_tokens": 787,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.9703048282420464,
+          "reason": "Ragas response relevancy: 0.97",
+          "input_tokens": 982,
+          "output_tokens": 787
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q07",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:context_precision_without_reference",
+      "result": "FAIL",
+      "score": 0.555555555537037,
+      "threshold": 0.7,
+      "execution_time": 58.181,
+      "judge_llm_input_tokens": 14283,
+      "judge_llm_output_tokens": 5915,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.555555555537037,
+          "reason": "Ragas context precision without reference: 0.56",
+          "input_tokens": 14283,
+          "output_tokens": 5915
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q07",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:context_relevance",
+      "result": "PASS",
+      "score": 1.0,
+      "threshold": 0.7,
+      "execution_time": 16.591,
+      "judge_llm_input_tokens": 2270,
+      "judge_llm_output_tokens": 1884,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 1.0,
+          "reason": "Ragas context relevance: 1.00",
+          "input_tokens": 2270,
+          "output_tokens": 1884
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q07",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:context_recall",
+      "result": "FAIL",
+      "score": 0.6666666666666666,
+      "threshold": 0.8,
+      "execution_time": 22.115,
+      "judge_llm_input_tokens": 4172,
+      "judge_llm_output_tokens": 3061,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.6666666666666666,
+          "reason": "Ragas LLM context recall: 0.67",
+          "input_tokens": 4172,
+          "output_tokens": 3061
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q07",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "custom:answer_correctness",
+      "result": "PASS",
+      "score": 1.0,
+      "threshold": 0.75,
+      "execution_time": 13.612,
+      "judge_llm_input_tokens": 831,
+      "judge_llm_output_tokens": 1312,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 1.0,
+          "reason": "Custom answer correctness: 1.00 - The provided response is factually accurate, comprehensive, and directly addresses the question. It not only covers the specific scenario outlined in the expected response but also provides additional, equally valid circumstances that lead to the same failure.",
+          "input_tokens": 831,
+          "output_tokens": 1312
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q17",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:faithfulness",
+      "result": "FAIL",
+      "score": 0.6842105263157895,
+      "threshold": 0.8,
+      "execution_time": 78.656,
+      "judge_llm_input_tokens": 4281,
+      "judge_llm_output_tokens": 10078,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.6842105263157895,
+          "reason": "Ragas faithfulness: 0.68",
+          "input_tokens": 4281,
+          "output_tokens": 10078
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q17",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:response_relevancy",
+      "result": "PASS",
+      "score": 0.9703048282420464,
+      "threshold": 0.8,
+      "execution_time": 7.38,
+      "judge_llm_input_tokens": 884,
+      "judge_llm_output_tokens": 930,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.9703048282420464,
+          "reason": "Ragas response relevancy: 0.97",
+          "input_tokens": 884,
+          "output_tokens": 930
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q17",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:context_precision_without_reference",
+      "result": "FAIL",
+      "score": 0.2916666666520833,
+      "threshold": 0.7,
+      "execution_time": 68.782,
+      "judge_llm_input_tokens": 15820,
+      "judge_llm_output_tokens": 7109,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.2916666666520833,
+          "reason": "Ragas context precision without reference: 0.29",
+          "input_tokens": 15820,
+          "output_tokens": 7109
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q17",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:context_relevance",
+      "result": "PASS",
+      "score": 1.0,
+      "threshold": 0.7,
+      "execution_time": 12.007,
+      "judge_llm_input_tokens": 2105,
+      "judge_llm_output_tokens": 1336,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 1.0,
+          "reason": "Ragas context relevance: 1.00",
+          "input_tokens": 2105,
+          "output_tokens": 1336
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q17",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:context_recall",
+      "result": "FAIL",
+      "score": 0.0,
+      "threshold": 0.8,
+      "execution_time": 6.852,
+      "judge_llm_input_tokens": 3068,
+      "judge_llm_output_tokens": 983,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.0,
+          "reason": "Ragas LLM context recall: 0.00",
+          "input_tokens": 3068,
+          "output_tokens": 983
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q17",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "custom:answer_correctness",
+      "result": "PASS",
+      "score": 1.0,
+      "threshold": 0.75,
+      "execution_time": 17.464,
+      "judge_llm_input_tokens": 680,
+      "judge_llm_output_tokens": 1911,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 1.0,
+          "reason": "Custom answer correctness: 1.00 - The response is factually correct, complete, and directly addresses all parts of the user's question. It correctly identifies key features for a Principal Systems Engineer, such as using `osbuild-composer` for image creation, integrating the real-time kernel for optimization, and noting the deprecation of `teamd` for system configuration.",
+          "input_tokens": 680,
+          "output_tokens": 1911
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q18",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:faithfulness",
+      "result": "FAIL",
+      "score": 0.275,
+      "threshold": 0.8,
+      "execution_time": 86.624,
+      "judge_llm_input_tokens": 4754,
+      "judge_llm_output_tokens": 12831,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.275,
+          "reason": "Ragas faithfulness: 0.28",
+          "input_tokens": 4754,
+          "output_tokens": 12831
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q18",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:response_relevancy",
+      "result": "PASS",
+      "score": 0.9703048282420464,
+      "threshold": 0.8,
+      "execution_time": 6.235,
+      "judge_llm_input_tokens": 1288,
+      "judge_llm_output_tokens": 663,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.9703048282420464,
+          "reason": "Ragas response relevancy: 0.97",
+          "input_tokens": 1288,
+          "output_tokens": 663
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q18",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:context_precision_without_reference",
+      "result": "FAIL",
+      "score": 0.32499999998375,
+      "threshold": 0.7,
+      "execution_time": 55.52,
+      "judge_llm_input_tokens": 15280,
+      "judge_llm_output_tokens": 6147,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.32499999998375,
+          "reason": "Ragas context precision without reference: 0.32",
+          "input_tokens": 15280,
+          "output_tokens": 6147
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q18",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:context_relevance",
+      "result": "PASS",
+      "score": 1.0,
+      "threshold": 0.7,
+      "execution_time": 30.719,
+      "judge_llm_input_tokens": 1913,
+      "judge_llm_output_tokens": 3442,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 1.0,
+          "reason": "Ragas context relevance: 1.00",
+          "input_tokens": 1913,
+          "output_tokens": 3442
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q18",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:context_recall",
+      "result": "FAIL",
+      "score": 0.5,
+      "threshold": 0.8,
+      "execution_time": 15.354,
+      "judge_llm_input_tokens": 2663,
+      "judge_llm_output_tokens": 1842,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.5,
+          "reason": "Ragas LLM context recall: 0.50",
+          "input_tokens": 2663,
+          "output_tokens": 1842
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q18",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "custom:answer_correctness",
+      "result": "PASS",
+      "score": 1.0,
+      "threshold": 0.75,
+      "execution_time": 16.28,
+      "judge_llm_input_tokens": 1092,
+      "judge_llm_output_tokens": 1687,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 1.0,
+          "reason": "Custom answer correctness: 1.00 - The response is factually correct, comprehensive, and directly addresses all aspects of the user's question.",
+          "input_tokens": 1092,
+          "output_tokens": 1687
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q04",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:faithfulness",
+      "result": "FAIL",
+      "score": 0.2,
+      "threshold": 0.8,
+      "execution_time": 134.876,
+      "judge_llm_input_tokens": 5773,
+      "judge_llm_output_tokens": 17757,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.2,
+          "reason": "Ragas faithfulness: 0.20",
+          "input_tokens": 5773,
+          "output_tokens": 17757
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q04",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:response_relevancy",
+      "result": "FAIL",
+      "score": 0.0,
+      "threshold": 0.8,
+      "execution_time": 5.868,
+      "judge_llm_input_tokens": 468,
+      "judge_llm_output_tokens": 602,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.0,
+          "reason": "Ragas response relevancy: 0.00",
+          "input_tokens": 468,
+          "output_tokens": 602
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q04",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:context_precision_without_reference",
+      "result": "FAIL",
+      "score": 0.4166666666458333,
+      "threshold": 0.7,
+      "execution_time": 41.058,
+      "judge_llm_input_tokens": 7587,
+      "judge_llm_output_tokens": 4443,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.4166666666458333,
+          "reason": "Ragas context precision without reference: 0.42",
+          "input_tokens": 7587,
+          "output_tokens": 4443
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q04",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:context_relevance",
+      "result": "FAIL",
+      "score": 0.0,
+      "threshold": 0.7,
+      "execution_time": 4.407,
+      "judge_llm_input_tokens": 1402,
+      "judge_llm_output_tokens": 446,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.0,
+          "reason": "Ragas context relevance: 0.00",
+          "input_tokens": 1402,
+          "output_tokens": 446
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q04",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:context_recall",
+      "result": "FAIL",
+      "score": 0.0,
+      "threshold": 0.8,
+      "execution_time": 13.208,
+      "judge_llm_input_tokens": 2169,
+      "judge_llm_output_tokens": 2010,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.0,
+          "reason": "Ragas LLM context recall: 0.00",
+          "input_tokens": 2169,
+          "output_tokens": 2010
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q04",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "custom:answer_correctness",
+      "result": "FAIL",
+      "score": 0.0,
+      "threshold": 0.75,
+      "execution_time": 12.97,
+      "judge_llm_input_tokens": 252,
+      "judge_llm_output_tokens": 1276,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.0,
+          "reason": "Custom answer correctness: 0.00 - The response completely fails to answer the user's question. The user's query contains a very minor and common typo (\"Recovr\" instead of \"Recover\"). A capable system should easily recognize this and provide information on \"Relax-and-Recover (ReaR)\". Instead, the model states it has no information and stops, making the response entirely unhelpful. It fails on factual accuracy (by omission), completeness, and alignment with the expected answer. While it correctly hypothesizes a misspelling, it fails to act on that hypothesis to provide the correct information.",
+          "input_tokens": 252,
+          "output_tokens": 1276
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q09",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:faithfulness",
+      "result": "FAIL",
+      "score": 0.2692307692307692,
+      "threshold": 0.8,
+      "execution_time": 101.968,
+      "judge_llm_input_tokens": 4525,
+      "judge_llm_output_tokens": 12114,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.2692307692307692,
+          "reason": "Ragas faithfulness: 0.27",
+          "input_tokens": 4525,
+          "output_tokens": 12114
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q09",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:response_relevancy",
+      "result": "PASS",
+      "score": 0.9703048282420464,
+      "threshold": 0.8,
+      "execution_time": 5.272,
+      "judge_llm_input_tokens": 1031,
+      "judge_llm_output_tokens": 596,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.9703048282420464,
+          "reason": "Ragas response relevancy: 0.97",
+          "input_tokens": 1031,
+          "output_tokens": 596
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q09",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:context_precision_without_reference",
+      "result": "FAIL",
+      "score": 0.6595238095106191,
+      "threshold": 0.7,
+      "execution_time": 69.722,
+      "judge_llm_input_tokens": 13770,
+      "judge_llm_output_tokens": 7273,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 0.6595238095106191,
+          "reason": "Ragas context precision without reference: 0.66",
+          "input_tokens": 13770,
+          "output_tokens": 7273
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q09",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:context_relevance",
+      "result": "PASS",
+      "score": 1.0,
+      "threshold": 0.7,
+      "execution_time": 9.528,
+      "judge_llm_input_tokens": 2275,
+      "judge_llm_output_tokens": 1241,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 1.0,
+          "reason": "Ragas context relevance: 1.00",
+          "input_tokens": 2275,
+          "output_tokens": 1241
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q09",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "ragas:context_recall",
+      "result": "PASS",
+      "score": 1.0,
+      "threshold": 0.8,
+      "execution_time": 11.656,
+      "judge_llm_input_tokens": 3013,
+      "judge_llm_output_tokens": 1272,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 1.0,
+          "reason": "Ragas LLM context recall: 1.00",
+          "input_tokens": 3013,
+          "output_tokens": 1272
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    },
+    {
+      "conversation_group_id": "rhel10_benchmark_q09",
+      "tag": "rhel10_benchmark",
+      "turn_id": "turn1",
+      "metric_identifier": "custom:answer_correctness",
+      "result": "PASS",
+      "score": 1.0,
+      "threshold": 0.75,
+      "execution_time": 20.599,
+      "judge_llm_input_tokens": 822,
+      "judge_llm_output_tokens": 2134,
+      "judge_scores": [
+        {
+          "judge_id": "primary",
+          "score": 1.0,
+          "reason": "Custom answer correctness: 1.00 - The provided response is factually superior, more comprehensive, and more useful than the \"Expected Response.\"",
+          "input_tokens": 822,
+          "output_tokens": 2134
+        }
+      ],
+      "time_to_first_token": null,
+      "streaming_duration": null,
+      "tokens_per_second": null
+    }
+  ]
+}

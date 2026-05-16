@@ -1,0 +1,290 @@
+- conversation_group_id: rhel10_benchmark_q01
+  description: RHEL 10 Benchmark Question 1
+  tag: rhel10_benchmark
+  turns:
+  - turn_id: turn1
+    query: How does perf integrate with uprobes?
+    response: null
+    contexts: null
+    expected_response: Uprobes integrate seamlessly with perf, which can both consume
+      existing uprobes and create new ones. This integration provides powerful, non-intrusive
+      observability and profiling of user-space behavior alongside kernel-space instrumentation.
+    turn_metrics: &id001
+    - ragas:faithfulness
+    - ragas:response_relevancy
+    - ragas:context_precision_without_reference
+    - ragas:context_relevance
+    - ragas:context_recall
+    - custom:answer_correctness
+- conversation_group_id: rhel10_benchmark_q02
+  description: RHEL 10 Benchmark Question 2
+  tag: rhel10_benchmark
+  turns:
+  - turn_id: turn1
+    query: How can I report Red Hat documentation errors using Jira?
+    response: null
+    contexts: null
+    expected_response: You can submit suggestions or report errors through the Red
+      Hat Jira tracking system to help improve the documentation.
+    turn_metrics: *id001
+- conversation_group_id: rhel10_benchmark_q03
+  description: RHEL 10 Benchmark Question 3
+  tag: rhel10_benchmark
+  turns:
+  - turn_id: turn1
+    query: How do I go about submmiting feedback through Jira?
+    response: null
+    contexts: null
+    expected_response: Feedback can be submitted through Jira, but an account is required.
+    turn_metrics: *id001
+- conversation_group_id: rhel10_benchmark_q04
+  description: RHEL 10 Benchmark Question 4
+  tag: rhel10_benchmark
+  turns:
+  - turn_id: turn1
+    query: What is Relax-and-Recovr?
+    response: null
+    contexts: null
+    expected_response: Relax-and-Recover (ReaR) is a utility used to restore a system
+      by using an existing backup. It functions as a disaster recovery solution, helping
+      to minimize the impact of failures and supporting system migration. Furthermore,
+      it allows for integration with certain backup software for disaster recovery.
+    turn_metrics: *id001
+- conversation_group_id: rhel10_benchmark_q05
+  description: RHEL 10 Benchmark Question 5
+  tag: rhel10_benchmark
+  turns:
+  - turn_id: turn1
+    query: How does dual RAiD provide redudancy in an active/passive configeration?
+    response: null
+    contexts: null
+    expected_response: Active/passive configuration with dual RAID devices provides
+      redundant paths to multiple storage arrays, ensuring failover protection across
+      separate RAID systems with dedicated controllers. With DM Multipath configured,
+      a failure at any of the points of the I/O path to either of the RAID devices
+      causes DM Multipath to switch to the alternate I/O path for that device.
+    turn_metrics: *id001
+- conversation_group_id: rhel10_benchmark_q06
+  description: RHEL 10 Benchmark Question 6
+  tag: rhel10_benchmark
+  turns:
+  - turn_id: turn1
+    query: As a Rhys SystemManager overseeing RHEL environments, I'm trying to get
+      a clear understanding of the `samba-bgq` service. Could you please detail its
+      primary function, specify the conditions under which it should be utilized,
+      particularly concerning print servers, and explain how it is managed within
+      the system?
+    response: null
+    contexts: null
+    expected_response: The `samba-bgqd` service, which is the Samba background queue
+      daemon, has the primary function of regularly updating the printer list with
+      printers from CUPS. It should be utilized for print servers that have multiple
+      printers. This daemon is managed by the `samba-bgqd` systemd service, and if
+      it fails to run, `rpcd_spoolss` starts it on demand.
+    turn_metrics: *id001
+- conversation_group_id: rhel10_benchmark_q07
+  description: RHEL 10 Benchmark Question 7
+  tag: rhel10_benchmark
+  turns:
+  - turn_id: turn1
+    query: Under what circumstances does the `wsrep_cluster_address` option contribute
+      to a failed MariaDB Galera Cluster restart?
+    response: null
+    contexts: null
+    expected_response: The `wsrep_cluster_address` option contributes to a failed
+      MariaDB Galera Cluster restart if the cluster is not bootstrapped and the `mariadb`
+      service on the first node is started using only the `systemctl start mariadb`
+      command. In such a situation, the node attempts to connect to at least one of
+      the nodes listed in the `wsrep_cluster_address` option within the `/etc/my.cnf.d/galera.cnf`
+      file. If no nodes are currently running, this connection attempt fails, resulting
+      in a failed restart.
+    turn_metrics: *id001
+- conversation_group_id: rhel10_benchmark_q08
+  description: RHEL 10 Benchmark Question 8
+  tag: rhel10_benchmark
+  turns:
+  - turn_id: turn1
+    query: As a system manager, what is the purpose of installing the `pcp-zero-conf`
+      package, and what considerations should I keep in mind regarding its data storage?
+    response: null
+    contexts: null
+    expected_response: The `pcp-zeroconf` package is installed to configure Performance
+      Co-Pilot (PCP), which collects performance data essential for troubleshooting
+      fencing, resource failures, and cluster disruptions. For cluster deployments
+      where PCP is enabled, sufficient space is needed for PCP’s captured data on
+      the file system that contains `/var/log/pcp/`. While 10Gb is usually sufficient
+      when using the `pcp-zeroconf` default settings, monitoring usage in this directory
+      over a 14-day period of typical activity can provide a more accurate usage expectation.
+    turn_metrics: *id001
+- conversation_group_id: rhel10_benchmark_q09
+  description: RHEL 10 Benchmark Question 9
+  tag: rhel10_benchmark
+  turns:
+  - turn_id: turn1
+    query: As Dr. Anya Sharma, a Principal Systems Engineer, I frequently consult
+      technical resources for deep-level system configuration and kernel optimization.
+      Could you please detail the established procedure for providing feedback on
+      Red Hat documantation, especially concerning areas that might impact hardware
+      compatibility or system security, to ensure its continuous improvement?
+    response: null
+    contexts: null
+    expected_response: Feedback on Red Hat documentation is appreciated, and it helps
+      us improve it. The established procedure for submitting feedback is through
+      Jira, which requires an account.
+    turn_metrics: *id001
+- conversation_group_id: rhel10_benchmark_q10
+  description: RHEL 10 Benchmark Question 10
+  tag: rhel10_benchmark
+  turns:
+  - turn_id: turn1
+    query: RHEL blueprint, what it is?
+    response: null
+    contexts: null
+    expected_response: A blueprint is a description of a customized system image for
+      RHEL. It lists the packages and customizations that will be part of the system.
+      You can edit blueprints with customizations and save them as a particular version,
+      and they are created in the TOML format.
+    turn_metrics: *id001
+- conversation_group_id: rhel10_benchmark_q11
+  description: RHEL 10 Benchmark Question 11
+  tag: rhel10_benchmark
+  turns:
+  - turn_id: turn1
+    query: 'As a System Manager overseeing Red Hat Enterprise Linux environments,
+      I am keen to understand the specific content provided by official documentation.
+      Could you please inform me what particular information is explained within the
+      Red Hat Enterprise Linux 9: Application Compatibility Guide document?'
+    response: null
+    contexts: null
+    expected_response: 'The Red Hat Enterprise Linux 9: Application Compatibility
+      Guide document explains application compatibility levels.'
+    turn_metrics: *id001
+- conversation_group_id: rhel10_benchmark_q12
+  description: RHEL 10 Benchmark Question 12
+  tag: rhel10_benchmark
+  turns:
+  - turn_id: turn1
+    query: Why does Red Hat make a specific recomendation about duplicate UIDs and
+      GIDs?
+    response: null
+    contexts: null
+    expected_response: Red Hat recommends you do not have multiple entries with the
+      same UIDs or GIDs. This is because if you have objects with duplicate IDs, security
+      identifiers (SIDs) are not generated correctly. SIDs are crucial for trusts
+      between IdM and Active Directory and for Kerberos authentication to work correctly.
+    turn_metrics: *id001
+- conversation_group_id: rhel10_benchmark_q13
+  description: RHEL 10 Benchmark Question 13
+  tag: rhel10_benchmark
+  turns:
+  - turn_id: turn1
+    query: As someone managing Red Hat Enterprise Linux environments and building
+      UBI-based web server containers, what is the importance of disabeling non-UBI
+      DNF repositries to ensure that my image contains only Red Hat software that
+      I can redistribute, and when should I consider using microdnf instead of dnf
+      for these tasks?
+    response: null
+    contexts: null
+    expected_response: When creating a UBI-based web server container from a Containerfile,
+      you have to disable all non-UBI DNF repositories to ensure that your image contains
+      only Red Hat software that you can redistribute. For UBI minimal images, you
+      should use microdnf instead of dnf, for example, with commands like `RUN microdnf
+      update -y && rm -rf /var/cache/yum` and `RUN microdnf install httpd -y && microdnf
+      clean all`.
+    turn_metrics: *id001
+- conversation_group_id: rhel10_benchmark_q14
+  description: RHEL 10 Benchmark Question 14
+  tag: rhel10_benchmark
+  turns:
+  - turn_id: turn1
+    query: As a manager of Red Hat Enterprise Linux environments who values high-quality
+      documentation for system stability and application deployment, what is the established
+      method for providing feedback, such as submitting suggestions or reporting errors,
+      to Red Hat concerning their documentation?
+    response: null
+    contexts: null
+    expected_response: To help improve the documentation, you can submit suggestions
+      or report errors through the Red Hat Jira tracking system.
+    turn_metrics: *id001
+- conversation_group_id: rhel10_benchmark_q15
+  description: RHEL 10 Benchmark Question 15
+  tag: rhel10_benchmark
+  turns:
+  - turn_id: turn1
+    query: AD trust FIPS mode, what do?
+    response: null
+    contexts: null
+    expected_response: To establish a cross-forest trust with an Active Directory
+      (AD) domain while FIPS mode is enabled, you must authenticate with an AD administrative
+      account. You cannot establish a trust using a shared secret while FIPS mode
+      is enabled.
+    turn_metrics: *id001
+- conversation_group_id: rhel10_benchmark_q16
+  description: RHEL 10 Benchmark Question 16
+  tag: rhel10_benchmark
+  turns:
+  - turn_id: turn1
+    query: How are OpenPGPvI signatures used in RHEL 10.1?
+    response: null
+    contexts: null
+    expected_response: In RHEL 10.1, OpenPGPv6 signatures can be created or verified
+      using Sequoia PGP tools to sign RPM packages with PQC algorithms. This is part
+      of the new RPMv6 signature format, which enables multiple signatures in an RPM
+      package.
+    turn_metrics: *id001
+- conversation_group_id: rhel10_benchmark_q17
+  description: RHEL 10 Benchmark Question 17
+  tag: rhel10_benchmark
+  turns:
+  - turn_id: turn1
+    query: Dr. Anya Sharma, me, Principal Systems Engineer, I need to know about the
+      new features and enhancements for installer and image creation, what is there
+      for me to see, like, what is important for my work with system configuration
+      and kernel optimization, can you tell me about it?
+    response: null
+    contexts: null
+    expected_response: The context mentions Key highlights for RHEL installer and
+      Key highlights for RHEL image builder. For more information, you should see
+      New features and enhancements - Installer and image creation.
+    turn_metrics: *id001
+- conversation_group_id: rhel10_benchmark_q18
+  description: RHEL 10 Benchmark Question 18
+  tag: rhel10_benchmark
+  turns:
+  - turn_id: turn1
+    query: Me, Alexius, I'm wondering about Podman, like, how it helps with the network
+      for my applications, and what it does for the communication with the host and
+      outside networks, and if it makes things good for performance and security isolation,
+      you know, for my specific application requirements, because I need to deploy
+      and update applications and keep things stable.
+    response: null
+    contexts: null
+    expected_response: You can configure container network modes by using Podman to
+      define how your workloads communicate with the host and external networks. Selecting
+      the appropriate networking environment ensures optimal performance and security
+      isolation tailored to your specific application requirements.
+    turn_metrics: *id001
+- conversation_group_id: rhel10_benchmark_q19
+  description: RHEL 10 Benchmark Question 19
+  tag: rhel10_benchmark
+  turns:
+  - turn_id: turn1
+    query: How to display printer drivers for CUSP in RHEL?
+    response: null
+    contexts: null
+    expected_response: After installing the required package, you can display the
+      list of drivers in the CUPS web interface or by using the lpinfo -m command.
+    turn_metrics: *id001
+- conversation_group_id: rhel10_benchmark_q20
+  description: RHEL 10 Benchmark Question 20
+  tag: rhel10_benchmark
+  turns:
+  - turn_id: turn1
+    query: How can I run multiple PostgreSQL 16 instances on a single RHEL 10 host?
+    response: null
+    contexts: null
+    expected_response: On RHEL 10, you cannot install multiple PostgreSQL instances
+      on the same host due to conflicting RPM packages, as only one version (stream)
+      of the same module can be installed by design. As an alternative, you can run
+      the database server services in a container.
+    turn_metrics: *id001

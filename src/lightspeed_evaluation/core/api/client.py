@@ -285,9 +285,6 @@ class APIClient:
             # parse out data needed for tests
             if "data" in response_data:  # the outer key
                 data = response_data["data"]
-                # temporary!!! TODO: remove this
-                RED = "\033[31m"
-                RESET = "\033[0m"
                 if "text" in data:  # answer to the question
                     response_data["response"] = data["text"]
                 if "request_id" in data:
@@ -299,9 +296,7 @@ class APIClient:
                     )
                 if "output_tokens" in data:
                     response_data["output_tokens"] = data["output_tokens"]
-                    logger.debug(
-                        f"output_tokens: {response_data["output_tokens"]}"
-                    )
+                    logger.debug(f"output_tokens: {response_data["output_tokens"]}")
                 if "tool_calls" in data:
                     response_data["tool_calls"] = data["tool_calls"]
                 if "tool_results" in data:  # RAG "chunks" are in the tool calls

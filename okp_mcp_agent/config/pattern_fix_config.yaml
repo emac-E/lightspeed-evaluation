@@ -1,0 +1,30 @@
+# Pattern Fix POC Configuration
+# Edit these paths to match your local environment
+#
+# You can either:
+# 1. Set environment variables: export OKP_MCP_ROOT=/path/to/okp-mcp
+# 2. Edit this file directly with absolute paths
+# 3. Use relative paths (resolved from this config file's directory)
+
+# Path to lightspeed-evaluation repository (this repo)
+eval_root: ../..
+
+# Path to okp-mcp repository
+# Try sibling directory first, or set ${OKP_MCP_ROOT} env var
+okp_mcp_root: ../../../../okp-mcp
+
+# Path to lscore-deploy repository
+# Try sibling directory first, or set ${LSCORE_DEPLOY_ROOT} env var
+lscore_deploy_root: ../../../../lscore-deploy
+
+# Pattern directories (relative to eval_root)
+patterns_dir: okp_mcp_agent/config/patterns
+
+# Optimization parameters
+max_iterations: 10
+answer_threshold: 0.75
+stability_runs: 3
+
+# Agent options
+interactive: true
+enable_llm_advisor: true

@@ -1,0 +1,227 @@
+SOLR DOCUMENTS THAT COULD ANSWER FAILED TEST QUESTIONS
+================================================================================
+Generated: 2026-03-31
+Purpose: Identify which docs exist in Solr that should be retrieved for test questions
+================================================================================
+
+
+================================================================================
+TEMPORAL-REMOVED-001
+Query: How to install and configure a DHCP server in RHEL 10?
+--------------------------------------------------------------------------------
+
+[Score: 645] Managing networking infrastructure services - Red Hat Enterprise Linux 10
+URL: https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/10/html-single/managing_networking_infrastructure_services
+Solr ID: /documentation/en-us/red_hat_enterprise_linux/10/html-single/managing_networking_infrastructure_services/index/index.html
+
+[Score: 240] Configuring and managing networking - Red Hat Enterprise Linux 10
+URL: https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/10/html-single/configuring_and_managing_networking
+Solr ID: /documentation/en-us/red_hat_enterprise_linux/10/html-single/configuring_and_managing_networking/index/index.html
+
+[Score: 126] Networking Guide - Red Hat OpenStack Platform 10
+URL: https://access.redhat.com/documentation/en-us/red_hat_openstack_platform/10/html-single/networking_guide
+Solr ID: /documentation/en-us/red_hat_openstack_platform/10/html-single/networking_guide/index/index.html
+
+[Score: 124] Product Guide - Red Hat OpenStack Platform 10
+URL: https://access.redhat.com/documentation/en-us/red_hat_openstack_platform/10/html-single/product_guide
+Solr ID: /documentation/en-us/red_hat_openstack_platform/10/html-single/product_guide/index/index.html
+
+[Score: 114] Red Hat OpenDaylight Product Guide - Red Hat OpenStack Platform 10
+URL: https://access.redhat.com/documentation/en-us/red_hat_openstack_platform/10/html-single/red_hat_opendaylight_product_guide
+Solr ID: /documentation/en-us/red_hat_openstack_platform/10/html-single/red_hat_opendaylight_product_guide/index/index.html
+
+================================================================================
+RSPEED-1812
+Query: Where can I find documentation for RHEL System Roles?
+--------------------------------------------------------------------------------
+
+[Score: 544] Automating system administration by using RHEL system roles - Red Hat Enterprise Linux 10
+URL: https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/10/html-single/automating_system_administration_by_using_rhel_system_roles
+Solr ID: /documentation/en-us/red_hat_enterprise_linux/10/html-single/automating_system_administration_by_using_rhel_system_roles/index/index.html
+
+[Score: 123] Administration Guide - Red Hat Certificate System 10
+URL: https://access.redhat.com/documentation/en-us/red_hat_certificate_system/10/html-single/administration_guide
+Solr ID: /documentation/en-us/red_hat_certificate_system/10/html-single/administration_guide/index/index.html
+
+[Score: 107] Administration Guide (Common Criteria Edition) - Red Hat Certificate System 10
+URL: https://access.redhat.com/documentation/en-us/red_hat_certificate_system/10/html-single/administration_guide_common_criteria_edition
+Solr ID: /documentation/en-us/red_hat_certificate_system/10/html-single/administration_guide_common_criteria_edition/index/index.html
+
+[Score: 104] Installing RHEL 10 for SAP Solutions - Red Hat Enterprise Linux for SAP Solutions 10
+URL: https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux_for_sap_solutions/10/html-single/installing_rhel_10_for_sap_solutions
+Solr ID: /documentation/en-us/red_hat_enterprise_linux_for_sap_solutions/10/html-single/installing_rhel_10_for_sap_solutions/index/index.html
+
+[Score: 101] Introduction to Red Hat Enterprise Linux for SAP Solutions - Red Hat Enterprise Linux for SAP Solutions 10
+URL: https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux_for_sap_solutions/10/html-single/introduction_to_red_hat_enterprise_linux_for_sap_solutions
+Solr ID: /documentation/en-us/red_hat_enterprise_linux_for_sap_solutions/10/html-single/introduction_to_red_hat_enterprise_linux_for_sap_solutions/index/index.html
+
+================================================================================
+RSPEED-1930
+Query: How do I install a package on a system using rpm-ostree?
+--------------------------------------------------------------------------------
+
+[Score: 181] Composing, installing, and managing RHEL for Edge images - Red Hat Enterprise Linux 10
+URL: https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/10/html-single/composing_installing_and_managing_rhel_for_edge_images
+Solr ID: /documentation/en-us/red_hat_enterprise_linux/10/html-single/composing_installing_and_managing_rhel_for_edge_images/index/index.html
+
+[Score: 165] Using image mode for RHEL to build, deploy, and manage operating systems - Red Hat Enterprise Linux 10
+URL: https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/10/html-single/using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems
+Solr ID: /documentation/en-us/red_hat_enterprise_linux/10/html-single/using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems/index/index.html
+
+[Score: 81] Considerations in adopting RHEL 10 - Red Hat Enterprise Linux 10
+URL: https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/10/html-single/considerations_in_adopting_rhel_10
+Solr ID: /documentation/en-us/red_hat_enterprise_linux/10/html-single/considerations_in_adopting_rhel_10/index/index.html
+
+[Score: 78] 10.0 Release Notes - Red Hat Enterprise Linux 10
+URL: https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/10/html-single/10.0_release_notes
+Solr ID: /documentation/en-us/red_hat_enterprise_linux/10/html-single/10.0_release_notes/index/index.html
+
+[Score: 76] 10.1 Release Notes - Red Hat Enterprise Linux 10
+URL: https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/10/html-single/10.1_release_notes
+Solr ID: /documentation/en-us/red_hat_enterprise_linux/10/html-single/10.1_release_notes/index/index.html
+
+================================================================================
+TEMPORAL-ADDED-003
+Query: What kernel version does RHEL 10 use?
+--------------------------------------------------------------------------------
+
+[Score: 181] 10.1 Release Notes - Red Hat Enterprise Linux 10
+URL: https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/10/html-single/10.1_release_notes
+Solr ID: /documentation/en-us/red_hat_enterprise_linux/10/html-single/10.1_release_notes/index/index.html
+
+[Score: 174] 10.0 Release Notes - Red Hat Enterprise Linux 10
+URL: https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/10/html-single/10.0_release_notes
+Solr ID: /documentation/en-us/red_hat_enterprise_linux/10/html-single/10.0_release_notes/index/index.html
+
+[Score: 168] Release Notes - Red Hat OpenStack Platform 10
+URL: https://access.redhat.com/documentation/en-us/red_hat_openstack_platform/10/html-single/release_notes
+Solr ID: /documentation/en-us/red_hat_openstack_platform/10/html-single/release_notes/index/index.html
+
+[Score: 151] 10.0 Release Notes - Red Hat Developer Toolset 10
+URL: https://access.redhat.com/documentation/en-us/red_hat_developer_toolset/10/html-single/10.0_release_notes
+Solr ID: /documentation/en-us/red_hat_developer_toolset/10/html-single/10.0_release_notes/index/index.html
+
+[Score: 151] 10.1 Release Notes - Red Hat Developer Toolset 10
+URL: https://access.redhat.com/documentation/en-us/red_hat_developer_toolset/10/html-single/10.1_release_notes
+Solr ID: /documentation/en-us/red_hat_developer_toolset/10/html-single/10.1_release_notes/index/index.html
+
+================================================================================
+RSPEED-2294
+Query: What is most current version of Python for RHEL 10?
+--------------------------------------------------------------------------------
+
+[Score: 197] Installing and using dynamic programming languages - Red Hat Enterprise Linux 10
+URL: https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/10/html-single/installing_and_using_dynamic_programming_languages
+Solr ID: /documentation/en-us/red_hat_enterprise_linux/10/html-single/installing_and_using_dynamic_programming_languages/index/index.html
+
+[Score: 192] 10.0 Release Notes - Red Hat Enterprise Linux 10
+URL: https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/10/html-single/10.0_release_notes
+Solr ID: /documentation/en-us/red_hat_enterprise_linux/10/html-single/10.0_release_notes/index/index.html
+
+[Score: 176] Release Notes - Red Hat OpenStack Platform 10
+URL: https://access.redhat.com/documentation/en-us/red_hat_openstack_platform/10/html-single/release_notes
+Solr ID: /documentation/en-us/red_hat_openstack_platform/10/html-single/release_notes/index/index.html
+
+[Score: 169] 10.1 Release Notes - Red Hat Enterprise Linux 10
+URL: https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/10/html-single/10.1_release_notes
+Solr ID: /documentation/en-us/red_hat_enterprise_linux/10/html-single/10.1_release_notes/index/index.html
+
+[Score: 159] Release Notes - Red Hat Certificate System 10
+URL: https://access.redhat.com/documentation/en-us/red_hat_certificate_system/10/html-single/release_notes
+Solr ID: /documentation/en-us/red_hat_certificate_system/10/html-single/release_notes/index/index.html
+
+================================================================================
+TEMPORAL-MIGRATION-001
+Query: How do I migrate my DHCP server from RHEL 9 to RHEL 10?
+--------------------------------------------------------------------------------
+
+[Score: 315] Managing networking infrastructure services - Red Hat Enterprise Linux 10
+URL: https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/10/html-single/managing_networking_infrastructure_services
+Solr ID: /documentation/en-us/red_hat_enterprise_linux/10/html-single/managing_networking_infrastructure_services/index/index.html
+
+[Score: 98] Networking Guide - Red Hat OpenStack Platform 10
+URL: https://access.redhat.com/documentation/en-us/red_hat_openstack_platform/10/html-single/networking_guide
+Solr ID: /documentation/en-us/red_hat_openstack_platform/10/html-single/networking_guide/index/index.html
+
+[Score: 89] Product Guide - Red Hat OpenStack Platform 10
+URL: https://access.redhat.com/documentation/en-us/red_hat_openstack_platform/10/html-single/product_guide
+Solr ID: /documentation/en-us/red_hat_openstack_platform/10/html-single/product_guide/index/index.html
+
+[Score: 75] Director Installation and Usage - Red Hat OpenStack Platform 10
+URL: https://access.redhat.com/documentation/en-us/red_hat_openstack_platform/10/html-single/director_installation_and_usage
+Solr ID: /documentation/en-us/red_hat_openstack_platform/10/html-single/director_installation_and_usage/index/index.html
+
+[Score: 74] Architecture Guide - Red Hat OpenStack Platform 10
+URL: https://access.redhat.com/documentation/en-us/red_hat_openstack_platform/10/html-single/architecture_guide
+Solr ID: /documentation/en-us/red_hat_openstack_platform/10/html-single/architecture_guide/index/index.html
+
+================================================================================
+SUMMARY OF CHANGES
+================================================================================
+
+1. ANALYSIS COMPLETED:
+   - Checked URLs retrieved in failed test evaluations
+   - Searched Solr for docs that SHOULD have been retrieved
+   - All expected docs exist in Solr with high scores
+
+2. KEY FINDINGS:
+   
+   ✅ DOCS EXIST IN SOLR:
+   - Managing networking infrastructure services (DHCP/Kea docs)
+   - Automating system administration by using RHEL system roles
+   - Using image mode for RHEL (rpm-ostree docs)
+   - RHEL 10 Release Notes (kernel version, Python version)
+   - Installing and using dynamic programming languages
+   
+   ❌ RETRIEVAL PROBLEM:
+   - Correct docs exist but rank too low (e.g., #7 instead of #1)
+   - Release notes and lifecycle docs rank higher than technical guides
+   - Context recall = 0% because retrieved docs don't contain answers
+   
+3. ROOT CAUSE:
+   - Base ranking favors generic docs (Release Notes) over specific guides
+   - Need phrase-proximity reranking to prioritize semantic matches
+   - Applied fix: Increased reRankWeight from 3 to 10, added proximity queries
+
+4. FILES UPDATED:
+   
+   a) okp-mcp/tools.py:
+      - Added phrase-proximity reranking with ~5 slop
+      - Version boost in rerank query (documentation_version:10^25)
+      - Pattern-specific boosts (install/configure, migrate, etc.)
+      - Increased reRankWeight from 3 to 10
+   
+   b) config/temporal_validity_tests_runnable.yaml:
+      - Added expected_urls field to all test questions
+      - Format: commented-out list for future validation
+   
+   c) config/chronically_failing_questions.yaml:
+      - Added expected_urls field to all test questions
+   
+   d) config/temporal_validity_tests.yaml:
+      - Added expected_urls field to all test questions
+
+5. EXPECTED URLS ADDED FOR:
+   - TEMPORAL-REMOVED-001 (DHCP installation)
+   - TEMPORAL-ADDED-002 (DHCP options)
+   - TEMPORAL-ADDED-003 (kernel version)
+   - TEMPORAL-MIGRATION-001 (DHCP migration)
+   - TEMPORAL-MIGRATION-002 (Python changes)
+   - TEMPORAL-IMPLICIT-001 (DHCP setup)
+   - RSPEED-1812 (System Roles docs)
+   - RSPEED-1930 (rpm-ostree)
+   - RSPEED-2294 (Python version)
+   - RSPEED-1998 (Kea setup)
+
+6. NEXT STEPS FOR TESTING:
+   
+   To test improved reranking:
+   - Restart okp-mcp container (already done)
+   - Run evaluation: uv run python -m lightspeed_evaluation.runner --config config/temporal_validity_tests_runnable.yaml
+   - Check if "Managing networking infrastructure services" now ranks #1
+   
+   To enable expected_urls validation:
+   - Uncomment expected_urls in test config files
+   - Implement URL matching metric in lightspeed_evaluation/core/metrics/custom/
+   - Add to turn_metrics list
+

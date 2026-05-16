@@ -68,6 +68,14 @@ class TurnData(StreamingMetricsMixin):
     expected_intent: Optional[str] = Field(
         default=None, min_length=1, description="Expected intent for intent evaluation"
     )
+    expected_urls: Optional[list[str]] = Field(
+        default=None,
+        description="Expected URLs that should be retrieved (for URL retrieval evaluation)",
+    )
+    forbidden_claims: Optional[list[str]] = Field(
+        default=None,
+        description="Known-incorrect phrases that must NOT appear in response (for regression testing)",
+    )
     conversation_id: Optional[str] = Field(
         default=None, description="Conversation ID - populated by API if enabled"
     )

@@ -1,0 +1,35 @@
+RHEL 10 Benchmark Evaluation - Generality Test
+================================================================================
+
+Questions: 20 (same questions across all 3 runs)
+Runs: 3 consecutive evaluations
+
+Average Scores by Run:
+           mean       std  min  max
+run                                
+Run 1  0.506594  0.434426  0.0  1.0
+Run 2  0.499789  0.432798  0.0  1.0
+Run 3  0.509901  0.428860  0.0  1.0
+
+Average Scores by Metric:
+                                               mean       std  min       max
+metric                                                                      
+custom:answer_correctness                  0.596667  0.430202  0.0  1.000000
+ragas:context_precision_without_reference  0.317235  0.271074  0.0  0.926667
+ragas:context_recall                       0.294118  0.415783  0.0  1.000000
+ragas:context_relevance                    0.617647  0.475271  0.0  1.000000
+ragas:faithfulness                         0.366763  0.338986  0.0  1.000000
+ragas:response_relevancy                   0.776244  0.391397  0.0  0.970305
+
+Top 10 Questions with Highest Score Variance Across Runs:
+question
+Q11    0.477951
+Q10    0.454096
+Q01    0.439342
+Q19    0.416883
+Q16    0.404217
+Q17    0.398934
+Q15    0.398278
+Q05    0.389660
+Q12    0.369860
+Q02    0.333844

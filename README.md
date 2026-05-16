@@ -25,6 +25,55 @@ A comprehensive framework for evaluating GenAI applications.
 - **Caching**: LLM, embedding, and API response caching for faster re-runs
 - **Skip on Failure**: Optionally skip remaining evaluations in a conversation when a turn evaluation fails (configurable globally or per conversation). When there is an error in API call/Setup script execution metrics are marked as ERROR always.
 
+## 🤖 OKP-MCP Autonomous Agent (This Fork)
+
+**NEW:** This fork includes an autonomous agent for fixing okp-mcp RAG retrieval issues!
+
+### Answer-First Workflow for Customer Bugs
+
+**The realistic way to handle customer bugs:** You have a question and the correct answer from an SME, but don't know which documents should be retrieved.
+
+```bash
+# 1. Create test with just question + expected answer (no URLs needed!)
+cat > config/okp_mcp_test_suites/customer_bugs.yaml <<EOF
+- conversation_group_id: CUSTOMER_BUG_123
+  turns:
+  - query: "Is SPICE available to help with RHEL VMs?"
+    expected_response: |
+      SPICE is deprecated in RHEL 8.3 and removed in RHEL 9.
+      Use VNC instead for VM console access.
+    turn_metrics:
+    - custom:answer_correctness
+    - ragas:faithfulness
+EOF
+
+# 2. Diagnose (checks if answer is correct)
+uv run scripts/okp_mcp_agent.py diagnose CUSTOMER-BUG-123
+
+# 3. Auto-fix with document discovery + optimization
+uv run scripts/okp_mcp_agent.py bootstrap CUSTOMER-BUG-123 --yolo --max-iterations 20
+```
+
+**What it does:**
+1. ✅ Checks if system gives correct answer
+2. ✅ If wrong, finds which docs contain the answer
+3. ✅ Optimizes Solr config to retrieve those docs
+4. ✅ Saves discovered URLs as regression test
+
+**Batch processing multiple bugs:**
+```bash
+# Process 10 customer bugs overnight
+uv run scripts/okp_mcp_agent.py fix --ticket-file bugs.txt --yolo --max-iterations 20
+
+# Check results in the morning
+cat .diagnostics/batch_summary_*.txt
+```
+
+**📚 Full Documentation:**
+- [Answer-First Workflow Guide](docs/ANSWER_FIRST_WORKFLOW.md) - Complete workflow with examples
+- [Optimization Opportunities](docs/OPTIMIZATION_OPPORTUNITIES.md) - Performance tuning and advanced workflows
+- [Example Tickets](example_tickets.txt) - 20 functional test cases
+
 ## 🚀 Quick Start
 
 ### Installation
@@ -61,12 +110,25 @@ If you want to install Ragas NLP metrics like ROUGE or Bleu install additional d
 ```bash
 # Using pip
 pip install 'lightspeed-evaluation[nlp-metrics]'
-```
-or 
-```bash
+
 # Using uv (from already cloned repo for local development)
 uv sync --extra nlp-metrics
 ```
+
+#### Optional: All Metrics (NLP + Local Embeddings)
+To install **both** NLP metrics and local embeddings together:
+```bash
+# Using pip
+pip install 'lightspeed-evaluation[all-metrics]'
+
+# Using uv (from already cloned repo for local development)
+uv sync --extra all-metrics
+
+# Or specify multiple extras individually (same result)
+uv sync --extra nlp-metrics --extra local-embeddings
+```
+
+> **⚠️ Important `uv` Behavior**: Each `uv sync --extra X` command syncs ONLY that extra. If you run `uv sync --extra nlp-metrics` followed by `uv sync --extra local-embeddings`, the second command will **remove** nlp-metrics dependencies! Always specify all extras you need in one command, or use `--extra all-metrics` for everything.
 
 ### Basic Usage
 
@@ -446,9 +508,10 @@ make install-deps-test
 make black-format
 
 # Run all pre-commit checks at once (same as CI)
-make pre-commit      # Runs: bandit, check-types, pyright, docstyle, ruff, pylint, black-check
+make pre-commit      # Runs: bandit, check-types, pyright, docstyle, ruff, pylint, black-check, detect-secrets
 # or Run each quality checks individually:
-make bandit          # Security scan
+make bandit          # Security scan (code vulnerabilities)
+make detect-secrets  # Security scan (credentials/API keys)
 make check-types     # Type check
 make pyright         # Type check
 make docstyle        # Docstring style
@@ -459,6 +522,23 @@ make black-check     # Check formatting
 # Run tests
 make test            # Or: uv run pytest tests --cov=src
 ```
+
+## 🔒 Security
+
+For security considerations, vulnerability assessments, and secure deployment guidelines, see:
+
+**[Security Assessment](docs/SECURITY_ASSESSMENT.md)** - Comprehensive security review including:
+- 🔴 Critical findings (SSL verification, script execution)
+- 🟠 High-priority remediations (path traversal, prompt injection)
+- ✅ Security best practices already implemented
+- 📋 Secure deployment checklist
+
+**Quick Security Checklist:**
+- ✅ Run `make bandit` and `make detect-secrets` before commits
+- ✅ Never commit `.env` files or API keys
+- ✅ Enable SSL verification in production (`api.ssl_verify: true`)
+- ✅ Restrict script execution paths (see security assessment)
+- ✅ Keep dependencies updated (`pip-audit` or `uv pip check`)
 
 ## 🔧 Troubleshooting
 

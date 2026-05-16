@@ -20,15 +20,19 @@ dependencies = [
     "seaborn>=0.11.0",
     "numpy>=1.23.0",
     "scipy>=1.10.0",
+    "python-dotenv>=1.0.0",
     # Agent evaluation dependencies (for future integration)
     "httpx>=0.27.2",
     "tqdm>=4.67.1",
+    # Agentic AI for autonomous fixing (Phase 2)
+    "pydantic-ai>=0.0.14",
     # Generate answers dependencies
     "click>=8.0.0",
     "diskcache>=5.6.3",
     "tenacity>=9.1.2",
     "langchain[huggingface]>=0.3.27",
     "langchain-google-genai>=2.0.0",
+    "claude-agent-sdk>=0.1.54",
 ]
 
 [project.optional-dependencies]
@@ -54,10 +58,27 @@ nlp-metrics = [
     "rapidfuzz>=3.0.0",      # Required for semantic_similarity_distance
 ]
 
+# Combined extras for convenience - install all optional features together
+# Includes both NLP metrics and local embeddings
+# Install with:
+#   pip install 'lightspeed-evaluation[all-metrics]'
+# or
+#   uv sync --extra all-metrics
+all-metrics = [
+    # NLP metrics
+    "sacrebleu>=2.0.0",
+    "rouge-score>=0.1.2",
+    "rapidfuzz>=3.0.0",
+    # Local embeddings
+    "torch>=2.0.0",
+    "sentence-transformers>=5.1.0",
+]
+
 [dependency-groups]
 dev = [
     "bandit>=1.7.0",
     "black>=25.1.0",
+    "detect-secrets>=1.5.0",
     "mypy>=1.15.0",
     "ruff>=0.8.0",
     "pyright>=1.1.401",

@@ -13,16 +13,18 @@ llm:
   ssl_verify: true                    # Verify SSL certificates for specified provider
   ssl_cert_file: null                 # Path to custom CA
   temperature: 0.0                    # Generation temperature
-  max_tokens: 16384                   # Maximum tokens in response
+  max_tokens: 65536                   # Maximum tokens in response - increased to avoid truncation
   timeout: 300                        # Request timeout in seconds
   num_retries: 5                      # Retry attempts
   cache_dir: ".caches/llm_cache"      # Directory with LLM cache
   cache_enabled: true                # Is LLM cache enabled?
 
-# Default embedding (for LLM as a judge) configuration:
+# Embedding configuration for Ragas evaluation metrics
+# Used by metrics like context_recall, response_relevancy, context_precision
+# Providers: "huggingface" (local), "openai" (API), "gemini" (API)
 embedding:
-  provider: "huggingface"
-  model: "sentence-transformers/all-MiniLM-L6-v2"  # Fast, lightweight local model
+  provider: "huggingface"  # Local execution (downloads model to ~/.cache/huggingface/ on first use)
+  model: "sentence-transformers/all-MiniLM-L6-v2"  # Fast, lightweight (~90MB download, runs on CPU)
   provider_kwargs: {}
   cache_dir: ".caches/embedding_cache"
   cache_enabled: true
@@ -106,6 +108,16 @@ metrics_metadata:
       description: "Tool call evaluation comparing expected vs actual tool calls"
       ordered: true       # true (default): sequence order matters, false: any order allowed
       full_match: true    # true (default): exact 1:1 match, false: expected tools found in actual (extras allowed)
+
+    "custom:url_retrieval_eval":
+      threshold: 0.7
+      description: "URL retrieval quality - F1 score of expected vs retrieved documentation URLs"
+      default: false
+
+    "custom:forbidden_claims_eval":
+      threshold: 1.0
+      description: "Known-incorrect claims avoided in response (regression detection)"
+      default: false
 
     # Script-based metrics
     "script:action_eval":
@@ -250,7 +262,7 @@ environment:
 # Logging Configuration
 logging:
   # Source code logging level
-  source_level: DEBUG          # DEBUG, INFO, WARNING, ERROR, CRITICAL
+  source_level: INFO          # DEBUG, INFO, WARNING, ERROR, CRITICAL
 
   # Package logging level (imported libraries)
   package_level: ERROR

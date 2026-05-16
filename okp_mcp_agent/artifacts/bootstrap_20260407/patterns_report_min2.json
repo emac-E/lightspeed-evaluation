@@ -1,0 +1,369 @@
+{
+  "generated_at": "2026-04-08T01:15:19.829200",
+  "summary": {
+    "total_tickets": 91,
+    "patterns_found": 10,
+    "tickets_grouped": 38,
+    "tickets_ungrouped": 53,
+    "grouping_rate": "41.8%",
+    "min_pattern_size": 2
+  },
+  "patterns": [
+    {
+      "pattern_id": "AUTHENTICATION_ISSUES",
+      "description": "Authentication and identity management configuration issues across various security contexts",
+      "ticket_count": 6,
+      "representative_tickets": [
+        "RSPEED-2657",
+        "RSPEED-2653"
+      ],
+      "matched_tickets": [
+        "RSPEED-2657",
+        "RSPEED-2656",
+        "RSPEED-2654",
+        "RSPEED-2653",
+        "RSPEED-2652",
+        "RSPEED-2651"
+      ],
+      "common_problem_type": "OTHER",
+      "common_components": [
+        "authentication",
+        "security",
+        "identity-management"
+      ],
+      "version_pattern": "version-independent",
+      "verification_queries": [
+        {
+          "query": "RHEL authentication configuration best practices",
+          "context": "Customers encountering authentication setup issues across RBAC, identity management, and security contexts",
+          "expected_doc_type": "documentation"
+        },
+        {
+          "query": "RHEL identity management integration guide",
+          "context": "Multiple tickets involve identity-management component",
+          "expected_doc_type": "documentation"
+        }
+      ]
+    },
+    {
+      "pattern_id": "BOOTLOADER_FIRMWARE_PROCEDURES",
+      "description": "Incorrect procedures for bootloader, GRUB2, UEFI firmware, and secure boot configuration across multiple RHEL versions",
+      "ticket_count": 6,
+      "representative_tickets": [
+        "RSPEED-1726",
+        "RSPEED-1722"
+      ],
+      "matched_tickets": [
+        "RSPEED-1726",
+        "RSPEED-1724",
+        "RSPEED-1723",
+        "RSPEED-1722",
+        "RSPEED-1721",
+        "RSPEED-1720"
+      ],
+      "common_problem_type": "INCORRECT_PROCEDURE",
+      "common_components": [
+        "bootloader",
+        "grub2",
+        "firmware",
+        "UEFI",
+        "security"
+      ],
+      "version_pattern": "RHEL 7, 8, 9, 10 (multi-version)",
+      "verification_queries": [
+        {
+          "query": "RHEL GRUB2 bootloader configuration procedure",
+          "context": "Customers using incorrect procedures for GRUB2 configuration across multiple RHEL versions",
+          "expected_doc_type": "documentation"
+        },
+        {
+          "query": "RHEL UEFI secure boot firmware management",
+          "context": "Multiple tickets involve UEFI firmware and secure boot procedures",
+          "expected_doc_type": "documentation"
+        }
+      ]
+    },
+    {
+      "pattern_id": "RPM_OSTREE_PROCEDURES",
+      "description": "Incorrect procedures for rpm-ostree system management, package operations, and container integration",
+      "ticket_count": 4,
+      "representative_tickets": [
+        "RSPEED-1931",
+        "RSPEED-1929"
+      ],
+      "matched_tickets": [
+        "RSPEED-1931",
+        "RSPEED-1930",
+        "RSPEED-1929",
+        "RSPEED-1859"
+      ],
+      "common_problem_type": "INCORRECT_PROCEDURE",
+      "common_components": [
+        "rpm-ostree",
+        "system-management",
+        "packages",
+        "containers"
+      ],
+      "version_pattern": "version-independent",
+      "verification_queries": [
+        {
+          "query": "RHEL rpm-ostree system management guide",
+          "context": "Customers using incorrect procedures for rpm-ostree operations including kernel and package management",
+          "expected_doc_type": "documentation"
+        },
+        {
+          "query": "rpm-ostree container integration procedures",
+          "context": "Multiple tickets involve rpm-ostree with containers",
+          "expected_doc_type": "documentation"
+        }
+      ]
+    },
+    {
+      "pattern_id": "CONVERT2RHEL_ISSUES",
+      "description": "Various issues with convert2rhel migration tool including unsupported configurations, repository problems, and incorrect procedures",
+      "ticket_count": 4,
+      "representative_tickets": [
+        "RSPEED-1774",
+        "RSPEED-1772"
+      ],
+      "matched_tickets": [
+        "RSPEED-1775",
+        "RSPEED-1774",
+        "RSPEED-1773",
+        "RSPEED-1772"
+      ],
+      "common_problem_type": "MIXED (INCORRECT_PROCEDURE, UNSUPPORTED_CONFIG, OTHER)",
+      "common_components": [
+        "convert2rhel",
+        "conversion-tools",
+        "repositories",
+        "insights"
+      ],
+      "version_pattern": "RHEL 7, 8 (migration targets)",
+      "verification_queries": [
+        {
+          "query": "convert2rhel supported configurations RHEL 7",
+          "context": "Tickets show unsupported configuration issues with convert2rhel on RHEL 7",
+          "expected_doc_type": "documentation"
+        },
+        {
+          "query": "convert2rhel repository configuration requirements",
+          "context": "Repository-related issues in conversion process",
+          "expected_doc_type": "documentation"
+        }
+      ]
+    },
+    {
+      "pattern_id": "DEPRECATED_RHEL10_FEATURES",
+      "description": "Features deprecated in RHEL 10 including GFS2, DHCP, and Btrfs filesystem",
+      "ticket_count": 3,
+      "representative_tickets": [
+        "RSPEED-2794",
+        "RSPEED-1998",
+        "RSPEED-1584"
+      ],
+      "matched_tickets": [
+        "RSPEED-2794",
+        "RSPEED-1998",
+        "RSPEED-1584"
+      ],
+      "common_problem_type": "DEPRECATED_FEATURE",
+      "common_components": [
+        "storage",
+        "networking",
+        "filesystem"
+      ],
+      "version_pattern": "RHEL 10",
+      "verification_queries": [
+        {
+          "query": "RHEL 10 deprecated features list",
+          "context": "Multiple features deprecated in RHEL 10 including GFS2, DHCP, and Btrfs",
+          "expected_doc_type": "documentation"
+        },
+        {
+          "query": "RHEL 10 GFS2 migration alternatives",
+          "context": "GFS2 deprecated in resilient-storage for RHEL 10",
+          "expected_doc_type": "documentation"
+        },
+        {
+          "query": "RHEL 10 Btrfs filesystem alternatives",
+          "context": "Btrfs filesystem deprecated in RHEL 10",
+          "expected_doc_type": "documentation"
+        }
+      ]
+    },
+    {
+      "pattern_id": "EOL_LIFECYCLE_SUPPORT",
+      "description": "End-of-life and lifecycle support questions for RHEL 6 and RHEL 7 systems",
+      "ticket_count": 3,
+      "representative_tickets": [
+        "RSPEED-2745",
+        "RSPEED-1648"
+      ],
+      "matched_tickets": [
+        "RSPEED-2745",
+        "RSPEED-2482",
+        "RSPEED-1648"
+      ],
+      "common_problem_type": "EOL_UNSUPPORTED",
+      "common_components": [
+        "lifecycle",
+        "support",
+        "maintenance",
+        "containers"
+      ],
+      "version_pattern": "RHEL 6, 7 (EOL versions)",
+      "verification_queries": [
+        {
+          "query": "RHEL 7 end of life date and extended support options",
+          "context": "Multiple tickets about RHEL 7 EOL and lifecycle support",
+          "expected_doc_type": "documentation"
+        },
+        {
+          "query": "RHEL 6 containers support EOL status",
+          "context": "RSPEED-2482 involves containers on EOL RHEL 6",
+          "expected_doc_type": "documentation"
+        }
+      ]
+    },
+    {
+      "pattern_id": "PACEMAKER_CLUSTERING_PROCEDURES",
+      "description": "Incorrect procedures for Pacemaker clustering configuration and management",
+      "ticket_count": 3,
+      "representative_tickets": [
+        "RSPEED-1711",
+        "RSPEED-1709"
+      ],
+      "matched_tickets": [
+        "RSPEED-1711",
+        "RSPEED-1710",
+        "RSPEED-1709"
+      ],
+      "common_problem_type": "INCORRECT_PROCEDURE",
+      "common_components": [
+        "pacemaker",
+        "clustering"
+      ],
+      "version_pattern": "RHEL 9 and version-independent",
+      "verification_queries": [
+        {
+          "query": "RHEL Pacemaker cluster configuration procedure",
+          "context": "Customers using incorrect procedures for Pacemaker clustering setup",
+          "expected_doc_type": "documentation"
+        },
+        {
+          "query": "RHEL 9 Pacemaker clustering best practices",
+          "context": "At least one ticket specifically on RHEL 9",
+          "expected_doc_type": "documentation"
+        }
+      ]
+    },
+    {
+      "pattern_id": "CONTAINER_UNSUPPORTED_CONFIG",
+      "description": "Unsupported container configurations including Solr compatibility, OpenShift security contexts, and runtime issues across RHEL versions",
+      "ticket_count": 3,
+      "representative_tickets": [
+        "RSPEED-2754",
+        "RSPEED-2218"
+      ],
+      "matched_tickets": [
+        "RSPEED-2754",
+        "RSPEED-2536",
+        "RSPEED-2218"
+      ],
+      "common_problem_type": "UNSUPPORTED_CONFIG",
+      "common_components": [
+        "containers",
+        "openshift",
+        "security",
+        "cli",
+        "runtime"
+      ],
+      "version_pattern": "RHEL 6, 9, 10 (wide version range)",
+      "verification_queries": [
+        {
+          "query": "RHEL container supported configurations by version",
+          "context": "Unsupported container configurations across RHEL 6, 9, 10",
+          "expected_doc_type": "documentation"
+        },
+        {
+          "query": "RHEL Solr container compatibility matrix",
+          "context": "RSPEED-2754 involves Solr search container compatibility between RHEL 6 and 9",
+          "expected_doc_type": "documentation"
+        }
+      ]
+    },
+    {
+      "pattern_id": "NETWORKING_PROCEDURES",
+      "description": "Incorrect networking procedures including driver configuration, bonding, and CIFS/Kerberos integration",
+      "ticket_count": 3,
+      "representative_tickets": [
+        "RSPEED-2123",
+        "RSPEED-2113",
+        "RSPEED-1902"
+      ],
+      "matched_tickets": [
+        "RSPEED-2123",
+        "RSPEED-2113",
+        "RSPEED-1902"
+      ],
+      "common_problem_type": "INCORRECT_PROCEDURE",
+      "common_components": [
+        "networking",
+        "drivers",
+        "bonding",
+        "cifs",
+        "kerberos",
+        "security"
+      ],
+      "version_pattern": "RHEL 6, 7, 8 and version-independent",
+      "verification_queries": [
+        {
+          "query": "RHEL network bonding configuration procedure",
+          "context": "Incorrect bonding configuration procedures",
+          "expected_doc_type": "documentation"
+        },
+        {
+          "query": "RHEL CIFS mount with Kerberos authentication",
+          "context": "RSPEED-1902 involves CIFS and Kerberos across RHEL 6, 7, 8",
+          "expected_doc_type": "documentation"
+        }
+      ]
+    },
+    {
+      "pattern_id": "OKP_MCP_ISSUES",
+      "description": "OKP-MCP (OpenShift Kubernetes Platform - Model Context Protocol) configuration and documentation issues",
+      "ticket_count": 3,
+      "representative_tickets": [
+        "RSPEED-2786",
+        "RSPEED-2700"
+      ],
+      "matched_tickets": [
+        "RSPEED-2786",
+        "RSPEED-2702",
+        "RSPEED-2700"
+      ],
+      "common_problem_type": "OTHER",
+      "common_components": [
+        "okp-mcp",
+        "configuration",
+        "documentation",
+        "middleware",
+        "logging"
+      ],
+      "version_pattern": "version-independent",
+      "verification_queries": [
+        {
+          "query": "OKP-MCP configuration guide RHEL",
+          "context": "OKP-MCP configuration and environment variable setup issues",
+          "expected_doc_type": "documentation"
+        },
+        {
+          "query": "OKP-MCP middleware logging configuration",
+          "context": "RSPEED-2786 involves OKP-MCP middleware logging",
+          "expected_doc_type": "documentation"
+        }
+      ]
+    }
+  ]
+}

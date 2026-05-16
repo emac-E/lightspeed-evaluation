@@ -1,3 +1,0 @@
-conversation_group_id,turn_id,custom:answer_correctness,ragas:context_precision_without_reference,ragas:context_relevance,ragas:faithfulness,anomaly_type,description
-TEMPORAL-REMOVED-001,turn1,1.0,0.0555555555499999,0.0,0.25,RAG_BYPASS,LLM answered correctly despite poor context retrieval
-TEMPORAL-REMOVED-001,turn1,1.0,0.0555555555499999,0.0,0.25,PARAMETRIC_KNOWLEDGE,Correct answer with zero context scores (parametric knowledge)

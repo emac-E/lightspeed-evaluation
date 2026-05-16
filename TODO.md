@@ -3,14 +3,16 @@
 ## High Priority
 
 ### [Done]1. Fix Token Usage Tracking
-- [ ] Pull token info from endpoint response (Gemini model answering questions)
+- [x] Pull token info from endpoint response (Gemini model answering questions)
   - Currently showing 0 tokens for `api_input_tokens` and `api_output_tokens`
   - Need to extract from response object and store in evaluation results
   - Affects accurate cost estimation
-- [ ] Re-run cost estimation script after fix
+- [x] Re-run cost estimation script after fix
   ```bash
-  python scripts/calculate_cost_estimate_multi.py eval_output/latest --comparison
+  $ python scripts/show_cost.py
+
   ```
+  [] Fix existing bugs caused by claude
 
 ### 2. Clean Up Repository
 - [ ] Remove old evaluation output files from repository
@@ -37,121 +39,6 @@
   - `CONTEXT_QUALITY_DEGRADATION_TESTS.md`
   - `ADVERSARIAL_CONTEXT_INJECTION_TESTS.md`
   - `JUDGE_LLM_CONSISTENCY_TESTS.md`
-
-## High Priority - RAG Testing Improvements for RHEL 10
-
-### Do These First (This Week)
-
-- [ ] **1. Add RHEL Version-Aware Metrics** (1 hour) - High Impact, Low Effort
-  - [ ] Create `src/lightspeed_evaluation/core/metrics/custom/version_accuracy.py`
-    - Validates RHEL version accuracy in contexts and responses
-    - Checks if target version is in contexts
-    - Detects wrong version in response
-    - Calculates target version ratio in contexts
-  - [ ] Add to `config/system.yaml` metrics_metadata
-  - [ ] Set threshold to 0.8
-  - **Impact:** Directly measures what we care about - are we retrieving the right version?
-
-- [ ] **2. Create RHEL 10-Specific Test Suite** (2 hours) - High Impact, Medium Effort
-  - [ ] Create `config/rhel10_focused_tests.yaml`
-  - [ ] Include test categories:
-    - New features (bootc, performance improvements)
-    - Version-specific configuration
-    - Migration and upgrade paths
-    - Common administrative tasks
-    - Troubleshooting scenarios
-    - Package management (DNF5)
-    - Security (SELinux)
-  - **Impact:** Focused test coverage on primary use case
-
-- [ ] **3. Add Version Markers to Test Data** (1 hour) - Medium Impact, Low Effort
-  - [ ] Update all test YAML files with:
-    - `target_version: "10"`
-    - `version_strictness: "required|preferred|mixed"`
-    - `expected_version_in_response: "10"`
-    - `expected_version_in_contexts: ["10"]`
-    - `forbidden_versions: ["8", "9"]`
-  - [ ] Create validator in evaluation pipeline
-  - **Impact:** Explicit pass/fail criteria for version correctness
-
-### Do These Next (Next 2 Weeks)
-
-- [ ] **4. Add Context Quality Metrics** (3 hours) - High Impact, Low Effort
-  - [ ] Create `src/lightspeed_evaluation/core/metrics/custom/context_validation.py`
-  - [ ] Implement `ContextVersionPurityMetric`
-    - Measure percentage of contexts matching target version
-  - [ ] Implement `ContextRecencyMetric`
-    - Check if contexts are from recent documentation
-    - Flag old documentation (>2 years)
-  - **Impact:** Better understanding of WHY context_precision is only 42.9%
-  - **Related:** Currently context_precision pass rate is 42.9%, need better validation
-
-- [ ] **5. Create Regression Test Suite from Current Failures** (2 hours) - High Impact, Medium Effort
-  - [ ] Create `scripts/create_regression_suite.py`
-    - Extract questions with scores below 0.5
-    - Group by conversation and track worst metrics
-    - Generate `config/regression_tests.yaml`
-  - [ ] Track these specific questions over time
-  - **Impact:** Systematic tracking of problematic questions
-  - **Note:** Use this after each major evaluation run to build regression dataset
-
-- [ ] **6. Add Gemini 2.5 Flash-Specific Optimizations** (2 hours) - Medium Impact, Medium Effort
-  - [ ] Create `config/gemini_optimized_system.yaml`
-  - [ ] Configure Gemini-specific parameters:
-    - `top_p: 0.95`
-    - `top_k: 40`
-    - Safety settings for technical documentation
-  - [ ] Add structured prompt templates
-    - System prompt emphasizing RHEL version awareness
-    - Instruction to only use provided documentation
-  - [ ] Use same model for judge LLM for consistency
-  - **Impact:** Better alignment with Gemini's strengths
-
-### Do Eventually (Longer Term)
-
-- [ ] **7. Create Golden Dataset with Human Validation** - High Impact, High Effort
-  - [ ] Select 20 critical RHEL 10 questions (most common user queries)
-  - [ ] Manually validate/write perfect expected responses
-  - [ ] Have RHEL experts review
-  - [ ] Create `config/golden_rhel10_tests.yaml` with:
-    - `quality_level: "gold"`
-    - `expert_validated: true`
-    - `validation_date` and `validator` fields
-    - `gold_standard_response` (expert written)
-    - `required_facts` (must-have information)
-    - `forbidden_statements` (common misconceptions)
-  - [ ] Use as high-confidence regression suite
-  - **Impact:** High-confidence baseline for measuring improvements
-
-- [ ] **8. Add Failure Mode Detection** (3 hours) - Medium Impact, Low Effort
-  - [ ] Create `src/lightspeed_evaluation/core/metrics/custom/failure_modes.py`
-  - [ ] Implement `FailureModeDetector` to catch:
-    - Version hallucination (query version ≠ response version)
-    - Empty/refusal responses
-    - Context ignored (response contradicts context)
-    - Over-generic responses
-    - Wrong doc type (KB article instead of documentation)
-  - **Impact:** Better root cause analysis of failures
-
-- [ ] **9. Add Cost Tracking and Optimization** - Low Impact, Low Effort
-  - [ ] Add cost tracking to evaluation pipeline:
-    - Track API calls, input/output tokens
-    - Calculate estimated cost using Gemini 2.5 Flash pricing
-      - $0.075 per 1M input tokens
-      - $0.30 per 1M output tokens
-  - [ ] Add to evaluation output and summary reports
-  - **Impact:** Better budget management for testing
-
-- [ ] **10. Implement Continuous Testing Dashboard** - Low Impact, High Effort
-  - [ ] Create `scripts/generate_dashboard_data.py`
-  - [ ] Build web dashboard to track:
-    - Pass rate trends by metric over time
-    - Cost per successful evaluation
-    - Common failure patterns
-    - Version accuracy over time
-    - Per-question performance
-  - [ ] Host at `http://localhost:8000/dashboard`
-  - **Impact:** Long-term visibility into testing trends
 
 ## Medium Priority
 
@@ -232,22 +119,6 @@ Following specs created this week:
 - [x] Create cost estimation scripts
   - [x] `scripts/calculate_cost_estimate.py`
   - [x] `scripts/calculate_cost_estimate_multi.py`
-
-## Expected Impact from RAG Testing Improvements
-
-With items 1-6 implemented:
-- **Better visibility** into version correctness (currently blind spot)
-- **Higher confidence** in test results (know WHY things fail)
-- **Faster debugging** of failures (failure mode detection)
-- **Lower costs** from focused testing (RHEL 10 specific suite)
-- **60% → 75%+ pass rate** expected on RHEL 10 temporal questions
-- **Reduced variance** in results (better test data quality)
-
-### Current Baseline (from version filtering analysis)
-- Temporal test pass rate: 60% (was 40% before version filtering)
-- Context precision: 42.9% pass rate (needs improvement)
-- Faithfulness: 42.9% pass rate (was 14.3% before filtering)
-- Version accuracy: Not currently measured (Item #1 will add this)
 
 ## Notes
 
